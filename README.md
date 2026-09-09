@@ -117,7 +117,13 @@ cargo check --target wasm32-unknown-unknown --all-targets
 cargo clippy --target wasm32-unknown-unknown --all-targets -- -D warnings
 cargo fmt --all -- --check
 
+# worker-build's minor version must match the `worker` dependency in Cargo.toml
+# — they are released in lockstep, and the build tool derives the wasm-bindgen
+# CLI it downloads from the version in Cargo.lock. A mismatched pair fails with
+# "linked against a different version of wasm-bindgen".
+cargo install -q worker-build --version ^0.8
 worker-build --release          # the real artefact
+
 npx wrangler dev                # serve it locally
 npx wrangler deploy --dry-run   # validate the config without deploying
 ```
