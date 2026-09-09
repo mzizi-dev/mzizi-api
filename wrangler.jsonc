@@ -7,8 +7,21 @@
 
   // workers-rs compiles to WASM through worker-build, which emits the JS shim
   // named in `main` and the wasm beside it.
+  //
+  // The pin tracks the `worker` dependency in Cargo.toml: since workers-rs 0.7
+  // the library and the build tool are released in lockstep and worker-build
+  // rejects a library outside its own minor line. It also matters for a reason
+  // that is not obvious — worker-build 0.8 reads the resolved wasm-bindgen
+  // version from Cargo.lock and downloads exactly that CLI, whereas the 0.1
+  // line hard-codes one (0.2.105) that has nothing to do with what the crate
+  // compiled against. wasm-bindgen refuses to process a module built by a
+  // different version of itself, so `^0.1` against worker 0.8 cannot build.
+  //
+  // This command is duplicated in .github/workflows/ci.yml on purpose: this one
+  // is what Cloudflare Workers Builds actually runs, so if they drift the deploy
+  // breaks while CI stays green. Change both or neither.
   "build": {
-    "command": "cargo install -q worker-build --version ^0.1 && worker-build --release",
+    "command": "cargo install -q worker-build --version ^0.8 && worker-build --release",
   },
 
   // A custom domain takes a BARE HOSTNAME. Wildcards and paths are rejected

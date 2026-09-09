@@ -44,7 +44,33 @@ serde_json = "1"
 opt-level = "z"
 lto = true
 codegen-units = 1
-strip = true
+
+# NOT `strip = true`. That is an alias for `strip = "symbols"`, which makes rustc
+# pass `--strip-all` to wasm-ld, and wasm-ld's `--strip-all` skips writing three
+# synthetic custom sections: `name`, `producers`, and `target_features`.
+#
+# Losing `target_features` is the fatal one. It is where the module advertises
+# `reference-types`, and that advertisement is the ONLY signal wasm-bindgen uses
+# to decide whether to run its externref transform. Stripped, the transform is
+# silently skipped, no externref table is emitted, and the build dies late with
+# an error that names neither `strip` nor `target_features`:
+#
+#     error: failed to generate catch wrappers
+#     Caused by: externref table required for catch wrappers
+#
+# The `catch` wrappers it cannot generate are not optional for us: worker-build
+# invokes wasm-bindgen with `--force-enable-abort-handler`, so every workers-rs
+# build takes this path. Upstream knows — cloudflare/workers-rs#1014 and
+# wasm-bindgen#5205 — but as of writing neither fix has shipped, so the profile
+# is what has to change.
+#
+# `"debuginfo"` maps to `--strip-debug`, which drops the `.debug_*` sections and
+# leaves the other three alone. It is also the right setting on its own merits:
+# `observability` is on in wrangler.jsonc, and the `name` section that
+# `strip = true` was discarding is what turns a stack trace in those logs into
+# function names instead of indices. worker-build already takes this view — it
+# passes `--debuginfo` to wasm-opt specifically to keep the names section.
+strip = "debuginfo"
 
 [lints.rust]
 unsafe_code = "forbid"

@@ -61,9 +61,23 @@ jobs:
       # The real artefact. `cargo check` proves the crate compiles; this proves
       # worker-build can turn it into something wrangler will accept, which is a
       # separate claim and the one that fails at deploy time if it is wrong.
+      #
+      # The version pin MUST track the `worker` dependency in Cargo.toml. Since
+      # workers-rs 0.7 the two crates are released in lockstep, and worker-build
+      # refuses to run against a library outside its own minor line. `^0.1` is a
+      # pre-0.7 toolchain: it hard-codes the wasm-bindgen CLI it downloads
+      # (0.2.105) with no knowledge of what the crate actually compiled against,
+      # which is 0.2.128 here. wasm-bindgen requires the CLI and the library to
+      # be the SAME version, so that pairing could only ever fail. worker-build
+      # 0.8 reads the resolved wasm-bindgen version out of Cargo.lock and fetches
+      # exactly that CLI, so the two cannot drift apart again.
+      #
+      # Keep this identical to `build.command` in wrangler.jsonc — that is what
+      # Cloudflare Workers Builds runs, and drift there fails the deploy while
+      # leaving CI green.
       - name: worker-build
         run: |
-          cargo install -q worker-build --version ^0.1
+          cargo install -q worker-build --version ^0.8
           worker-build --release
 
       - name: wrangler deploy --dry-run
