@@ -1,0 +1,57 @@
+# api.mzizi.dev — the Mzizi registry API, as a pure-Rust Cloudflare Worker.
+#
+# WHY THIS EXISTS
+#
+# The registry API is served today by Next.js route handlers in mzizi-dev/mzizi,
+# running on Vercel at `mzizi.dev/api/v1`. `api.mzizi.dev` is the address the
+# ecosystem already writes down — mzizi-console pointed at it, and had to be
+# corrected because the host has no DNS record at all. This Worker is what makes
+# that address real.
+#
+# WHY workers-rs AND NOT AN IN-HOUSE FRAMEWORK
+#
+# There is no in-house HTTP framework to use. `mzizi-rs/crates/*` are UI and
+# assurance layers (N1, N2, N7-N11) — none of them serves HTTP. `mzizi-lang` is
+# Phase 0 research: its own README says the front end is a prototype, contract
+# bodies parse but are not evaluated, and nothing has been measured against the
+# charter's kill criteria. An API gateway is the wrong first production load for
+# it.
+#
+# `workers-rs` is the Cloudflare-maintained Rust SDK, and the DNA architecture
+# doc already names it as the target runtime for the fundi rung. Using it here
+# is consistent with a decision the ecosystem already recorded.
+[package]
+name = "mzizi-api-gateway"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+license = "Apache-2.0"
+repository = "https://github.com/mzizi-dev/mzizi-api-gateway"
+homepage = "https://api.mzizi.dev"
+description = "The Mzizi registry API — a pure-Rust Cloudflare Worker."
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+worker = "0.8"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[profile.release]
+# The Worker ships as WASM; size is a deploy constraint, not a preference.
+opt-level = "z"
+lto = true
+codegen-units = 1
+strip = true
+
+[lints.rust]
+unsafe_code = "forbid"
+missing_docs = "warn"
+
+[lints.clippy]
+all = { level = "deny", priority = -1 }
+todo = "deny"
+unwrap_used = "deny"
+expect_used = "deny"

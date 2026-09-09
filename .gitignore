@@ -1,0 +1,16 @@
+# Rust
+/target
+**/*.rs.bk
+*.pdb
+
+# worker-build output
+/build
+
+# wrangler
+.wrangler/
+
+# node (wrangler is invoked via npx; no package.json is committed)
+node_modules/
+
+# macOS
+.DS_Store

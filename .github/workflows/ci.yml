@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    # Not just main. Stacked pull requests target the branch below them in the
+    # stack, and a filter of [main] silently gives every layer but the bottom
+    # one zero checks — a green PR with nothing run looks identical to a
+    # passing one.
+    branches: [main, "claude/**"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  rust:
+    name: rust
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+          # The Worker ships as WASM, so this is the target that matters. Code
+          # can pass a native `cargo check` and fail to compile for workerd.
+          targets: wasm32-unknown-unknown
+
+      - uses: Swatinem/rust-cache@v2
+
+      - run: cargo fmt --all -- --check
+
+      # Clippy against wasm32 rather than the host: the `worker` crate's API is
+      # cfg'd for that target, so a host-only lint pass checks code the Worker
+      # never runs.
+      - run: cargo clippy --target wasm32-unknown-unknown --all-targets -- -D warnings
+
+      - run: cargo check --target wasm32-unknown-unknown --all-targets
+
+      - run: cargo test
+
+  build:
+    name: worker build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - uses: Swatinem/rust-cache@v2
+
+      # The real artefact. `cargo check` proves the crate compiles; this proves
+      # worker-build can turn it into something wrangler will accept, which is a
+      # separate claim and the one that fails at deploy time if it is wrong.
+      - name: worker-build
+        run: |
+          cargo install -q worker-build --version ^0.1
+          worker-build --release
+
+      - name: wrangler deploy --dry-run
+        run: npx --yes wrangler@4 deploy --dry-run --outdir=.wrangler/dryrun
+
+  secrets:
+    name: secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      # The gitleaks/gitleaks-action wrapper requires a paid licence for org
+      # repos. The binary is MIT-licensed, so it runs directly and stays free.
+      - name: Install gitleaks
+        env:
+          VERSION: "8.21.2"
+        run: |
+          set -euo pipefail
+          curl -sSL --fail -o /tmp/gitleaks.tar.gz \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz"
+          sudo tar -xzf /tmp/gitleaks.tar.gz -C /usr/local/bin gitleaks
+          gitleaks version
+
+      - run: gitleaks detect --source . --redact --no-banner --verbose
