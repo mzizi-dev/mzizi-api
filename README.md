@@ -33,8 +33,8 @@ brief and the honest answer is that there isn't one to use yet:
   `mzizi-ui` (N2), `mzizi-shell` (N7), `mzizi-assurance` (N8), `mzizi-fundi`
   (N9), `mzizi-docs` (N10), `mzizi-discovery` (N11). None serves HTTP.
 - **`mzizi-lang`** is Phase 0 research. Its own README: the front end is a
-  prototype, *"contract bodies parse but are not evaluated"*, and *"nothing here
-  has yet been measured against the charter's kill criteria"*. A public API
+  prototype, _"contract bodies parse but are not evaluated"_, and _"nothing here
+  has yet been measured against the charter's kill criteria"_. A public API
   gateway is the wrong first production load for a language that cannot yet
   evaluate a contract body.
 
@@ -77,8 +77,8 @@ Two things make that safe to do incrementally:
 
 ### Ported
 
-| Route | Notes |
-|---|---|
+| Route            | Notes                                                                                                                                                             |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `GET /v1/health` | The gateway's own liveness. Native on purpose — proxying it would report the origin's health while saying nothing about whether the gateway in front of it is up. |
 
 ### Proxied
@@ -103,11 +103,11 @@ The routes the console actually calls are the ones whose latency and
 availability a user sees, so they are the ones worth porting — but check where a
 route's data actually lives before picking it up. Measured 2026-09-11:
 
-| Candidate | Real data source | Portable? |
-|---|---|---|
-| `/v1/ui` | `registry.json` + `lib/registry.generated.ts` | **No** — see [Data](#data) |
-| `/v1/architecture` | `content/doctrine/**` via `lib/doctrine.ts`; only the node counts are Supabase | **No** — the helix is files |
-| `/v1/brand` | `brand_minerals`, `brand_semantic_colors`, `brand_typography`, `brand_spacing`, `brand_ecosystem`, `brand_meta` | **Yes** — start here |
+| Candidate          | Real data source                                                                                                | Portable?                   |
+| ------------------ | --------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| `/v1/ui`           | `registry.json` + `lib/registry.generated.ts`                                                                   | **No** — see [Data](#data)  |
+| `/v1/architecture` | `content/doctrine/**` via `lib/doctrine.ts`; only the node counts are Supabase                                  | **No** — the helix is files |
+| `/v1/brand`        | `brand_minerals`, `brand_semantic_colors`, `brand_typography`, `brand_spacing`, `brand_ecosystem`, `brand_meta` | **Yes** — start here        |
 
 **`/v1/brand` is the one to port first.** All six views return `200` to the anon
 key, with row counts matching the live response, and the response is ~24 KB. Two
@@ -115,7 +115,7 @@ caveats to handle rather than discover: `heritage` and `experimental` come from
 `lib/tokens/palette.generated` (7 entries each, generated from `app/globals.css`
 by `pnpm tokens:sync`), and `radii`, `accessibility`, `voiceAndTone` and
 `philosophy` are literals in the route file. Both are small, but both are
-*copies* — the fixture round-trip is what keeps them honest.
+_copies_ — the fixture round-trip is what keeps them honest.
 
 [`CONTRIBUTING.md`](CONTRIBUTING.md) has the step-by-step: find the real data
 source, capture the fixture, implement, round-trip the fixture against your
@@ -135,7 +135,7 @@ The registry is **not in the database**. `docs/db-contents-rule.md` in
 > the issue log and the self-healing log. [...] **Everything else is in the
 > repo.**
 
-The test is *who writes it*: a script, a release, or telemetry writes to the
+The test is _who writes it_: a script, a release, or telemetry writes to the
 database; a human writes to a file. So the content routes read files compiled
 into the origin's Vercel bundle — `registry.json` for components,
 `content/doctrine/**` for the helix — through `lib/registry.ts` and
@@ -148,7 +148,7 @@ source this Worker can read that is the same source. Reading Supabase instead
 and hoping the two agree is precisely the failure the fixture rule exists to
 catch — see [`/v1/ui`](#the-v1ui-index) below.
 
-Where a route *is* genuinely database-backed, it reads Supabase with the anon
+Where a route _is_ genuinely database-backed, it reads Supabase with the anon
 key under RLS. There is no service-role credential in this Worker and there
 should never be one: the registry is public, read-only data.
 
@@ -162,12 +162,12 @@ with where the code is).
 
 It is not reconstructible from `component_documents`:
 
-| | Origin response | `component_documents` |
-|---|---|---|
-| Items | 575 | 3,062 rows / 1,580 distinct names |
-| `title` present | 575 / 575 | 100 / 3,062 |
-| `categories` present | 575 / 575 | **0 / 3,062** |
-| `type` present | 575 / 575 | 3 / 3,062 |
+|                      | Origin response | `component_documents`             |
+| -------------------- | --------------- | --------------------------------- |
+| Items                | 575             | 3,062 rows / 1,580 distinct names |
+| `title` present      | 575 / 575       | 100 / 3,062                       |
+| `categories` present | 575 / 575       | **0 / 3,062**                     |
+| `type` present       | 575 / 575       | 3 / 3,062                         |
 
 Four of the 575 names do not exist in the table at all, and 1,009 names in the
 table must not appear in the index. `categories` — required on every item — is

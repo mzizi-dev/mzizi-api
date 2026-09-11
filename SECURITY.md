@@ -27,14 +27,14 @@ forge is a supply-chain problem for everything that consumes it.
 
 ## Controls that already exist
 
-| Control | Where | What it stops |
-| --- | --- | --- |
-| Non-`GET` answered `405` locally | `src/lib.rs` | A write attempt never reaches the origin — it is rejected at the edge, before any forwarding happens |
-| Origin host is a compile-time constant | `ORIGIN` in `src/lib.rs` | The proxy cannot be aimed at an attacker-controlled host by request input; only the path and query travel |
-| Origin is a *different* hostname | `mzizi.dev` vs `api.mzizi.dev` | A proxied request cannot re-enter this Worker, so there is no recursion to amplify |
-| No secrets or bindings | `wrangler.jsonc` | There is nothing in the Worker's environment to exfiltrate |
-| `gitleaks` on full history | `.github/workflows/ci.yml` | A credential committed by accident fails CI rather than shipping |
-| `unsafe_code = "forbid"` | `Cargo.toml` | Memory-safety classes are excluded by the compiler, not by review |
+| Control                                | Where                          | What it stops                                                                                             |
+| -------------------------------------- | ------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| Non-`GET` answered `405` locally       | `src/lib.rs`                   | A write attempt never reaches the origin — it is rejected at the edge, before any forwarding happens      |
+| Origin host is a compile-time constant | `ORIGIN` in `src/lib.rs`       | The proxy cannot be aimed at an attacker-controlled host by request input; only the path and query travel |
+| Origin is a _different_ hostname       | `mzizi.dev` vs `api.mzizi.dev` | A proxied request cannot re-enter this Worker, so there is no recursion to amplify                        |
+| No secrets or bindings                 | `wrangler.jsonc`               | There is nothing in the Worker's environment to exfiltrate                                                |
+| `gitleaks` on full history             | `.github/workflows/ci.yml`     | A credential committed by accident fails CI rather than shipping                                          |
+| `unsafe_code = "forbid"`               | `Cargo.toml`                   | Memory-safety classes are excluded by the compiler, not by review                                         |
 
 `Access-Control-Allow-Origin: *` is deliberate and is not a finding. The data is
 public, no route is credentialed, and browsers never attach cookies to these
@@ -54,13 +54,13 @@ Include the request that reproduces it (full URL and method), what the gateway
 returned, what you expected, and the commit SHA or deploy time if you have it.
 PGP is not required.
 
-| Stage | Target |
-| --- | --- |
-| Acknowledgement | Within 48 hours |
-| Triage and reproduction | Within 5 business days |
-| Fix merged to `main` (critical / high) | Within 7 days of triage |
-| Fix merged to `main` (medium / low) | Within 30 days of triage |
-| Public disclosure | After the fix ships, coordinated with the reporter |
+| Stage                                  | Target                                             |
+| -------------------------------------- | -------------------------------------------------- |
+| Acknowledgement                        | Within 48 hours                                    |
+| Triage and reproduction                | Within 5 business days                             |
+| Fix merged to `main` (critical / high) | Within 7 days of triage                            |
+| Fix merged to `main` (medium / low)    | Within 30 days of triage                           |
+| Public disclosure                      | After the fix ships, coordinated with the reporter |
 
 ## Scope
 

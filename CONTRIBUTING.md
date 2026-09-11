@@ -35,7 +35,7 @@ Two properties make that safe to do incrementally:
   reaching the origin at all.
 - **A ported route is provably identical, or it is not ported.** Fixtures are
   captured live responses, so an implementation is checked against what the
-  origin *actually returns* — never against what this repo believes it returns.
+  origin _actually returns_ — never against what this repo believes it returns.
 
 That second property is not theoretical. The Svelte console that preceded
 `mzizi-console` had types that were self-consistent and wrong, and rendered
@@ -63,7 +63,7 @@ in that repo records the owner's decision of 2026-08-04:
 > the issue log and the self-healing log. Subscriptions and customer data live
 > in their own store. **Everything else is in the repo.**
 
-The test is *who writes it*: a script, a release, or telemetry writes to the
+The test is _who writes it_: a script, a release, or telemetry writes to the
 database; a human writes to a file, where a diff and a reviewer can see it. So
 the content routes read files that are compiled into the Vercel bundle —
 `registry.json` and `content/doctrine/**` — not rows. A route whose docblock
@@ -81,7 +81,7 @@ mkdir -p tests/fixtures
 curl -s https://mzizi.dev/api/v1/<route> > tests/fixtures/<route>.json
 ```
 
-Capture it *first*. A fixture captured after the implementation exists is a
+Capture it _first_. A fixture captured after the implementation exists is a
 fixture unconsciously shaped to agree with it.
 
 Record the capture date in the test that reads it. Fixtures go stale; a stale
@@ -125,7 +125,7 @@ fn brand_fixture_round_trips() {
 ```
 
 Round-tripping is the assertion that matters. Decoding alone proves only that
-you did not *reject* the origin's JSON — `serde` ignores unknown fields by
+you did not _reject_ the origin's JSON — `serde` ignores unknown fields by
 default, so a type missing half the response still decodes it happily. Comparing
 the re-serialised value against the original is what catches the dropped field.
 
@@ -195,10 +195,10 @@ first bug.**
 
 The version therefore appears in two places, and they must stay **identical**:
 
-| File                         | Field           |
-| ---------------------------- | --------------- |
-| `.github/workflows/ci.yml`   | the `worker-build` step |
-| `wrangler.jsonc`             | `build.command` |
+| File                       | Field                   |
+| -------------------------- | ----------------------- |
+| `.github/workflows/ci.yml` | the `worker-build` step |
+| `wrangler.jsonc`           | `build.command`         |
 
 `wrangler.jsonc`'s `build.command` is what **Cloudflare Workers Builds actually
 runs**. CI does not run it. So if the two drift, CI stays green and the deploy
@@ -211,7 +211,7 @@ breaks. Change both or neither.
 synthetic custom sections: `name`, `producers`, and **`target_features`**.
 
 Losing `target_features` is the fatal one. It is where the module advertises
-`reference-types`, and that advertisement is the *only* signal `wasm-bindgen`
+`reference-types`, and that advertisement is the _only_ signal `wasm-bindgen`
 uses to decide whether to run its externref transform. Stripped, the transform
 is silently skipped, no externref table is emitted, and the build dies two
 passes later with an error that names neither `strip` nor `target_features`:
@@ -247,13 +247,13 @@ The full reasoning is in the comment above the `[profile.release]` block in
 
 - **No `/*`.** Wildcards are rejected outright ("Wildcard operators (*) are not
   allowed in Custom Domains"), and a custom domain already routes every path on
-  the hostname, so it is invalid *and* redundant.
+  the hostname, so it is invalid _and_ redundant.
 - **No `zone_name`.** It is inferred, and only means anything on a
   non-custom-domain route.
 
 The reason this deserves its own section: **Workers Builds previews upload a
 version WITHOUT applying routes.** A bad route is therefore only validated on
-the *production* deploy — the same commit reads green on the PR and red on
+the _production_ deploy — the same commit reads green on the PR and red on
 `main`. That form silently broke two Workers in this org already (`mzizi-mcp`,
 agent-tools#102, and the console, which never deployed at all). A green PR is
 not evidence that the route is valid.
@@ -272,7 +272,7 @@ gh pr merge <n> --merge --delete-branch
 ```
 
 Write commit messages that are worth keeping, since they are kept: what changed,
-and *why* — especially why the obvious alternative was not taken. Most of the
+and _why_ — especially why the obvious alternative was not taken. Most of the
 load-bearing knowledge in this repo lives in commit messages and code comments
 rather than in a wiki.
 
@@ -280,11 +280,11 @@ rather than in a wiki.
 
 All three jobs must be green before merge:
 
-| Job            | What it proves                                                              |
-| -------------- | --------------------------------------------------------------------------- |
-| `rust`         | `fmt`, `clippy -D warnings` and `check` on wasm32, plus `cargo test`        |
+| Job            | What it proves                                                                  |
+| -------------- | ------------------------------------------------------------------------------- |
+| `rust`         | `fmt`, `clippy -D warnings` and `check` on wasm32, plus `cargo test`            |
 | `worker build` | `worker-build --release` produces something `wrangler deploy --dry-run` accepts |
-| `secret scan`  | `gitleaks` finds no credential in the diff or the history                   |
+| `secret scan`  | `gitleaks` finds no credential in the diff or the history                       |
 
 `rust` and `worker build` are separate claims on purpose: `cargo check` proves
 the crate compiles; only `worker-build` proves it can be turned into an artefact
