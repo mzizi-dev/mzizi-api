@@ -113,10 +113,11 @@ mirror of them. The point is to prove the types you ship can round-trip what the
 origin sends.
 
 ```rust
+/// Fixture captured from https://mzizi.dev/api/v1/brand on 2026-09-11.
 #[test]
-fn ui_fixture_round_trips() {
-    let raw = include_str!("fixtures/ui.json");
-    let parsed: UiIndex = serde_json::from_str(raw).expect("fixture decodes");
+fn brand_fixture_round_trips() {
+    let raw = include_str!("fixtures/brand.json");
+    let parsed: BrandSystem = serde_json::from_str(raw).expect("fixture decodes");
     let reserialised = serde_json::to_value(&parsed).unwrap();
     let original: serde_json::Value = serde_json::from_str(raw).unwrap();
     assert_eq!(original, reserialised, "projection is not byte-identical");
