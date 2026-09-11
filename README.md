@@ -99,16 +99,69 @@ double helix at `/v1/architecture`. They are proxied like anything else, so the
 
 ### Suggested order
 
-Port the routes the console actually calls first — `/v1/ui`, `/v1/brand`,
-`/v1/architecture` — since those are the ones whose latency and availability a
-user sees.
+The routes the console actually calls are the ones whose latency and
+availability a user sees, so they are the ones worth porting — but check where a
+route's data actually lives before picking it up. `/v1/ui` and `/v1/architecture`
+both read files out of the origin's build, not the database, and neither is
+portable as things stand. See [Data](#data).
+
+[`CONTRIBUTING.md`](CONTRIBUTING.md) has the step-by-step: find the real data
+source, capture the fixture, implement, round-trip the fixture against your
+production types, move the arm in the router, update the table above.
 
 ## Data
 
-Ported routes read Supabase (`component_documents`) directly, the same source the
-Next.js handlers use via `lib/db`, with the anon key under RLS. There is no
-service-role credential in this Worker and there should never be one: the
-registry is public, read-only data.
+**This section previously said that ported routes read Supabase
+(`component_documents`) directly, "the same source the Next.js handlers use via
+`lib/db`". Measured against the origin, that is false, and it is the kind of
+plausible-but-wrong claim that costs a day — so here is what is actually true.**
+
+The registry is **not in the database**. `docs/db-contents-rule.md` in
+`mzizi-dev/mzizi-registry` records the owner's decision of 2026-08-04:
+
+> The DB only exists for version history, node counts, fundi-related logging,
+> the issue log and the self-healing log. [...] **Everything else is in the
+> repo.**
+
+The test is *who writes it*: a script, a release, or telemetry writes to the
+database; a human writes to a file. So the content routes read files compiled
+into the origin's Vercel bundle — `registry.json` for components,
+`content/doctrine/**` for the helix — through `lib/registry.ts` and
+`lib/doctrine.ts`. Several route docblocks still say `component_documents`; they
+predate the migration and have not caught up.
+
+What that means for this Worker: **a route whose data is a file in another
+repository's build output cannot be ported here at all**, because there is no
+source this Worker can read that is the same source. Reading Supabase instead
+and hoping the two agree is precisely the failure the fixture rule exists to
+catch — see [`/v1/ui`](#the-ui-index) below.
+
+Where a route *is* genuinely database-backed, it reads Supabase with the anon
+key under RLS. There is no service-role credential in this Worker and there
+should never be one: the registry is public, read-only data.
+
+### The `/v1/ui` index
+
+Measured 2026-09-11 and left proxied deliberately. `GET /api/v1/ui` projects
+eleven fields per item from `registry.json`, joined to the file listing in
+`lib/registry.generated.ts` (which is where `node` and `nodeLabel` come from —
+derived from the directory a component's file lives in, so they cannot disagree
+with where the code is).
+
+It is not reconstructible from `component_documents`:
+
+| | Origin response | `component_documents` |
+|---|---|---|
+| Items | 575 | 3,062 rows / 1,580 distinct names |
+| `title` present | 575 / 575 | 100 / 3,062 |
+| `categories` present | 575 / 575 | **0 / 3,062** |
+| `type` present | 575 / 575 | 3 / 3,062 |
+
+Four of the 575 names do not exist in the table at all, and 1,009 names in the
+table must not appear in the index. `categories` — required on every item — is
+on no row anywhere. Porting this route means first moving the registry index
+into the database, which is a decision the origin repo has explicitly taken in
+the opposite direction.
 
 ## Local development
 
@@ -139,6 +192,14 @@ version without applying routes**, so a route error is only caught on the
 production deploy — the same commit reads green on a PR and red on `main`. That
 form silently broke two Workers in this org already, which is why the route here
 is a bare hostname with no `/*` and no `zone_name`.
+
+## Contributing
+
+[`CONTRIBUTING.md`](CONTRIBUTING.md) — how to port a route, the build and its
+two version-lockstep traps, the `wrangler.jsonc` rules that only fail on
+production, and the merge-only convention.
+
+[`SECURITY.md`](SECURITY.md) · [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
 
 ## Licence
 
