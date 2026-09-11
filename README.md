@@ -101,9 +101,21 @@ double helix at `/v1/architecture`. They are proxied like anything else, so the
 
 The routes the console actually calls are the ones whose latency and
 availability a user sees, so they are the ones worth porting — but check where a
-route's data actually lives before picking it up. `/v1/ui` and `/v1/architecture`
-both read files out of the origin's build, not the database, and neither is
-portable as things stand. See [Data](#data).
+route's data actually lives before picking it up. Measured 2026-09-11:
+
+| Candidate | Real data source | Portable? |
+|---|---|---|
+| `/v1/ui` | `registry.json` + `lib/registry.generated.ts` | **No** — see [Data](#data) |
+| `/v1/architecture` | `content/doctrine/**` via `lib/doctrine.ts`; only the node counts are Supabase | **No** — the helix is files |
+| `/v1/brand` | `brand_minerals`, `brand_semantic_colors`, `brand_typography`, `brand_spacing`, `brand_ecosystem`, `brand_meta` | **Yes** — start here |
+
+**`/v1/brand` is the one to port first.** All six views return `200` to the anon
+key, with row counts matching the live response, and the response is ~24 KB. Two
+caveats to handle rather than discover: `heritage` and `experimental` come from
+`lib/tokens/palette.generated` (7 entries each, generated from `app/globals.css`
+by `pnpm tokens:sync`), and `radii`, `accessibility`, `voiceAndTone` and
+`philosophy` are literals in the route file. Both are small, but both are
+*copies* — the fixture round-trip is what keeps them honest.
 
 [`CONTRIBUTING.md`](CONTRIBUTING.md) has the step-by-step: find the real data
 source, capture the fixture, implement, round-trip the fixture against your
