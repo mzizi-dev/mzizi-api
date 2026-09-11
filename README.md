@@ -9,7 +9,7 @@
 ## Why this exists
 
 The registry API is served today by ~30 Next.js route handlers in
-[`mzizi-dev/mzizi`](https://github.com/mzizi-dev/mzizi), running on Vercel at
+[`mzizi-dev/mzizi-registry`](https://github.com/mzizi-dev/mzizi-registry), running on Vercel at
 `mzizi.dev/api/v1`.
 
 `api.mzizi.dev` is the address the ecosystem already writes down — and it did not
@@ -146,7 +146,7 @@ What that means for this Worker: **a route whose data is a file in another
 repository's build output cannot be ported here at all**, because there is no
 source this Worker can read that is the same source. Reading Supabase instead
 and hoping the two agree is precisely the failure the fixture rule exists to
-catch — see [`/v1/ui`](#the-ui-index) below.
+catch — see [`/v1/ui`](#the-v1ui-index) below.
 
 Where a route *is* genuinely database-backed, it reads Supabase with the anon
 key under RLS. There is no service-role credential in this Worker and there
