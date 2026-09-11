@@ -2,8 +2,11 @@
 #
 # WHY THIS EXISTS
 #
-# The registry API is served today by Next.js route handlers in mzizi-dev/mzizi,
-# running on Vercel at `mzizi.dev/api/v1`. `api.mzizi.dev` is the address the
+# The registry API is served today by Next.js route handlers in
+# mzizi-dev/mzizi-registry, running on Vercel at `mzizi.dev/api/v1`. NOT
+# mzizi-dev/mzizi, which this said and which is the language research repo
+# (mzizi-lang) — a pointer someone will grep for is worse than no pointer when
+# it names the wrong place. `api.mzizi.dev` is the address the
 # ecosystem already writes down — mzizi-console pointed at it, and had to be
 # corrected because the host has no DNS record at all. This Worker is what makes
 # that address real.

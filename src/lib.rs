@@ -3,8 +3,9 @@
 //! # The shape of this migration
 //!
 //! This is a **strangler fig**, not a rewrite. The registry API is ~30 route
-//! handlers in `mzizi-dev/mzizi`, and porting all of them before anything ships
-//! would mean `api.mzizi.dev` stays a dead hostname for however long that takes
+//! handlers in `mzizi-dev/mzizi-registry` — not `mzizi-dev/mzizi`, which is the
+//! language research repo — and porting all of them before anything ships would
+//! mean `api.mzizi.dev` stays a dead hostname for however long that takes
 //! — which is the state that already broke `mzizi-console`, whose API client
 //! pointed at this address on the belief it resolved.
 //!
