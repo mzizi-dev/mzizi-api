@@ -30,17 +30,26 @@ use worker::{event, Context, Env, Fetch, Method, Request, Response, Result, Url}
 
 /// Where unported routes are served from.
 ///
-/// `mzizi.dev/api/v1`, and this is measured rather than assumed:
+/// The `mzizi-registry` Worker, NOT the apex. That distinction is now
+/// load-bearing: `mzizi.dev` is becoming `mzizi-site`, the human-facing
+/// site, which serves no `/api` at all. Proxying to the apex would have
+/// made this Worker die the moment that cutover happened.
+///
+/// It is also strictly better than the apex was. Measured:
 ///
 /// ```text
-/// api.mzizi.dev      NXDOMAIN — no DNS record
-/// mzizi.dev/api/v1   200
+/// apex /api/v1/ui       804 apex URLs,   0 canonical   (a Vercel build frozen 2026-08-29)
+/// registry /api/v1/ui     0 apex URLs, 804 canonical   (current `main`)
 /// ```
 ///
-/// Note the recursion this Worker must avoid once it owns `api.mzizi.dev`: the
-/// origin is the Vercel app on a DIFFERENT hostname, so a proxied request never
-/// re-enters this Worker.
-const ORIGIN: &str = "https://mzizi.dev/api";
+/// Both serve 575 items and identical component counts; the registry is
+/// simply not two weeks stale. The registry Worker reads everything from
+/// disk — no database, per the owner's ruling — so this origin has no
+/// dependency the apex cutover can break.
+///
+/// The recursion this Worker must avoid still applies: the origin is a
+/// DIFFERENT hostname, so a proxied request never re-enters this Worker.
+const ORIGIN: &str = "https://mzizi-registry.nyuchi.workers.dev/api";
 
 /// Cache and CORS headers, matching what the Next.js handlers already send.
 ///
@@ -106,7 +115,27 @@ async fn proxy(req: &Request) -> Result<Response> {
     target.set_path(&format!("/api{}", incoming.path()));
     target.set_query(incoming.query());
 
-    Fetch::Url(target).send().await
+    let mut upstream = Fetch::Url(target).send().await?;
+
+    // Rebuilt rather than returned directly, and this is not tidiness.
+    //
+    // A `Response` from `Fetch` carries the runtime's IMMUTABLE headers, so the
+    // `cors()` call that every branch passes through threw
+    // `TypeError: Can't modify immutable headers.` and the Worker answered 500
+    // on every proxied route while `/v1/health` — which builds its own response
+    // — was fine. The failure is invisible in a dry run and invisible in CI:
+    // nothing executes the fetch path until a real request arrives.
+    //
+    // Copying status, headers and body into a fresh response gives a mutable
+    // header map, and leaves the payload untouched — still no re-serialisation,
+    // so the proxy stays byte-identical to the origin.
+    let status = upstream.status_code();
+    let headers = upstream.headers().clone();
+    let body = upstream.bytes().await?;
+
+    Ok(Response::from_bytes(body)?
+        .with_status(status)
+        .with_headers(headers))
 }
 
 /// Apply the shared cache and CORS headers.
