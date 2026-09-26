@@ -131,6 +131,18 @@ async fn proxy(req: &Request) -> Result<Response> {
     // so the proxy stays byte-identical to the origin.
     let status = upstream.status_code();
     let headers = upstream.headers().clone();
+    // `.bytes()` reads the body through the runtime's fetch implementation,
+    // which transparently decompresses it — but `headers` still describes the
+    // ORIGIN's wire representation. Left in place, a compressed upstream
+    // response ships plaintext bytes labelled `Content-Encoding: gzip` (or
+    // similar) with a `Content-Length` sized for the compressed payload,
+    // which is a different way to break every proxied route than the one
+    // this rebuild already fixed: a browser's fetch fails decoding a body
+    // that was never actually encoded. `Response::from_bytes` computes the
+    // correct length for what is actually being sent, so both stale headers
+    // must go rather than be copied forward.
+    headers.delete("content-encoding")?;
+    headers.delete("content-length")?;
     let body = upstream.bytes().await?;
 
     Ok(Response::from_bytes(body)?
