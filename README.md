@@ -262,7 +262,7 @@ API with a proxy to an origin that 404s.
 | [`mzizi`](https://github.com/mzizi-dev/mzizi)                   | The language — Rust compiler research, Phase 0 | —                                      |
 | [`mzizi-registry`](https://github.com/mzizi-dev/mzizi-registry) | The component registry, brand and architecture | Portal currently unrouted              |
 | [`mzizi-console`](https://github.com/mzizi-dev/mzizi-console)   | The console — reads this API at runtime        | [app.mzizi.dev](https://app.mzizi.dev) |
-| [`mzizi-site`](https://github.com/mzizi-dev/mzizi-site)         | The ecosystem front door                       | [mzizi.dev](https://mzizi.dev)         |
+| [`mzizi-site`](https://github.com/mzizi-dev/mzizi-site)         | Mzizi's front door                             | [mzizi.dev](https://mzizi.dev)         |
 | `mzizi-api-gateway`                                             | This repository                                | Target: `api.mzizi.dev`                |
 
 ## Contributing
@@ -279,4 +279,5 @@ the merge convention.
 Licensed under the [Apache License 2.0](LICENSE).
 
 Mzizi is an independent open-architecture project that owns, operates and
-develops its framework, design system and registry.
+develops its framework, design system, registry, docs and this API gateway. The
+Mzizi console and every paid plan are run under **Nyuchi**.
