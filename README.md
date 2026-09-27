@@ -241,41 +241,19 @@ on no row anywhere. Porting this route means first moving the registry index
 into a database, which is a decision the origin repo has explicitly taken in the
 opposite direction.
 
-## Commands
+## Building and deploying
 
-| Command                                                                     | What it does                          |
-| --------------------------------------------------------------------------- | ------------------------------------- |
-| `cargo check --target wasm32-unknown-unknown --all-targets`                 | Typecheck against the real target     |
-| `cargo clippy --target wasm32-unknown-unknown --all-targets -- -D warnings` | Lints                                 |
-| `cargo fmt --all -- --check`                                                | Formatting                            |
-| `cargo install -q worker-build --version ^0.8`                              | The build tool, version-locked        |
-| `worker-build --release`                                                    | The real artefact                     |
-| `npx wrangler dev`                                                          | Serve it locally                      |
-| `npx wrangler deploy --dry-run`                                             | Validate the config without deploying |
+```bash
+cargo check --target wasm32-unknown-unknown --all-targets
+worker-build --release
+npx wrangler dev              # serve locally
+```
 
-`worker-build`'s minor version must match the `worker` dependency in
-`Cargo.toml` — they are released in lockstep, and the build tool derives the
-wasm-bindgen CLI it downloads from the version in `Cargo.lock`. A mismatched
-pair fails with "linked against a different version of wasm-bindgen".
-
-## Deployment
-
-Cloudflare Workers Builds, on push to `main`. `wrangler.jsonc` declares
-`api.mzizi.dev` as a custom-domain route — a **bare hostname**, no `/*` and no
-`zone_name`, because the three-field form silently broke two Workers in this org
-already.
-
-**Workers Builds previews upload a version without applying routes**, so a route
-error is only caught on the production deploy — the same commit reads green on a
-PR and red on `main`.
-
-**Before deploying this Worker to production, read [Status](#status).** A custom
-domain on a hostname something else already serves **takes** that hostname;
-`api.mzizi.dev` is currently answered by the registry's app, and this Worker's
-`ORIGIN` points at an address that 404s. Deploying it in that state would
-replace a working API with a proxy to nothing. That failure mode is not
-hypothetical — it is what happened to the `mzizi.dev` apex; see
-[`mzizi-site`](https://github.com/mzizi-dev/mzizi-site#readme).
+See [`AGENTS.md`](./AGENTS.md) for the full command reference, the `worker-build`/`worker`
+version-lockstep trap, and — before you touch `wrangler.jsonc` or deploy to production —
+why the route needs reading about first. Short version: this Worker is not currently what
+answers `api.mzizi.dev` (see "Status" above), and deploying it as-is would replace a working
+API with a proxy to an origin that 404s.
 
 ## Ecosystem
 
@@ -291,20 +269,10 @@ hypothetical — it is what happened to the `mzizi.dev` apex; see
 
 [`CONTRIBUTING.md`](CONTRIBUTING.md) — how to port a route, the build and its
 two version-lockstep traps, and the `wrangler.jsonc` rules that only fail on
-production.
+production. [`AGENTS.md`](AGENTS.md) has the same, in agent-facing form, plus
+the merge convention.
 
 [`SECURITY.md`](SECURITY.md) · [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
-
-**This repository is rebase-only.** Read off the API on 2026-09-12,
-`allow_rebase_merge` is `true` with merge commits and squash both disabled, on
-all nine repos in `mzizi-dev` and all 75 in the enterprise. Auto-merge is on.
-
-```sh
-gh pr merge <n> --rebase --auto
-```
-
-Never `--admin`. `CONTRIBUTING.md` still describes the merge-only convention
-that preceded this; the API is the authority.
 
 ## Licence
 
