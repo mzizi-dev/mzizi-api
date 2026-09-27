@@ -8,7 +8,7 @@
 ![Rust](https://img.shields.io/badge/Rust-workers--rs_0.8-000000?style=flat-square&logo=rust&logoColor=white)
 ![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-F38020?style=flat-square&logo=cloudflare&logoColor=white)
 
-**Crate:** `mzizi-api-gateway` 0.1.0 (`publish = false`) | **Live API:** [api.mzizi.dev](https://api.mzizi.dev/api/v1) | **Docs:** [docs.bundu.org](https://docs.bundu.org)
+**Crate:** `mzizi-api-gateway` 0.1.0 (`publish = false`) | **Live API:** [api.mzizi.dev](https://api.mzizi.dev/api/v1) | **Docs:** [docs.mzizi.dev](https://docs.mzizi.dev)
 
 ---
 
