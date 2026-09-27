@@ -255,13 +255,13 @@ why the route needs reading about first. Short version: this Worker is not curre
 answers `api.mzizi.dev` (see "Status" above), and deploying it as-is would replace a working
 API with a proxy to an origin that 404s.
 
-## Ecosystem
+## Related repositories
 
 | Repository                                                      | What it is                                     | Address                                |
 | --------------------------------------------------------------- | ---------------------------------------------- | -------------------------------------- |
 | [`mzizi`](https://github.com/mzizi-dev/mzizi)                   | The language — Rust compiler research, Phase 0 | —                                      |
 | [`mzizi-registry`](https://github.com/mzizi-dev/mzizi-registry) | The component registry, brand and architecture | Portal currently unrouted              |
-| [`mzizi-console`](https://github.com/mzizi-dev/mzizi-console)   | The console — reads this API at runtime        | [app.mzizi.dev](https://app.mzizi.dev) |
+| [`mzizi-console`](https://github.com/mzizi-dev/mzizi-console)   | The console, run under Nyuchi; reads this API  | [app.mzizi.dev](https://app.mzizi.dev) |
 | [`mzizi-site`](https://github.com/mzizi-dev/mzizi-site)         | Mzizi's front door                             | [mzizi.dev](https://mzizi.dev)         |
 | `mzizi-api-gateway`                                             | This repository                                | Target: `api.mzizi.dev`                |
 
@@ -280,4 +280,4 @@ Licensed under the [Apache License 2.0](LICENSE).
 
 Mzizi is an independent open-architecture project that owns, operates and
 develops its framework, design system, registry, docs and this API gateway. The
-Mzizi console and every paid plan are run under **Nyuchi**.
+Mzizi console and everything revenue-generating are run under **Nyuchi**.
