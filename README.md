@@ -278,5 +278,5 @@ the merge convention.
 
 Licensed under the [Apache License 2.0](LICENSE).
 
-Mzizi is an independent open-architecture project, operated and developed by
-**Nyuchi**.
+Mzizi is an independent open-architecture project that owns, operates and
+develops its framework, design system and registry.
