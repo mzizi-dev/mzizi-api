@@ -310,5 +310,5 @@ that preceded this; the API is the authority.
 
 Licensed under the [Apache License 2.0](LICENSE).
 
-Mzizi is an open-architecture project of the **Bundu Foundation**, operated and
-developed by **Nyuchi**.
+Mzizi is an independent open-architecture project, operated and developed by
+**Nyuchi**.
