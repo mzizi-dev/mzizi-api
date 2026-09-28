@@ -10,8 +10,7 @@ A **Hono (TypeScript) Cloudflare Worker**, meant to serve `api.mzizi.dev`, the
 Mzizi registry API. **Owner decision, 2026-09-28:** the API Worker is Hono,
 running its own API, and nothing touches Supabase except the Mzizi console. That
 replaces this repo's earlier "pure-Rust `workers-rs`" position. The Rust proxy is
-retired: `Cargo.toml` and `src/lib.rs`, if still present, are dead code that
-nothing builds. Don't edit them. Delete them.
+retired and its sources are gone; don't bring `workers-rs` back.
 
 Every route answers from JSON generated at build time out of
 `mzizi-dev/mzizi-registry`'s repository files, at the commit pinned in
