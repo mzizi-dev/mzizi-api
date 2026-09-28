@@ -180,6 +180,22 @@ describe("HTTP behaviour", () => {
     expect((await get("//")).headers.get("location")).toBe("/");
   });
 
+  it("collapses repeated slashes instead of redirecting off-site", async () => {
+    // What api.mzizi.dev answers today for each of these.
+    const cases: Array<[string, string]> = [
+      ["//evil.com/", "/evil.com/"],
+      ["/\\evil.com/", "/evil.com/"],
+      ["///evil.com/", "/evil.com/"],
+      ["//v1/ui", "/v1/ui"],
+      ["/v1//ui?x=1", "/v1/ui?x=1"],
+    ];
+    for (const [path, location] of cases) {
+      const res = await get(`https://api.mzizi.dev${path}`);
+      expect(res.status, path).toBe(308);
+      expect(res.headers.get("location"), path).toBe(location);
+    }
+  });
+
   it("publishes security.txt with the owner-chosen contact", async () => {
     const text = await (await get("/.well-known/security.txt")).text();
     expect(text).toContain("Contact: mailto:security@bundu.org");

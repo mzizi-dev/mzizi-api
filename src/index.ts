@@ -43,8 +43,15 @@ app.use("*", async (c, next) => {
   const url = new URL(c.req.url);
   const { pathname, search } = url;
 
-  // Next's default `trailingSlash: false`.
-  if (pathname.length > 1 && pathname.endsWith("/")) {
+  // Next collapses repeated slashes first, in its own hop. This must run before
+  // the trailing-slash rule: `//evil.com/` would otherwise redirect to
+  // `//evil.com`, a protocol-relative Location that sends the browser off-site.
+  // (`/\evil.com/` arrives here as `//evil.com/` — the URL parser turns `\`
+  // into `/`.)
+  if (pathname.includes("//")) {
+    c.res = redirect(pathname.replace(/\/{2,}/g, "/") + search);
+  } else if (pathname.length > 1 && pathname.endsWith("/")) {
+    // Next's default `trailingSlash: false`.
     c.res = redirect((pathname.replace(/\/+$/, "") || "/") + search);
   } else {
     const renamed = renamedComponentPath(pathname);

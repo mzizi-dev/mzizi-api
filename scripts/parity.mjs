@@ -168,6 +168,11 @@ const paths = [
     ]),
   "/v1/ui/",
   "/v1/ui/button/",
+  // Repeated slashes: collapsed in one hop, never a protocol-relative Location.
+  "//evil.com/",
+  "/%5Cevil.com/",
+  "//v1/ui",
+  "/v1//ui?x=1",
   "/v1/search",
   "/v1/search?q=button",
   "/v1/search?layer=2",
