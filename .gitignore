@@ -14,3 +14,7 @@ node_modules/
 
 # macOS
 .DS_Store
+
+# Registry checkout and generated data (scripts/build-data.mjs)
+/.registry/
+/src/data/

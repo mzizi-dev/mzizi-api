@@ -2,45 +2,40 @@
 
 ## What this is, and what it therefore is not
 
-`mzizi-api-gateway` is a **public, read-only API gateway**. It serves the Mzizi
-registry API at `api.mzizi.dev`, either answering a route natively or forwarding
-it unmodified to `https://mzizi.dev/api/v1`.
+`mzizi-api-gateway` is a **public, read-only API**. It serves the Mzizi registry
+API at `api.mzizi.dev` from data generated at build time out of
+`mzizi-dev/mzizi-registry`'s repository files and bundled into the Worker.
 
 Sizing the policy to that honestly:
 
 - **No authentication, no sessions, no cookies.** Every route is public.
-- **No writes.** There is no mutation path in this Worker, and adding one would
-  be a design change, not a feature.
-- **No end-user data.** The registry is component metadata — names,
-  descriptions, dependencies. There is no PII here to leak.
-- **No service-role credential, ever.** Where a ported route reads Supabase it
-  uses the anon / publishable key, which grants only the `anon` role that RLS
-  restricts to read-only `SELECT` on public tables. That key and the project URL
-  are public by design (see `mzizi-dev/agent-tools/mzizi-mcp/src/defaults.ts`).
-  A service-role key in this Worker would be the single most serious finding
-  this repo could have — report it as one.
+- **No writes.** There's no mutation path in this Worker. Adding one would be a
+  design change, not a feature.
+- **No end-user data.** The registry is component metadata and source, brand
+  tokens and doctrine. There's no PII here to leak.
+- **No credentials at all.** The Worker has no secrets, no bindings and no
+  database client. It doesn't talk to Supabase. A credential of any kind in
+  this Worker or its build would be a serious finding. Report it as one.
 
-So the realistic risk here is not data theft. It is **integrity of what the
-gateway serves**: this Worker sits in front of an address that downstream apps
-and the shadcn CLI install from, so a response this gateway can be made to
-forge is a supply-chain problem for everything that consumes it.
+So the realistic risk isn't data theft. It's the **integrity of what the Worker
+serves**. Downstream apps and the shadcn CLI install from this address, so
+anything that could make it serve source the registry didn't contain is a
+supply-chain problem for everything that consumes it.
 
 ## Controls that already exist
 
-| Control                                | Where                          | What it stops                                                                                             |
-| -------------------------------------- | ------------------------------ | --------------------------------------------------------------------------------------------------------- |
-| Non-`GET` answered `405` locally       | `src/lib.rs`                   | A write attempt never reaches the origin — it is rejected at the edge, before any forwarding happens      |
-| Origin host is a compile-time constant | `ORIGIN` in `src/lib.rs`       | The proxy cannot be aimed at an attacker-controlled host by request input; only the path and query travel |
-| Origin is a _different_ hostname       | `mzizi.dev` vs `api.mzizi.dev` | A proxied request cannot re-enter this Worker, so there is no recursion to amplify                        |
-| No secrets or bindings                 | `wrangler.jsonc`               | There is nothing in the Worker's environment to exfiltrate                                                |
-| `gitleaks` on full history             | `.github/workflows/ci.yml`     | A credential committed by accident fails CI rather than shipping                                          |
-| `unsafe_code = "forbid"`               | `Cargo.toml`                   | Memory-safety classes are excluded by the compiler, not by review                                         |
+| Control                              | Where                                         | What it stops                                                                                               |
+| ------------------------------------ | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Non-`GET` answered `405` locally     | `src/index.ts`                                | No request method other than `GET`/`HEAD`/`OPTIONS` reaches a handler                                       |
+| Data pinned to one registry commit   | `scripts/registry-ref.json`, `build-data.mjs` | The build fails unless the checkout is exactly the pinned SHA; changing what is served is a reviewed commit |
+| No request-time fetches              | `src/`                                        | No request input can steer the Worker to another host; there is no origin to poison or SSRF                 |
+| Supabase replaced by a throwing stub | `scripts/supabase-stub.mjs`                   | A registry reader that reached for the database fails the build instead of shipping                         |
+| No secrets or bindings               | `wrangler.jsonc`                              | There's nothing in the Worker's environment to exfiltrate                                                   |
+| `gitleaks` on full history           | `.github/workflows/ci.yml`                    | A credential committed by accident fails CI rather than shipping                                            |
 
-`Access-Control-Allow-Origin: *` is deliberate and is not a finding. The data is
-public, no route is credentialed, and browsers never attach cookies to these
-requests — so a wildcard grants a caller nothing it could not get with `curl`.
-It is applied to error responses too, so that a `404` surfaces in a browser as a
-`404` rather than as an opaque CORS failure.
+`Access-Control-Allow-Origin: *` is deliberate and isn't a finding. The data is
+public, no route takes credentials, and browsers never attach cookies to these
+requests, so a wildcard gives a caller nothing it couldn't get with `curl`.
 
 ## Reporting a vulnerability
 
@@ -48,7 +43,8 @@ It is applied to error responses too, so that a `404` surfaces in a browser as a
 
 1. Use GitHub's private advisory flow:
    <https://github.com/mzizi-dev/mzizi-api-gateway/security/advisories/new>
-2. If that is unavailable to you, email `security@nyuchi.com`.
+2. If that is unavailable to you, email `security@bundu.org` (also the
+   `Contact` in `https://api.mzizi.dev/.well-known/security.txt`).
 
 Include the request that reproduces it (full URL and method), what the gateway
 returned, what you expected, and the commit SHA or deploy time if you have it.
@@ -66,19 +62,21 @@ PGP is not required.
 
 In scope — anything this repository owns:
 
-- `src/**` — the router, the native route handlers, the proxy
+- `src/**` — the router and the route handlers
+- `scripts/**` — the data build (`build-data.mjs`, `extract.ts`) and the parity
+  script
 - `wrangler.jsonc` — routes, bindings, and the `build.command` that Cloudflare
   Workers Builds executes
 - `.github/workflows/**` — malicious-input, token-exfiltration, or
   privilege-escalation issues in CI
-- Any way the gateway can be induced to return a response the origin did not
-  produce, or to forward a request the origin should never have seen
+- Any way the Worker can be induced to serve content that is not in the
+  registry at the pinned commit
 
 Out of scope — report these to the repository that owns them:
 
-- The Next.js origin at `mzizi.dev/api/v1` and its Supabase RLS policies →
+- The registry's content and its Next.js app →
   [`mzizi-dev/mzizi-registry`](https://github.com/mzizi-dev/mzizi-registry).
-  While a route is still proxied, its behaviour is that repo's, not this one's.
+- Supabase and anything per-user → the Mzizi console.
 - Applications that consume the registry → their own repositories.
 - Volumetric denial of service against Cloudflare or Vercel — those platforms
   own their edge.
@@ -96,4 +94,5 @@ will not be pursued as a violation of computer-misuse law or terms of service.
 
 `main` only. The Worker is deployed continuously from `main`; there are no
 release branches to backport to, and the deployed artefact is always the head of
-`main`. `GET /v1/health` reports the running version.
+`main`. Every response's `X-Mzizi-Source` header names the registry commit
+the running build was generated from.

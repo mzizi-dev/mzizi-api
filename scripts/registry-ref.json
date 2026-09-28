@@ -1,0 +1,6 @@
+{
+  "repository": "https://github.com/mzizi-dev/mzizi-registry",
+  "ref": "61c805c2d88419133938bbc286972e14587457e0",
+  "pinned": "2026-09-28",
+  "note": "mzizi-registry main at the time of the Hono port. Bump with scripts/build-data.mjs --bump (or by hand), then re-run npm run parity."
+}

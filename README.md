@@ -1,276 +1,235 @@
 # Mzizi API gateway
 
-> `api.mzizi.dev` — the Mzizi registry API, as a **pure-Rust Cloudflare Worker**. A strangler fig in front of the Next.js handlers that serve the API today.
+> `api.mzizi.dev`: the Mzizi registry API as a **Hono Cloudflare Worker**, served from registry data bundled at build time. No origin, no database, no Supabase.
 
 [![CI](https://github.com/mzizi-dev/mzizi-api-gateway/actions/workflows/ci.yml/badge.svg)](https://github.com/mzizi-dev/mzizi-api-gateway/actions/workflows/ci.yml)
 [![Lint](https://github.com/mzizi-dev/mzizi-api-gateway/actions/workflows/lint.yml/badge.svg)](https://github.com/mzizi-dev/mzizi-api-gateway/actions/workflows/lint.yml)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
-![Rust](https://img.shields.io/badge/Rust-workers--rs_0.8-000000?style=flat-square&logo=rust&logoColor=white)
+![Hono](https://img.shields.io/badge/Hono-4-E36002?style=flat-square&logo=hono&logoColor=white)
 ![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-F38020?style=flat-square&logo=cloudflare&logoColor=white)
 
-**Crate:** `mzizi-api-gateway` 0.1.0 (`publish = false`) | **Live API:** [api.mzizi.dev](https://api.mzizi.dev/api/v1) | **Docs:** [docs.mzizi.dev](https://docs.mzizi.dev)
+**Package:** `mzizi-api-gateway` (private) | **Live API:** [api.mzizi.dev](https://api.mzizi.dev/v1/health) | **Docs:** [docs.mzizi.dev](https://docs.mzizi.dev)
 
 ---
 
+## Owner decision (2026-09-28)
+
+**The API Worker for `api.mzizi.dev` is Hono, running its own API. Nothing
+touches Supabase except the Mzizi console.**
+
+That replaces this repository's earlier "pure-Rust `workers-rs`" position, for
+this repository. The Rust proxy that stood here (a strangler fig forwarding to
+the registry's Next.js handlers) is retired. This Worker implements the whole
+public `/v1` API itself, from files.
+
 ## Status
 
-**Scaffold, and not currently the thing serving `api.mzizi.dev`.**
+**Built and parity-tested. Not yet serving `api.mzizi.dev`.**
 
-Both halves of that need saying plainly, because the previous version of this
-README asserted the second half the other way round.
+`api.mzizi.dev` is still attached to the `mzizi-registry` Worker (the registry's
+Next.js app on OpenNext; its responses carry `x-opennext: 1`). Moving the custom
+domain to this Worker is a deliberate owner step, described in
+[Cutover](#cutover). That's why `wrangler.jsonc` declares **no route**: a merge
+deploys to `workers.dev` only.
 
-`api.mzizi.dev` is up. Measured 2026-09-12, `/v1/ui`, `/v1/brand`,
-`/v1/architecture`, `/v1/health` and the `/api/v1/*` forms of all of them return
-`200`. **But the responses are not this Worker's.** Every one arrives with
-`x-opennext: 1` and Next.js `vary` headers, and `GET /v1/health` returns
+You can tell which Worker answered: every response from this one carries
+`X-Mzizi-Source: mzizi-api-gateway; registry=<commit>`.
 
-```json
-{ "status": "healthy", "timestamp": "…", "checks": { … }, "version": "unknown" }
-```
+## What it serves
 
-with **no `origin` field** — where this Worker's native health route
-([`src/lib.rs`](src/lib.rs)) always emits one. So the hostname is currently
-answered by the registry's own Next.js app running on Cloudflare via OpenNext,
-not by the code in this repository.
+The same contract `api.mzizi.dev` serves today: the same paths, methods, query
+parameters, status codes, response bodies, CORS headers and cache headers. Both
+base paths answer: `/v1/...` (canonical) and `/api/v1/...`.
 
-Neither this repository's `wrangler.jsonc` nor `mzizi-registry`'s explains which
-Worker holds the custom domain — the attachment was made in the Cloudflare
-dashboard, outside version control, the same way the `mzizi.dev` apex changed
-hands. That is worth fixing before anything here is ported, because **a route
-that exists only in a dashboard is a route nobody can review**.
+| Route                                                                                                         | Data                                              |
+| ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| `GET /v1` · `/api/v1`                                                                                         | Discovery document                                |
+| `GET /v1/health`                                                                                              | This Worker's liveness                            |
+| `GET /v1/ui` (`node`, `owner`, `collection`, `type`, `limit`, `offset`)                                       | `registry.json` joined to the files on disk       |
+| `GET /v1/ui/{name}`: the shadcn install endpoint                                                              | Item plus its source file                         |
+| `GET /v1/rs/{name}`                                                                                           | The Dioxus (`.rs`) source, where one exists       |
+| `GET /v1/brand`                                                                                               | `lib/tokens`: 21 colour families, and the rest    |
+| `GET /v1/architecture` · `/v1/architecture/nodes/{n}`                                                         | The DNA double helix: 8 nodes, 4 rungs, 6 strands |
+| `GET /v1/data-layer` · `/ecosystem` · `/pipeline` · `/sovereignty` · `/ubuntu/pillars` · `/ubuntu/principles` | `content/doctrine/**`                             |
+| `GET /v1/ai/instructions`                                                                                     | `content/doctrine/**`                             |
+| `GET /v1/changelog` · `/v1/changelog/{version}`                                                               | `lib/changelog.generated.ts`                      |
+| `GET /v1/skills` · `/v1/skills/summary` · `/v1/skills/{name}`                                                 | `lib/skills.generated.ts`                         |
+| `GET /v1/samples` · `/v1/samples/{type}`                                                                      | `lib/samples/data.ts`                             |
+| `GET /v1/stats`                                                                                               | Zeroed usage figures plus real per-node counts    |
+| `GET /openapi` · `/api/openapi`                                                                               | `lib/openapi.generated.ts`                        |
+| `GET /.well-known/security.txt`                                                                               | Contact `security@bundu.org`                      |
 
-What is true of the code: one route is native, the rest are proxied. See
-[The migration](#the-migration).
+Also answered, as they are today:
 
-## The two base paths
+- **`308` for renamed components.** `nyuchi-*` → `mzizi-*` on `/v1/ui`,
+  `/v1/rs` (and their `/api` forms), keeping the sub-path and query. The map is
+  the registry's `lib/component-renames.json`.
+- **`410 Gone`** for retired routes: `/v1/docs`, `/v1/docs/{slug}`,
+  `/v1/architecture/axes`, `/v1/architecture/frontend/{axes,layers}`,
+  `/v1/architecture/layers/{n}`.
+- **`503 {"error":"Database not configured"}`** for `/v1/ui/{name}/docs`,
+  `/v1/ui/{name}/versions`, `/v1/search` and `/v1/ai/instructions/{name}`. See
+  [Not served from files](#not-served-from-files).
+- `308 /mcp` → `https://mcp.mzizi.dev/mcp`, and a `308` that strips a trailing
+  slash.
+- **Read-only.** A path with a `GET` handler answers `OPTIONS` with `204` and
+  `Allow: GET, HEAD, OPTIONS`, and every other method with an empty `405`.
 
-| Base                                  | State                                                                                           |
-| ------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `https://api.mzizi.dev/api/v1`        | **The working base today.** The discovery document and every resource answer `200`              |
-| `https://api.mzizi.dev/v1/<resource>` | Works — `/v1/ui`, `/v1/brand`, `/v1/architecture`, `/v1/ui/<name>` all `200`                    |
-| `https://api.mzizi.dev/v1`            | **404.** The bare discovery document is served at `/api/v1` only, and `/v1` returns an HTML 404 |
-| `https://mzizi.dev/api/v1`            | **404. Never write this form.** The apex no longer serves the API at all                        |
-
-[`mzizi-registry#335`](https://github.com/mzizi-dev/mzizi-registry/pull/335),
-"serve `/v1` at the root", is **merged** — and the bare `/v1` index still does
-not answer, while every resource beneath it does. Report what a request returns,
-not what a merge implies.
-
-The canonical install form is:
-
-```bash
-npx shadcn@latest add https://api.mzizi.dev/v1/ui/<name>
-```
-
-Checked 2026-09-12: `https://api.mzizi.dev/v1/ui/button` returns `200` with a
-`registry-item.json` document. `https://api.mzizi.dev/api/v1/ui/button` returns
-the same. Use the canonical form.
-
-## Why this exists
-
-The registry API is served by ~30 Next.js route handlers in
-[`mzizi-dev/mzizi-registry`](https://github.com/mzizi-dev/mzizi-registry).
-
-`api.mzizi.dev` is the address the ecosystem already writes down — and it did not
-exist. `mzizi-console`'s API client pointed at it, with a comment asserting the
-old address "still resolves". Measured, the reverse was true:
-
-```text
-api.mzizi.dev      ->  NXDOMAIN, no DNS record at all
-mzizi.dev/api/v1   ->  200
-```
-
-The console would have rendered every view empty against a "healthy" API. Both
-of those measurements have since inverted — `api.mzizi.dev` resolves and
-`mzizi.dev/api/v1` is gone — which is the argument for the hostname made in one
-line: **the name outlives whatever is behind it.**
-
-## Why `workers-rs` and not an in-house framework
-
-Worth stating plainly, because "build it in our own framework" was the starting
-brief and the honest answer is that there isn't one to use yet:
-
-- **`mzizi-rs/crates/*`** are UI and assurance layers — `mzizi-tokens` (N1),
-  `mzizi-ui` (N2), `mzizi-shell` (N7), `mzizi-assurance` (N8), `mzizi-fundi`
-  (N9), `mzizi-docs` (N10), `mzizi-discovery` (N11). None serves HTTP.
-- **[`mzizi-dev/mzizi`](https://github.com/mzizi-dev/mzizi)**, the language, is
-  Phase 0 research — a Rust compiler and runtime for the agentic web, not the
-  registry, and the two are routinely confused. Its own README: the front end is
-  a prototype and _"nothing here has yet been measured against the charter's
-  kill criteria"_. A public API gateway is the wrong first production load for a
-  language that has not run its own benchmark.
-
-`workers-rs` is Cloudflare's own Rust SDK, and the DNA architecture doc already
-names it as the target runtime for the fundi rung — so using it here is
-consistent with a decision the ecosystem recorded rather than a new one.
-
-**Where in-house crates do fit, they should be used.** `mzizi-assurance` (N8) is
-the obvious one: a gateway is exactly where request telemetry belongs. That is
-deliberately not wired up yet — a scaffold that pulls in a dependency it does not
-exercise is harder to read, not easier.
-
-## The migration
-
-This is a **strangler fig**, not a rewrite.
-
-```text
-             ┌─────────────────────┐
-GET /v1/*  → │  mzizi-api-gateway  │ ── native ──→  answered here
-             │   api.mzizi.dev     │
-             └──────────┬──────────┘
-                        └── proxied ──→  the registry's Next.js handlers
-```
-
-Every route is served from day one. A route implemented natively is answered
-here; everything else is forwarded unmodified to the origin. Routes move from
-proxied to native one at a time, and callers never see the difference.
-
-**`ORIGIN` in [`src/lib.rs`](src/lib.rs) is `https://mzizi.dev/api`, and that
-address now 404s.** It was correct when written. Whatever is currently answering
-`api.mzizi.dev` is not this Worker (see [Status](#status)), so nothing is
-presently broken by it — but this constant must be repointed at an origin that
-actually serves before this Worker is put in front of the hostname. **That is the
-first thing to fix in this repository.**
-
-Two things make the incremental port safe to do:
-
-- **The API is read-only.** Every `/v1/*` route is a `GET`. There is no write
-  path to keep consistent across two implementations, which is what usually
-  makes a strangler fig expensive. Non-`GET` requests get a `405` here rather
-  than reaching the origin.
-- **A ported route is provably identical, or it is not ported.** Fixtures are
-  captured live responses, so a native implementation is checked against what the
-  origin actually returns — not against what this repo believes it returns. The
-  Svelte console that preceded `mzizi-console` had types that were
-  self-consistent and wrong; that is the failure this guards against.
-
-### Ported
-
-| Route            | Notes                                                                                                                                                                                                                                                          |
-| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /v1/health` | The gateway's own liveness. Native on purpose — proxying it would report the origin's health while saying nothing about whether the gateway in front of it is up. It emits an `origin` field, which is how you can tell this Worker's answer from the origin's |
-
-### Proxied
-
-Everything else, including routes not enumerated here — a new route added to the
-origin works through this Worker without a change. The current surface:
-
-`/v1` · `/v1/ai/instructions` · `/v1/architecture` · `/v1/architecture/nodes/[n]` ·
-`/v1/brand` · `/v1/changelog` · `/v1/data-layer` · `/v1/docs` · `/v1/ecosystem` ·
-`/v1/health` · `/v1/pipeline` · `/v1/rs/[name]` · `/v1/samples` · `/v1/search` ·
-`/v1/skills` · `/v1/skills/[name]` · `/v1/skills/summary` · `/v1/sovereignty` ·
-`/v1/stats` · `/v1/ui`
-
-Note `/v1/architecture/frontend/axes` and `/v1/architecture/frontend/layers`
-answer **410 Gone** at the origin. The axis model is retired — the architecture
-is the **DNA double helix: 8 nodes, 4 rungs, 6 strands**, served at
-`/v1/architecture`. "Axis", "axes" and "layer" survive in those legacy route
-names and nowhere else; they are not vocabulary to use in prose. The 410s are
-proxied like anything else, so they are preserved rather than becoming a 404
-here.
-
-### Suggested order
-
-The routes the console actually calls are the ones whose latency and
-availability a user sees, so they are the ones worth porting — but check where a
-route's data actually lives before picking it up. Measured 2026-09-11:
-
-| Candidate          | Real data source                                                      | Portable?                   |
-| ------------------ | --------------------------------------------------------------------- | --------------------------- |
-| `/v1/ui`           | `registry.json` + `lib/registry.generated.ts`                         | **No** — see [Data](#data)  |
-| `/v1/architecture` | `content/doctrine/**` via `lib/doctrine.ts`; node counts only from D1 | **No** — the helix is files |
-| `/v1/brand`        | The brand document, assembled in the route handler                    | Assess before starting      |
-
-The brand payload is the smallest — ~24 KB — and it is worth knowing its shape
-before porting: it carries **21 colour families in three groups of seven**,
-`minerals`, `heritage` and `experimental`. Not five, and not seven. A port that
-drops two of the three arrays would look correct against a console that renders
-only the minerals.
-
-[`CONTRIBUTING.md`](CONTRIBUTING.md) has the step-by-step: find the real data
-source, capture the fixture, implement, round-trip the fixture against your
-production types, move the arm in the router, update the table above.
+Only two things differ from today, both on purpose: the bare `/v1` now serves the
+discovery document (live answers it with the website's HTML 404), and an unknown
+path gets a small JSON 404 instead of that 93 KB HTML page. `security.txt` also
+has its new contact.
 
 ## Data
 
-**There is no database behind the registry.** The registry is disk.
-`docs/db-contents-rule.md` in `mzizi-dev/mzizi-registry` records the owner's
-decision of 2026-08-04:
+**There is no database behind the registry.** Components, doctrine, brand,
+changelog, skills and samples are files in
+[`mzizi-dev/mzizi-registry`](https://github.com/mzizi-dev/mzizi-registry), and
+that's where this Worker reads them. It reads them at build time, not at request
+time.
 
-> The DB only exists for version history, node counts, fundi-related logging,
-> the issue log and the self-healing log. [...] **Everything else is in the
-> repo.**
+`npm run build:data` ([`scripts/build-data.mjs`](scripts/build-data.mjs)):
 
-The test is _who writes it_: a script, a release, or telemetry writes to the
-database; a human writes to a file. So the content routes read files compiled
-into the origin's build output — `registry.json` for components,
-`content/doctrine/**` for the helix — through `lib/registry.ts` and
-`lib/doctrine.ts`. Several route docblocks still name database tables; they
-predate the migration and have not caught up.
+1. Checks out `mzizi-registry` at the commit pinned in
+   [`scripts/registry-ref.json`](scripts/registry-ref.json) (shallow, cached
+   under `.registry/`).
+2. Bundles [`scripts/extract.ts`](scripts/extract.ts) against that checkout with
+   esbuild. The extractor calls **the registry's own readers**: `lib/registry`,
+   `lib/registry-source`, the file-backed functions of `lib/db`,
+   `lib/doctrine`, and the generated changelog, skills, tokens, samples and
+   OpenAPI modules. So the shapes are the ones the registry serves, not a
+   reimplementation. `@supabase/supabase-js` is replaced by a stub that throws,
+   so a reader that reached for the database would fail the build.
+3. Writes `src/data/*.json` (gitignored). The Worker imports it as JSON modules.
 
-**Any claim that Supabase, D1 or any database is the source of truth for
-components, brand or tokens is wrong and should be deleted rather than
-softened.** D1 exists for the MCP server and for fundi logging.
+Wrangler runs this as its custom build (`build.command` in `wrangler.jsonc`), so
+`wrangler dev`, `wrangler deploy` and Workers Builds all build the same bundle
+from the same pin.
 
-What that means for this Worker: **a route whose data is a file in another
-repository's build output cannot be ported here at all**, because there is no
-source this Worker can read that is the same source. Reading a database instead
-and hoping the two agree is precisely the failure the fixture rule exists to
-catch — see [`/v1/ui`](#the-v1ui-index) below.
+**Size:** 4.3 MB raw, **~917 KiB gzipped**, under the 3 MiB Workers limit with
+room to spare. So the data is bundled into the Worker. R2 would add a network
+hop and a second deploy artefact for no benefit at this size. Revisit it only if
+`wrangler deploy --dry-run` approaches the limit.
 
-### The `/v1/ui` index
+### Not served from files
 
-Measured 2026-09-11 and left proxied deliberately. `GET /v1/ui` projects eleven
-fields per item from `registry.json`, joined to the file listing in
-`lib/registry.generated.ts` (which is where `node` and `nodeLabel` come from —
-derived from the directory a component's file lives in, so they cannot disagree
-with where the code is).
+Genuinely dynamic data belongs to the Mzizi console, the one place that talks
+to Supabase. This Worker doesn't implement it:
 
-It is not reconstructible from the `component_documents` table:
+| Data                                                 | Where it lives                        | What this Worker does                                                   |
+| ---------------------------------------------------- | ------------------------------------- | ----------------------------------------------------------------------- |
+| Component version history (`component_versions`)     | Supabase, written by releases         | `/v1/ui/{name}/versions` → `503`, as today                              |
+| Usage telemetry (`usage_events`)                     | Supabase, written by request tracking | `/v1/stats` reports zeroed totals, as today; per-node counts are real   |
+| Fundi issues, self-healing log, observability, chaos | Supabase                              | `/api/health/{name}`, `/api/chaos/{name}` not served (both `503` today) |
+| Accounts, users, keys, anything per-user             | The console                           | Not part of this API                                                    |
 
-|                      | Origin response | `component_documents`             |
-| -------------------- | --------------- | --------------------------------- |
-| Items                | 575             | 3,062 rows / 1,580 distinct names |
-| `title` present      | 575 / 575       | 100 / 3,062                       |
-| `categories` present | 575 / 575       | **0 / 3,062**                     |
-| `type` present       | 575 / 575       | 3 / 3,062                         |
+Three routes return `503` today even though their data **is** in files:
+`/v1/ui/{name}/docs` (the item's `meta` in `registry.json`), `/v1/search`
+(component names and descriptions), and `/v1/ai/instructions/{name}` (doctrine).
+The registry handlers gate them on Supabase credentials that aren't configured
+on the live Worker. The discovery document's `database` block reads
+`not_configured` / `0` for the same reason. They're kept byte-identical here so
+the cutover changes nothing a client sees. Switching them on from files is a
+small, separate change, best made after the cutover, when there's one
+implementation to change.
 
-Four of the 575 names do not exist in the table at all, and 1,009 names in the
-table must not appear in the index. `categories` — required on every item — is
-on no row anywhere. Porting this route means first moving the registry index
-into a database, which is a decision the origin repo has explicitly taken in the
-opposite direction.
+### Rebuilding when the registry changes
 
-## Building and deploying
+The pin is deliberate: a registry change reaches `api.mzizi.dev` only through a
+commit to this repository that CI (typecheck, tests, bundle) has checked. It's
+**not wired up yet**. This is the intended mechanism:
+
+1. **In `mzizi-registry`**, a workflow on `push` to `main` checks out this
+   repository, sets `ref` in `scripts/registry-ref.json` to `${{ github.sha }}`,
+   and opens (or updates) a pull request here, for example with
+   `peter-evans/create-pull-request`.
+2. **The secret it needs:** `MZIZI_API_GATEWAY_TOKEN`, stored in
+   `mzizi-registry`'s Actions secrets. That's a fine-grained personal access
+   token, or better, a GitHub App installation token, scoped to
+   `mzizi-dev/mzizi-api-gateway` only, with **Contents: read and write** and
+   **Pull requests: read and write**. The default `GITHUB_TOKEN` can't write to
+   another repository.
+3. CI runs here on that pull request. Merging it (by hand, or with
+   `gh pr merge --rebase --auto`) pushes to `main`, and Workers Builds redeploys.
+   Before merging, run the **Parity** workflow if the bump changes what live
+   serves.
+
+A Workers Builds deploy hook alone wouldn't do it: rebuilding at an unchanged
+pin produces an identical bundle. The pin has to move, and moving it is a
+commit.
+
+## Developing
 
 ```bash
-cargo check --target wasm32-unknown-unknown --all-targets
-worker-build --release
-npx wrangler dev              # serve locally
+npm ci
+npm run build:data     # clone the pinned registry ref, generate src/data/
+npm run dev            # wrangler dev on http://localhost:8787
+npm test               # offline route tests (vitest)
+npm run typecheck
+npm run parity         # live api.mzizi.dev vs the local Worker
 ```
 
-See [`AGENTS.md`](./AGENTS.md) for the full command reference, the `worker-build`/`worker`
-version-lockstep trap, and — before you touch `wrangler.jsonc` or deploy to production —
-why the route needs reading about first. Short version: this Worker is not currently what
-answers `api.mzizi.dev` (see "Status" above), and deploying it as-is would replace a working
-API with a proxy to an origin that 404s.
+`REGISTRY_DIR=/path/to/mzizi-registry` reuses an existing checkout, but it must
+be at the pinned commit.
+
+## Parity
+
+[`scripts/parity.mjs`](scripts/parity.mjs) is the acceptance test. It sends
+read-only requests to a baseline and a candidate: every route, **every
+component slug** on `/v1/ui/{name}` and `/v1/rs/{name}`, the renamed names, the
+query filters, the error paths, the `/api/v1` spellings and the method handling.
+It diffs status, `Location`, content type, the CORS, cache and security headers,
+and the body (JSON deep-equal). The only values it normalises are the health
+timestamp and `security.txt`'s `Expires`. Intentional differences are listed in
+the script with their reasons. Anything else fails the run.
+
+```bash
+node scripts/parity.mjs --baseline https://api.mzizi.dev --candidate http://localhost:8787
+```
+
+The **Parity** GitHub workflow (run by hand) does the same, with the report as
+the job summary.
+
+## Cutover
+
+Owner steps. Nothing in this repository performs them.
+
+1. **Deploy.** Merge to `main`. Workers Builds builds and deploys this Worker
+   to `workers.dev` (see the Workers Builds settings in the pull request that
+   introduced this README).
+2. **Verify on workers.dev.** Run the Parity workflow with baseline
+   `https://api.mzizi.dev` and candidate
+   `https://mzizi-api-gateway.nyuchi.workers.dev`. Expect **0 unexplained
+   differences**.
+3. **Move the domain.** In the Cloudflare dashboard: _Workers & Pages →
+   `mzizi-registry` → Settings → Domains & Routes_, remove `api.mzizi.dev`. Then
+   _`mzizi-api-gateway` → Settings → Domains & Routes → Add → Custom domain_,
+   add `api.mzizi.dev`. To make it reviewable, add the route to
+   `wrangler.jsonc` in the same form as the comment there, so the next deploy
+   keeps it.
+4. **Re-run parity** with baseline `https://mzizi-registry.nyuchi.workers.dev`
+   and candidate `https://api.mzizi.dev`, and check that `X-Mzizi-Source` is
+   present on `https://api.mzizi.dev/v1/health`.
+5. **Roll back** if needed. Remove `api.mzizi.dev` from `mzizi-api-gateway` and
+   re-add it to `mzizi-registry`, in the same dashboard pages. The registry
+   Worker is untouched by all of this, so rolling back is only this domain move.
 
 ## Related repositories
 
 | Repository                                                      | What it is                                     | Address                                |
 | --------------------------------------------------------------- | ---------------------------------------------- | -------------------------------------- |
-| [`mzizi`](https://github.com/mzizi-dev/mzizi)                   | The language — Rust compiler research, Phase 0 | —                                      |
-| [`mzizi-registry`](https://github.com/mzizi-dev/mzizi-registry) | The component registry, brand and architecture | Portal currently unrouted              |
+| [`mzizi`](https://github.com/mzizi-dev/mzizi)                   | The language: Rust compiler research, Phase 0  | —                                      |
+| [`mzizi-registry`](https://github.com/mzizi-dev/mzizi-registry) | The component registry, brand and architecture | Currently serves `api.mzizi.dev`       |
 | [`mzizi-console`](https://github.com/mzizi-dev/mzizi-console)   | The console, run under Nyuchi; reads this API  | [app.mzizi.dev](https://app.mzizi.dev) |
 | [`mzizi-site`](https://github.com/mzizi-dev/mzizi-site)         | Mzizi's front door                             | [mzizi.dev](https://mzizi.dev)         |
 | `mzizi-api-gateway`                                             | This repository                                | Target: `api.mzizi.dev`                |
 
 ## Contributing
 
-[`CONTRIBUTING.md`](CONTRIBUTING.md) — how to port a route, the build and its
-two version-lockstep traps, and the `wrangler.jsonc` rules that only fail on
-production. [`AGENTS.md`](AGENTS.md) has the same, in agent-facing form, plus
-the merge convention.
+[`CONTRIBUTING.md`](CONTRIBUTING.md) covers changing a route, bumping the
+registry pin, and the `wrangler.jsonc` rules that only fail on production.
+[`AGENTS.md`](AGENTS.md) has the same in agent-facing form, plus the merge
+convention.
 
 [`SECURITY.md`](SECURITY.md) · [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
 

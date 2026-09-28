@@ -28,3 +28,8 @@ profile/governance/
 *-lock.yaml
 package-lock.json
 pnpm-lock.yaml
+
+# Generated registry data and its source checkout
+.registry/
+src/data/
+.wrangler/

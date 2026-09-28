@@ -1,48 +1,34 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "mzizi-api-gateway",
-  "main": "build/worker/shim.mjs",
+  "main": "src/index.ts",
   "compatibility_date": "2026-05-22",
   "account_id": "125a2dfbc21f76a25c980609609e8218",
 
-  // workers-rs compiles to WASM through worker-build, which emits the JS shim
-  // named in `main` and the wasm beside it.
+  // Hono on Workers needs no Node built-ins, so no `nodejs_compat`.
   //
-  // The pin tracks the `worker` dependency in Cargo.toml: since workers-rs 0.7
-  // the library and the build tool are released in lockstep and worker-build
-  // rejects a library outside its own minor line. It also matters for a reason
-  // that is not obvious — worker-build 0.8 reads the resolved wasm-bindgen
-  // version from Cargo.lock and downloads exactly that CLI, whereas the 0.1
-  // line hard-codes one (0.2.105) that has nothing to do with what the crate
-  // compiled against. wasm-bindgen refuses to process a module built by a
-  // different version of itself, so `^0.1` against worker 0.8 cannot build.
-  //
-  // This command is duplicated in .github/workflows/ci.yml on purpose: this one
-  // is what Cloudflare Workers Builds actually runs, so if they drift the deploy
-  // breaks while CI stays green. Change both or neither.
+  // The data every route serves is generated here, from mzizi-registry's files
+  // at the ref pinned in scripts/registry-ref.json, and bundled into the Worker
+  // as JSON modules (src/data/, gitignored). Running it as wrangler's custom
+  // build means `wrangler dev`, `wrangler deploy` and Cloudflare Workers Builds
+  // all produce the same bundle from the same pin with no extra step — as long
+  // as `npm ci` ran first, which Workers Builds does on its own when it sees
+  // package-lock.json.
   "build": {
-    "command": "cargo install -q worker-build --version ^0.8 && worker-build --release",
+    "command": "node scripts/build-data.mjs",
   },
 
-  // A custom domain takes a BARE HOSTNAME. Wildcards and paths are rejected
-  // ("Wildcard operators (*) are not allowed in Custom Domains"), and a custom
-  // domain already routes every path on the hostname here, so a `/*` is both
-  // invalid and redundant. `zone_name` is inferred and only means anything on a
-  // non-custom-domain route.
+  // NO `routes` HERE, ON PURPOSE. This file used to declare `api.mzizi.dev` as a
+  // custom domain. api.mzizi.dev is currently attached to the `mzizi-registry`
+  // Worker, and a production deploy of this Worker with that route would move
+  // the hostname the moment this is merged and built — a cutover nobody chose
+  // to make at that moment. Deploys land on workers.dev only; moving the custom
+  // domain is a deliberate owner step (README, "Cutover"). When it is moved for
+  // good, add the route back in this exact form — a BARE hostname, no `/*`, no
+  // `zone_name` (the three-field form broke mzizi-mcp and the console):
   //
-  // Written this way from the start because the same three-field form silently
-  // broke two Workers in this org: mzizi-mcp (agent-tools#102) and the console,
-  // which never deployed at all. Workers Builds previews upload a version
-  // WITHOUT applying routes, so the config is only validated on the production
-  // deploy — the same commit reads green on a PR and red on main.
-  "routes": [
-    {
-      "pattern": "api.mzizi.dev",
-      "custom_domain": true,
-    },
-  ],
+  //   "routes": [{ "pattern": "api.mzizi.dev", "custom_domain": true }],
+  "workers_dev": true,
 
   "observability": { "enabled": true, "head_sampling_rate": 1 },
-
-  "placement": { "mode": "smart" },
 }

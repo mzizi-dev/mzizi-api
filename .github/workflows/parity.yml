@@ -1,0 +1,58 @@
+name: Parity
+
+# Run by hand. Before the cutover: baseline https://api.mzizi.dev (the registry
+# Worker), candidate blank (this commit under `wrangler dev`) or this Worker's
+# workers.dev URL. After it: baseline https://mzizi-registry.nyuchi.workers.dev,
+# candidate https://api.mzizi.dev. Read-only requests; the report is the job
+# summary.
+on:
+  workflow_dispatch:
+    inputs:
+      baseline:
+        description: "Baseline URL"
+        default: "https://api.mzizi.dev"
+        required: true
+      candidate:
+        description: "Candidate URL (blank = this commit under wrangler dev)"
+        default: ""
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build:data
+
+      - name: Start wrangler dev
+        if: inputs.candidate == ''
+        run: |
+          npx wrangler dev --port 8787 > wrangler-dev.log 2>&1 &
+          for _ in $(seq 1 60); do
+            curl -sf -o /dev/null http://localhost:8787/v1/health && exit 0
+            sleep 2
+          done
+          cat wrangler-dev.log
+          exit 1
+
+      - name: Parity
+        env:
+          BASELINE: ${{ inputs.baseline }}
+          CANDIDATE: ${{ inputs.candidate || 'http://localhost:8787' }}
+        run: |
+          status=0
+          node scripts/parity.mjs --baseline "$BASELINE" --candidate "$CANDIDATE" --report parity.md || status=$?
+          cat parity.md >> "$GITHUB_STEP_SUMMARY"
+          exit $status

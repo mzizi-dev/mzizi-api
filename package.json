@@ -1,0 +1,32 @@
+{
+  "name": "mzizi-api-gateway",
+  "version": "0.2.0",
+  "private": true,
+  "description": "api.mzizi.dev — the Mzizi registry API as a Hono Cloudflare Worker, served from bundled registry data.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build:data": "node scripts/build-data.mjs",
+    "build": "npm run build:data && wrangler deploy --dry-run --outdir=.wrangler/dryrun",
+    "dev": "wrangler dev",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "parity": "node scripts/parity.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "dependencies": {
+    "hono": "^4.13.10"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260928.1",
+    "esbuild": "^0.28.2",
+    "prettier": "^3.9.9",
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.2",
+    "wrangler": "^4.142.0"
+  }
+}
