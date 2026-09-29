@@ -1,6 +1,6 @@
 {
   "repository": "https://github.com/mzizi-dev/mzizi-registry",
-  "ref": "61c805c2d88419133938bbc286972e14587457e0",
-  "pinned": "2026-09-28",
-  "note": "mzizi-registry main at the time of the Hono port. Bump with scripts/build-data.mjs --bump (or by hand), then re-run npm run parity."
+  "ref": "f19bb0b9bf2f482512608344b440b76e726073ad",
+  "pinned": "2026-09-29",
+  "note": "mzizi-registry main on 2026-09-29, after #368 (no database; lib/db reads files only) and #370 (dependencies). Bump by hand, then run npm run build:data, npm test and npm run parity."
 }
