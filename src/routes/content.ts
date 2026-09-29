@@ -3,7 +3,14 @@
  * retired /v1/docs routes. Ported from mzizi-registry app/api/v1/**.
  */
 import type { Hono } from "hono";
-import { brand, changelog, doctrine, samples, skills } from "../data";
+import {
+  brand,
+  changelog,
+  doctrine,
+  readAiInstruction,
+  samples,
+  skills,
+} from "../data";
 import { CORS, CORS_CACHE, cache, json } from "../http";
 
 type Row = Record<string, unknown>;
@@ -408,11 +415,16 @@ export function registerContent(v1: Hono) {
       cache(300, 3600),
     );
   });
-  // Supabase-gated in the registry handler (the rows themselves are doctrine
-  // files); 503 on api.mzizi.dev today, kept at 503 here. See README "Data".
-  v1.get("/ai/instructions/:name", () =>
-    json({ error: "Database not configured" }, 503, CORS),
-  );
+  // app/api/v1/ai/instructions/[name]/route.ts with data present (mzizi-registry
+  // 0b1819e): the whole doctrine row, by name and then by target.
+  v1.get("/ai/instructions/:name", (c) => {
+    const name = c.req.param("name");
+    const instruction = readAiInstruction(name);
+    if (!instruction) {
+      return json({ error: `AI instruction "${name}" not found` }, 404, CORS);
+    }
+    return json(instruction, 200, cache(300, 3600));
+  });
 
   const GONE_HEADERS = {
     "Access-Control-Allow-Origin": "*",

@@ -88,16 +88,185 @@ describe("registry", () => {
     const api = await get("/api/v1/rs/nyuchi-a11y");
     expect(api.headers.get("location")).toBe("/api/v1/rs/mzizi-a11y");
   });
+});
 
-  it("keeps the Supabase-gated routes at the 503 api.mzizi.dev answers today", async () => {
+describe("file-backed routes", () => {
+  it("serves component docs from the registry's meta block", async () => {
+    const res = await get("/v1/ui/button/docs");
+    expect(res.status).toBe(200);
+    expect(res.headers.get("cache-control")).toBe(
+      "public, max-age=3600, s-maxage=86400",
+    );
+    expect(res.headers.get("access-control-allow-origin")).toBe("*");
+    const body = (await res.json()) as {
+      name: string;
+      docs: { component_name: string; use_cases: string[]; a11y: string[] };
+      demo: { has_demo: boolean } | null;
+    };
+    expect(Object.keys(body)).toEqual([
+      "name",
+      "description",
+      "node",
+      "nodeLabel",
+      "owner",
+      "collection",
+      "docs",
+      "demo",
+    ]);
+    const button = components.find((c) => c.name === "button")!;
+    expect(body).toMatchObject({
+      name: "button",
+      description: button.description,
+      node: button.node,
+      nodeLabel: button.nodeLabel,
+      owner: button.meta?.owner,
+      collection: button.meta?.collection,
+    });
+    expect(body.docs.component_name).toBe("button");
+    expect(body.docs.use_cases.length).toBeGreaterThan(0);
+    expect(body.docs.a11y.length).toBeGreaterThan(0);
+    expect(body.demo?.has_demo).toBe(true);
+    // Never the retired axis model, under any name.
+    expect(body).not.toHaveProperty("layer");
+  });
+
+  it("serves docs for every component, including data items", async () => {
+    for (const c of components) {
+      const res = await get(`/v1/ui/${c.name}/docs`);
+      expect(res.status, c.name).toBe(200);
+    }
+    const tokens = (await (await get("/v1/ui/mzizi-tokens/docs")).json()) as {
+      docs: { component_name: string };
+    };
+    expect(tokens.docs.component_name).toBe("mzizi-tokens");
+  });
+
+  it("404s docs for an unknown component, uncached", async () => {
+    const res = await get("/v1/ui/does-not-exist/docs");
+    expect(res.status).toBe(404);
+    expect(await res.json()).toEqual({
+      error: 'Component "does-not-exist" not found',
+    });
+    expect(res.headers.get("cache-control")).toBe(
+      "private, no-cache, no-store, max-age=0, must-revalidate",
+    );
+  });
+
+  it("keeps version history at 503, saying the console owns it", async () => {
     for (const path of [
-      "/v1/ui/button/docs",
       "/v1/ui/button/versions",
-      "/v1/search?q=x",
+      "/api/v1/ui/button/versions",
     ]) {
       const res = await get(path);
       expect(res.status).toBe(503);
-      expect(await res.json()).toEqual({ error: "Database not configured" });
+      expect(res.headers.get("access-control-allow-origin")).toBe("*");
+      const body = (await res.json()) as { error: string; message: string };
+      expect(body.error).toBe("Version history is not served by this API");
+      expect(body.message).toMatch(/Mzizi console/);
+      expect(body.message).not.toMatch(/Database not configured/);
+    }
+  });
+
+  it("searches names and descriptions, case-insensitively", async () => {
+    const res = await get("/v1/search?q=%20BUTTON%20");
+    expect(res.status).toBe(200);
+    expect(res.headers.get("cache-control")).toBe(
+      "public, max-age=300, s-maxage=3600",
+    );
+    const body = (await res.json()) as {
+      data: Array<{ name: string; description: string }>;
+      meta: Record<string, unknown>;
+    };
+    expect(body.meta).toEqual({
+      total: body.data.length,
+      query: "BUTTON",
+      layer: null,
+      category: null,
+    });
+    const names = body.data.map((d) => d.name);
+    expect(names).toContain("button");
+    const expected = components
+      .filter(
+        (c) =>
+          c.name.toLowerCase().includes("button") ||
+          (c.description ?? "").toLowerCase().includes("button"),
+      )
+      .map((c) => c.name);
+    expect(names).toEqual(expected);
+    // The handler's projection: registry items carry no `registry_type`,
+    // `category` or `layer`, so only name and description remain.
+    for (const hit of body.data)
+      expect(Object.keys(hit)).toEqual(["name", "description"]);
+  });
+
+  it("answers the registry handler's 400 without a query", async () => {
+    for (const path of [
+      "/v1/search",
+      "/v1/search?q=%20%20",
+      "/v1/search?layer=",
+    ]) {
+      const res = await get(path);
+      expect(res.status, path).toBe(400);
+      expect(await res.json()).toEqual({
+        error: "At least one of q, layer, or category is required",
+      });
+    }
+  });
+
+  it("filters by layer and category exactly as the registry handler does", async () => {
+    // Registry items carry `node` and `categories`, not the retired `layer` and
+    // `category` the handler filters on, so these match nothing (see README).
+    const layer = (await (await get("/v1/search?layer=2")).json()) as {
+      data: unknown[];
+      meta: Record<string, unknown>;
+    };
+    expect(layer).toEqual({
+      data: [],
+      meta: { total: 0, query: null, layer: "2", category: null },
+    });
+    const both = (await (
+      await get("/api/v1/search?q=button&category=forms")
+    ).json()) as { data: unknown[]; meta: Record<string, unknown> };
+    expect(both.data).toEqual([]);
+    expect(both.meta).toEqual({
+      total: 0,
+      query: "button",
+      layer: null,
+      category: "forms",
+    });
+  });
+
+  it("serves an AI instruction set by name and by target", async () => {
+    const list = (await (await get("/v1/ai/instructions")).json()) as {
+      data: Array<{ name: string; target: string }>;
+    };
+    expect(list.data.length).toBeGreaterThan(0);
+    for (const { name, target } of list.data) {
+      for (const key of [name, target]) {
+        const res = await get(`/v1/ai/instructions/${key}`);
+        expect(res.status, key).toBe(200);
+        expect(res.headers.get("cache-control")).toBe(
+          "public, max-age=300, s-maxage=3600",
+        );
+        const body = (await res.json()) as {
+          name: string;
+          target: string;
+          instruction_text: string;
+        };
+        expect(body.name).toBe(name);
+        expect(body.target).toBe(target);
+        expect(body.instruction_text.length).toBeGreaterThan(100);
+      }
+    }
+  });
+
+  it("404s an unknown AI instruction set", async () => {
+    for (const key of ["nope", "claude", "__proto__", "constructor"]) {
+      const res = await get(`/v1/ai/instructions/${key}`);
+      expect(res.status, key).toBe(404);
+      expect(await res.json()).toEqual({
+        error: `AI instruction "${key}" not found`,
+      });
     }
   });
 });

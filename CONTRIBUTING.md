@@ -28,7 +28,17 @@ npm run dev
 2. **Get the data through the registry's reader.** If the route needs data not
    yet in `src/data/`, add it to `scripts/extract.ts` by calling that reader. Don't
    re-derive it from raw files: the registry's readers are the definition of the
-   shape.
+   shape. Write a new file in `src/data/` rather than growing an existing one, so
+   a pin bump's diff stays easy to read. If the route computes per request (as
+   `/v1/search` does), put the computation in a pure module under `src/` and
+   check it against the registry's reader in `extract.ts`, as
+   `src/search.ts` is.
+   - If the registry handler at the pin is a stub (the registry removed
+     Supabase in
+     [mzizi-registry#368](https://github.com/mzizi-dev/mzizi-registry/pull/368)
+     and left `503` stubs where data used to be served), port the handler as it
+     answered with data present, from the last commit that had it, and say
+     which commit in a comment.
 3. **Project it in `src/routes/`.** Keep field order. Clients and the parity
    script both see it.
 4. **Test.** Add a case to `test/api.test.ts`, then run `npm run parity` against
@@ -45,6 +55,10 @@ npm run build:data && npm test && npm run parity
 Paste the parity summary into the PR. A difference after a bump usually means
 the registry changed a handler, not only its data. Port the handler change here
 in the same PR.
+
+Check that the bump changed only what the registry changed: keep a copy of
+`src/data/` from before the bump and `cmp` each file after it. `meta.json`
+always changes (it records the ref).
 
 ## `wrangler.jsonc` rules that bite
 

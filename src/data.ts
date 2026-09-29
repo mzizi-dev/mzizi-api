@@ -12,6 +12,8 @@ import skillsJson from "./data/skills.json";
 import samplesJson from "./data/samples.json";
 import brandJson from "./data/brand.json";
 import metaJson from "./data/meta.json";
+import componentDocsJson from "./data/component-docs.json";
+import aiInstructionIndexJson from "./data/ai-instruction-index.json";
 
 // The generated JSON is typed loosely on purpose: its shape is mzizi-registry's
 // (lib/registry.ts `RegistryItem`, lib/db/types.ts rows), and the parity script
@@ -90,3 +92,32 @@ export const skills = skillsJson as Loose as {
 };
 export const samples = samplesJson as Loose as Record<string, unknown[]>;
 export const brand = brandJson as Loose;
+
+/**
+ * lib/db `getComponentWithDocs(name)` → `{ docs, demo }`, per component: the docs
+ * row (use cases, variants, sizes, features, a11y, examples) and the demo flag,
+ * built from each item's `meta` block in registry.json.
+ */
+const componentDocs = componentDocsJson as Loose as Record<
+  string,
+  { docs: unknown; demo: unknown }
+>;
+export const readComponentDocs = (
+  name: string,
+): { docs: unknown; demo: unknown } | null =>
+  Object.prototype.hasOwnProperty.call(componentDocs, name)
+    ? componentDocs[name]
+    : null;
+
+const aiInstructionIndex = aiInstructionIndexJson as Record<string, number>;
+/**
+ * lib/db `getAiInstruction(key) ?? getAiInstructionByTarget(key)`: an instruction
+ * set by name, else by target, or null.
+ */
+export function readAiInstruction(key: string): Record<string, unknown> | null {
+  if (!Object.prototype.hasOwnProperty.call(aiInstructionIndex, key))
+    return null;
+  return (doctrine.aiInstructions as Array<Record<string, unknown>>)[
+    aiInstructionIndex[key]
+  ];
+}

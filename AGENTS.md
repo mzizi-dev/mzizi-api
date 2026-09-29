@@ -48,12 +48,26 @@ restart forever.
 - **Reuse the registry's readers, don't reimplement them.** Data shapes come from
   `scripts/extract.ts`, which calls mzizi-registry's own `lib/*` functions.
   Route handlers in `src/routes/` do only the per-endpoint projection, mirroring
-  `app/api/v1/**/route.ts` in the registry.
+  `app/api/v1/**/route.ts` in the registry. The one query-time computation,
+  `/v1/search`, lives in `src/search.ts`, and `extract.ts` fails the build if it
+  disagrees with the registry's `searchComponents`, `getComponentsByLayer` or
+  `getComponentsByCategory`. Change both sides together, or neither.
+- **Port handlers; don't fix them here.** A registry handler's quirk (for example
+  `/v1/search` filtering on fields registry items don't carry) is fixed in the
+  registry first and reaches this Worker through a pin bump.
 - **The API is read-only.** Every `/v1/*` route is a `GET`. Other methods get
   `405` (`OPTIONS` gets `204` + `Allow`). There's no write path. Don't add one.
-- **No Supabase, ever.** `scripts/supabase-stub.mjs` makes the build fail if a
-  registry reader tries to use it. The four Supabase-gated routes answer the
-  `503` live answers today (README, "Not served from files").
+- **No Supabase, ever.** The registry holds no database, and
+  `scripts/supabase-stub.mjs` makes the build fail if a registry reader ever
+  imports the client again. `/v1/ui/{name}/docs`, `/v1/search` and
+  `/v1/ai/instructions/{name}` serve from files (README, "File-backed routes").
+  `/v1/ui/{name}/versions` stays `503`: version history is console-owned data
+  (README, "Not served from files"). Don't add a database to serve it.
+- **Rust first.** Mzizi Roots (Rust components) are the direction; React/TSX
+  components are deprioritised but keep working. Present a Rust implementation
+  first where one exists. Roots routes follow the registry's Roots RFC
+  (`docs/roots/` in mzizi-registry, in progress). Until it lands, don't add
+  Roots-specific routes here (README, "Mzizi Roots").
 
 ## Deployment: read this before touching `wrangler.jsonc`
 

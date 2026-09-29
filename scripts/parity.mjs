@@ -73,6 +73,12 @@ const NOT_FOUND_PAGE = [
   "header:content-type",
   "header:access-control-allow-origin",
 ];
+/**
+ * A route that answered 503 and now serves from files: a new status, a body,
+ * and a Cache-Control the 503 lacked (the route's own on a 200, the uncacheable
+ * one on a 404). Its CORS and security headers must still match.
+ */
+const WAS_503 = ["status", "body", "header:cache-control"];
 const EXPECTED = {
   "GET /v1": {
     allow: [
@@ -100,6 +106,73 @@ const EXPECTED = {
     allow: ["body"],
     why: "Owner decision 2026-09-28: Contact is security@bundu.org; Canonical and Policy point at this host and this repository.",
   },
+  // ── File-backed routes, served from the registry's files (were 503) ───────
+  ...Object.fromEntries(
+    [
+      "/v1/ui/button/docs",
+      "/v1/ui/mzizi-tokens/docs",
+      "/api/v1/ui/button/docs",
+    ].map((p) => [
+      `GET ${p}`,
+      {
+        allow: WAS_503,
+        why: "Was 503 `Database not configured`. Now the registry handler's data-present answer: the docs row and demo flag `getComponentWithDocs` builds from registry.json `meta`.",
+      },
+    ]),
+  ),
+  "GET /v1/ui/does-not-exist/docs": {
+    allow: WAS_503,
+    why: "Was 503. Now the registry handler's 404 for an unknown component.",
+  },
+  ...Object.fromEntries(
+    ["/v1/ui/button/versions", "/api/v1/ui/button/versions"].map((p) => [
+      `GET ${p}`,
+      {
+        allow: ["body"],
+        why: "Still 503 with the same headers; the body now says why: version history is console-owned data and this API has no database.",
+      },
+    ]),
+  ),
+  ...Object.fromEntries(
+    [
+      "/v1/search?q=button",
+      "/v1/search?layer=2",
+      "/v1/search?category=forms",
+      "/api/v1/search?q=x",
+    ].map((p) => [
+      `GET ${p}`,
+      {
+        allow: WAS_503,
+        why: "Was 503. Now the registry search handler's data-present answer over registry.json (src/search.ts, checked against the registry's `searchComponents` at build time).",
+      },
+    ]),
+  ),
+  "GET /v1/search": {
+    allow: ["status", "body"],
+    why: "Was 503. Now the registry search handler's 400: at least one of q, layer or category is required.",
+  },
+  ...Object.fromEntries(
+    [
+      "/v1/ai/instructions/nyuchi-mcp-system-prompt",
+      "/v1/ai/instructions/mcp-server",
+      "/api/v1/ai/instructions/github-copilot",
+    ].map((p) => [
+      `GET ${p}`,
+      {
+        allow: WAS_503,
+        why: "Was 503. Now the instruction set's doctrine row, by name then by target, as the registry handler serves it.",
+      },
+    ]),
+  ),
+  ...Object.fromEntries(
+    ["/v1/ai/instructions/claude", "/v1/ai/instructions/nope"].map((p) => [
+      `GET ${p}`,
+      {
+        allow: WAS_503,
+        why: "Was 503. Now the registry handler's 404: no instruction set has this name or target (Claude's target is `claude-system-prompt`).",
+      },
+    ]),
+  ),
 };
 
 // ── Build the request list ─────────────────────────────────────────────────
@@ -157,6 +230,8 @@ const paths = [
   "/v1/ui/does-not-exist",
   "/v1/rs/does-not-exist",
   "/v1/ui/button/docs",
+  "/v1/ui/mzizi-tokens/docs",
+  "/v1/ui/does-not-exist/docs",
   "/v1/ui/button/versions",
   ...renames
     .slice(0, 3)
@@ -176,6 +251,7 @@ const paths = [
   "/v1/search",
   "/v1/search?q=button",
   "/v1/search?layer=2",
+  "/v1/search?category=forms",
   "/v1/stats",
   "/v1/stats?days=7",
   "/v1/stats?days=500",
@@ -213,6 +289,8 @@ const paths = [
   "/v1/ai/instructions",
   "/v1/ai/instructions/claude",
   "/v1/ai/instructions/nope",
+  "/v1/ai/instructions/nyuchi-mcp-system-prompt",
+  "/v1/ai/instructions/mcp-server",
   "/v1/this-route-does-not-exist",
   // The /api/v1 spelling — every resource, since Next applies extra CORS headers there.
   "/api/v1/health",
@@ -226,6 +304,9 @@ const paths = [
   "/api/v1/stats",
   "/api/v1/samples",
   "/api/v1/search?q=x",
+  "/api/v1/ui/button/docs",
+  "/api/v1/ui/button/versions",
+  "/api/v1/ai/instructions/github-copilot",
   "/api/v1/docs",
   "/api/v1/this-route-does-not-exist",
   "/openapi",

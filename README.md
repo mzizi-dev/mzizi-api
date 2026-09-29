@@ -46,11 +46,13 @@ base paths answer: `/v1/...` (canonical) and `/api/v1/...`.
 | `GET /v1/health`                                                                                              | This Worker's liveness                            |
 | `GET /v1/ui` (`node`, `owner`, `collection`, `type`, `limit`, `offset`)                                       | `registry.json` joined to the files on disk       |
 | `GET /v1/ui/{name}`: the shadcn install endpoint                                                              | Item plus its source file                         |
+| `GET /v1/ui/{name}/docs`                                                                                      | The item's `meta` block in `registry.json`        |
 | `GET /v1/rs/{name}`                                                                                           | The Dioxus (`.rs`) source, where one exists       |
+| `GET /v1/search` (`q`, and the handler's two legacy filters)                                                  | Component names and descriptions                  |
 | `GET /v1/brand`                                                                                               | `lib/tokens`: 21 colour families, and the rest    |
 | `GET /v1/architecture` · `/v1/architecture/nodes/{n}`                                                         | The DNA double helix: 8 nodes, 4 rungs, 6 strands |
 | `GET /v1/data-layer` · `/ecosystem` · `/pipeline` · `/sovereignty` · `/ubuntu/pillars` · `/ubuntu/principles` | `content/doctrine/**`                             |
-| `GET /v1/ai/instructions`                                                                                     | `content/doctrine/**`                             |
+| `GET /v1/ai/instructions` · `/v1/ai/instructions/{name}`                                                      | `content/doctrine/**`                             |
 | `GET /v1/changelog` · `/v1/changelog/{version}`                                                               | `lib/changelog.generated.ts`                      |
 | `GET /v1/skills` · `/v1/skills/summary` · `/v1/skills/{name}`                                                 | `lib/skills.generated.ts`                         |
 | `GET /v1/samples` · `/v1/samples/{type}`                                                                      | `lib/samples/data.ts`                             |
@@ -66,18 +68,27 @@ Also answered, as they are today:
 - **`410 Gone`** for retired routes: `/v1/docs`, `/v1/docs/{slug}`,
   `/v1/architecture/axes`, `/v1/architecture/frontend/{axes,layers}`,
   `/v1/architecture/layers/{n}`.
-- **`503 {"error":"Database not configured"}`** for `/v1/ui/{name}/docs`,
-  `/v1/ui/{name}/versions`, `/v1/search` and `/v1/ai/instructions/{name}`. See
+- **`503`** for `/v1/ui/{name}/versions`, whose body says why: version history
+  is console-owned data, and this API has no database. See
   [Not served from files](#not-served-from-files).
 - `308 /mcp` → `https://mcp.mzizi.dev/mcp`, and a `308` that strips a trailing
   slash.
 - **Read-only.** A path with a `GET` handler answers `OPTIONS` with `204` and
   `Allow: GET, HEAD, OPTIONS`, and every other method with an empty `405`.
 
-Only two things differ from today, both on purpose: the bare `/v1` now serves the
-discovery document (live answers it with the website's HTML 404), and an unknown
-path gets a small JSON 404 instead of that 93 KB HTML page. `security.txt` also
-has its new contact.
+The differences from the registry Worker this replaced are all on purpose, and
+each is listed in `EXPECTED` in [`scripts/parity.mjs`](scripts/parity.mjs):
+
+- The bare `/v1` serves the discovery document (the registry Worker answered it
+  with the website's HTML 404).
+- An unknown path gets a small JSON 404 instead of that 93 KB HTML page.
+- `security.txt` has its new contact.
+- `/v1/ui/{name}/docs`, `/v1/search` and `/v1/ai/instructions/{name}` serve
+  their data from files, where the registry Worker answered
+  `503 {"error":"Database not configured"}`. See
+  [File-backed routes](#file-backed-routes).
+- `/v1/ui/{name}/versions` is still `503`, with a body that gives the real
+  reason instead of `Database not configured`.
 
 ## Data
 
@@ -94,43 +105,79 @@ time.
    under `.registry/`).
 2. Bundles [`scripts/extract.ts`](scripts/extract.ts) against that checkout with
    esbuild. The extractor calls **the registry's own readers**: `lib/registry`,
-   `lib/registry-source`, the file-backed functions of `lib/db`,
-   `lib/doctrine`, and the generated changelog, skills, tokens, samples and
-   OpenAPI modules. So the shapes are the ones the registry serves, not a
-   reimplementation. `@supabase/supabase-js` is replaced by a stub that throws,
-   so a reader that reached for the database would fail the build.
+   `lib/registry-source`, `lib/db` (file-only since the registry dropped
+   Supabase), `lib/doctrine`, and the generated changelog, skills, tokens,
+   samples and OpenAPI modules. So the shapes are the ones the registry serves,
+   not a reimplementation. `@supabase/supabase-js` stays replaced by a stub that
+   throws, so a reader that ever reached for a database again would fail the
+   build.
 3. Writes `src/data/*.json` (gitignored). The Worker imports it as JSON modules.
 
 Wrangler runs this as its custom build (`build.command` in `wrangler.jsonc`), so
 `wrangler dev`, `wrangler deploy` and Workers Builds all build the same bundle
 from the same pin.
 
-**Size:** 4.3 MB raw, **~917 KiB gzipped**, under the 3 MiB Workers limit with
+**Size:** 4.6 MB raw, **~961 KiB gzipped**, under the 3 MiB Workers limit with
 room to spare. So the data is bundled into the Worker. R2 would add a network
 hop and a second deploy artefact for no benefit at this size. Revisit it only if
 `wrangler deploy --dry-run` approaches the limit.
+
+### File-backed routes
+
+Three routes used to answer `503 {"error":"Database not configured"}` even though
+their data was in files: the registry handlers gated them on Supabase
+credentials that were never set on the registry Worker. The registry has since
+dropped Supabase and reduced those handlers to `503` stubs, noting that serving
+them from files was a deliberate follow-up. This Worker is that follow-up. Each
+route answers what its registry handler answered with data present, from the
+registry's own readers. The handlers are the ones at
+[`0b1819e`](https://github.com/mzizi-dev/mzizi-registry/tree/0b1819e10dd34c7acb24a990b5434708d56c78ec/app/api/v1),
+the last registry commit before the Supabase removal
+([mzizi-registry#368](https://github.com/mzizi-dev/mzizi-registry/pull/368)):
+
+| Route                        | Reader (mzizi-registry `lib/db`)                                                | Answer                                                                                                       |
+| ---------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `/v1/ui/{name}/docs`         | `getComponentWithDocs`: the docs row and demo flag from the item's `meta` block | `name`, `description`, `node`, `nodeLabel`, `owner`, `collection`, `docs`, `demo`; `404` for an unknown name |
+| `/v1/search`                 | `searchComponents`, `getComponentsByLayer`, `getComponentsByCategory`           | `{ data, meta: { total, query, layer, category } }`; `400` with none of the three parameters                 |
+| `/v1/ai/instructions/{name}` | `getAiInstruction`, then `getAiInstructionByTarget`                             | The whole doctrine row, by name or by target; `404` for neither                                              |
+
+`build-data` stores what the first and third need (`src/data/component-docs.json`,
+`src/data/ai-instruction-index.json`). Search is computed per request, so it runs
+[`src/search.ts`](src/search.ts) over `components.json`, which is the output of
+`readComponents()`. `scripts/extract.ts` checks that code against the
+registry's own three readers on about 1,200 queries, and fails the build if
+they ever disagree.
+
+**Search carries its handler's quirks, on purpose.** Registry items carry `node`
+and `categories`. The handler filters on `layer` and `category` (the retired
+database row's field names), so a `layer` or `category` parameter matches
+nothing, and a hit has only `name` and `description`. A port that fixed this
+here would fork the contract from the registry. The fix belongs in the
+registry's handler first, and a pin bump brings it here.
+
+The discovery document is unchanged. Its `database` block still reads
+`not_configured` / `0`, as the registry's does.
 
 ### Not served from files
 
 Genuinely dynamic data belongs to the Mzizi console, the one place that talks
 to Supabase. This Worker doesn't implement it:
 
-| Data                                                 | Where it lives                        | What this Worker does                                                   |
-| ---------------------------------------------------- | ------------------------------------- | ----------------------------------------------------------------------- |
-| Component version history (`component_versions`)     | Supabase, written by releases         | `/v1/ui/{name}/versions` → `503`, as today                              |
-| Usage telemetry (`usage_events`)                     | Supabase, written by request tracking | `/v1/stats` reports zeroed totals, as today; per-node counts are real   |
-| Fundi issues, self-healing log, observability, chaos | Supabase                              | `/api/health/{name}`, `/api/chaos/{name}` not served (both `503` today) |
-| Accounts, users, keys, anything per-user             | The console                           | Not part of this API                                                    |
+| Data                                                 | Where it lives                              | What this Worker does                                                   |
+| ---------------------------------------------------- | ------------------------------------------- | ----------------------------------------------------------------------- |
+| Component version history (`component_versions`)     | The console's Supabase, written by releases | `/v1/ui/{name}/versions` → `503`, saying so                             |
+| Usage telemetry (`usage_events`)                     | Supabase, written by request tracking       | `/v1/stats` reports zeroed totals, as today; per-node counts are real   |
+| Fundi issues, self-healing log, observability, chaos | Supabase                                    | `/api/health/{name}`, `/api/chaos/{name}` not served (both `503` today) |
+| Accounts, users, keys, anything per-user             | The console                                 | Not part of this API                                                    |
 
-Three routes return `503` today even though their data **is** in files:
-`/v1/ui/{name}/docs` (the item's `meta` in `registry.json`), `/v1/search`
-(component names and descriptions), and `/v1/ai/instructions/{name}` (doctrine).
-The registry handlers gate them on Supabase credentials that aren't configured
-on the live Worker. The discovery document's `database` block reads
-`not_configured` / `0` for the same reason. They're kept byte-identical here so
-the cutover changes nothing a client sees. Switching them on from files is a
-small, separate change, best made after the cutover, when there's one
-implementation to change.
+`/v1/ui/{name}/versions` keeps its `503` status and headers. Its body now reads:
+
+```json
+{
+  "error": "Version history is not served by this API",
+  "message": "Component version history is machine-written data owned by the Mzizi console (app.mzizi.dev), not part of the registry's files. api.mzizi.dev serves those files and has no database. Release history is at https://api.mzizi.dev/v1/changelog."
+}
+```
 
 ### Rebuilding when the registry changes
 
@@ -156,6 +203,29 @@ commit to this repository that CI (typecheck, tests, bundle) has checked. It's
 A Workers Builds deploy hook alone wouldn't do it: rebuilding at an unchanged
 pin produces an identical bundle. The pin has to move, and moving it is a
 commit.
+
+## Mzizi Roots: Rust components first
+
+**Direction, not shipped.** Mzizi's own branded components are being converted
+to Rust as **Mzizi Roots**: UI and server components built for the agentic web.
+React/TSX components keep working, but they're deprioritised: they aren't the
+lead and aren't where new work goes. Where a Rust implementation exists, it
+comes first.
+
+What that means for this API:
+
+- **Today**, `/v1/rs/{name}` serves the Rust (Dioxus) source for every item
+  that has one, and `/v1/ui/{name}` serves the React source that the shadcn CLI
+  installs. Both come from the same pinned registry files. Neither changes in
+  this repository before the registry changes.
+- **The direction** is for Rust to be the first answer: Roots components listed
+  and described ahead of their React counterparts, and new component endpoints
+  designed around the Rust implementation. Each such change lands in the
+  registry's handlers first and reaches this Worker through a pin bump, with
+  parity recording the difference.
+- **The design** is the Roots RFC, which is being written in `mzizi-registry`
+  under `docs/roots/`. This section will link it once it lands. Until then,
+  don't build Roots-specific routes here.
 
 ## Developing
 

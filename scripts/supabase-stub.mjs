@@ -1,9 +1,9 @@
 // Stand-in for @supabase/supabase-js while extracting registry data.
 //
-// The extractor imports mzizi-registry's `lib/db`, which constructs Supabase
-// clients lazily. Nothing the extractor calls reaches them — every function it
-// uses reads files. If one ever does, this throws and the build fails, which is
-// the point: this Worker serves no data from Supabase.
+// mzizi-registry holds no database: its `lib/db` reads files only, and nothing
+// the extractor imports reaches for Supabase. This stays as a tripwire. If a
+// registry reader ever imports the client again, this throws and the build
+// fails, because this Worker serves no data from a database.
 export function createClient() {
   throw new Error(
     "extract: a registry lib function tried to reach Supabase. This Worker serves files only.",

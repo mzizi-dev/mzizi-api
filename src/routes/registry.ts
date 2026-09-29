@@ -3,8 +3,15 @@
  * /v1/search, /v1/stats. Ported from mzizi-registry app/api/v1/{ui,rs,search,stats}.
  */
 import type { Hono } from "hono";
-import { components, nodeCounts, readComponent, readSource } from "../data";
+import {
+  components,
+  nodeCounts,
+  readComponent,
+  readComponentDocs,
+  readSource,
+} from "../data";
 import { CORS, CORS_CACHE, cache, json } from "../http";
+import { search } from "../search";
 
 /** app/api/v1/ui/route.ts `positiveInt`. */
 function positiveInt(raw: string | null): number | undefined {
@@ -14,9 +21,23 @@ function positiveInt(raw: string | null): number | undefined {
   return n;
 }
 
-/** The Supabase-gated routes answer this on api.mzizi.dev today; see README "Data". */
-const dbNotConfigured = () =>
-  json({ error: "Database not configured" }, 503, CORS);
+/**
+ * Version history is the one registry route with no file behind it. It is
+ * machine-written data that the Mzizi console owns, and this Worker holds no
+ * database, so it stays at 503, now saying why.
+ */
+const versionsNotServed = () =>
+  json(
+    {
+      error: "Version history is not served by this API",
+      message:
+        "Component version history is machine-written data owned by the Mzizi console " +
+        "(app.mzizi.dev), not part of the registry's files. api.mzizi.dev serves those files " +
+        "and has no database. Release history is at https://api.mzizi.dev/v1/changelog.",
+    },
+    503,
+    CORS,
+  );
 
 export function registerRegistry(v1: Hono) {
   v1.get("/ui", (c) => {
@@ -79,14 +100,43 @@ export function registerRegistry(v1: Hono) {
     );
   });
 
-  // Version history (`component_versions`) and the two routes below are gated on
-  // Supabase in the registry handlers, and Supabase is not configured on the
-  // Worker serving api.mzizi.dev — so all four answer 503 there. They are kept at
-  // 503 here so the cutover changes nothing a client sees. The README lists which
-  // could be served from files in a follow-up and which (versions) cannot.
-  v1.get("/ui/:name/docs", dbNotConfigured);
-  v1.get("/ui/:name/versions", dbNotConfigured);
-  v1.get("/search", dbNotConfigured);
+  // app/api/v1/ui/[name]/docs/route.ts with data present (mzizi-registry
+  // 0b1819e; the pinned handler is a 503 stub with a note that serving it is a
+  // deliberate follow-up, which this is). The docs row and demo flag come from
+  // the registry's `getComponentWithDocs`; the rest is the component itself.
+  v1.get("/ui/:name/docs", (c) => {
+    const name = c.req.param("name");
+    const component = readComponent(name);
+    const withDocs = component ? readComponentDocs(component.name) : null;
+    if (!component || !withDocs) {
+      return json({ error: `Component "${name}" not found` }, 404, CORS);
+    }
+    return json(
+      {
+        name: component.name,
+        description: component.description,
+        node: component.node,
+        nodeLabel: component.nodeLabel,
+        owner: component.meta?.owner,
+        collection: component.meta?.collection,
+        docs: withDocs.docs ?? null,
+        demo: withDocs.demo ?? null,
+      },
+      200,
+      CORS_CACHE,
+    );
+  });
+
+  v1.get("/ui/:name/versions", versionsNotServed);
+
+  // app/api/v1/search/route.ts with data present (0b1819e); see src/search.ts.
+  const SEARCH_CACHE = cache(300, 3600);
+  v1.get("/search", (c) => {
+    const answer = search(components, new URL(c.req.url).searchParams);
+    return answer.status === 200
+      ? json(answer.body, 200, SEARCH_CACHE)
+      : json(answer.body, answer.status, CORS);
+  });
 
   v1.get("/ui/:name", (c) => {
     const name = c.req.param("name");

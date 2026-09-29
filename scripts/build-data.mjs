@@ -7,8 +7,9 @@
  *   1. Check out the registry at exactly that commit (shallow, cached under
  *      .registry/<sha>). REGISTRY_DIR=/path/to/checkout uses an existing one.
  *   2. Bundle scripts/extract.ts against the checkout with esbuild. `@/` resolves
- *      into the checkout and @supabase/supabase-js is replaced by a stub that
- *      throws, so a registry reader that reached for the database fails the build
+ *      into the checkout. The registry holds no database (its `lib/db` reads
+ *      files only), and @supabase/supabase-js stays replaced by a stub that
+ *      throws, so a reader that ever reached for one again fails the build
  *      instead of silently shipping empty data.
  *   3. Run the bundle and split its output into one JSON module per concern.
  *
@@ -128,6 +129,8 @@ const files = {
     byVersion: data.changelogByVersion,
   },
   "doctrine.json": data.doctrine,
+  "component-docs.json": data.componentDocs,
+  "ai-instruction-index.json": data.aiInstructionIndex,
   "skills.json": data.skills,
   "samples.json": data.samples,
   "brand.json": data.brand,
@@ -149,5 +152,8 @@ for (const [name, value] of Object.entries(files)) {
 console.error(
   `build-data: ${data.components.length} components, ` +
     `${data.helix.nodes.length} nodes / ${data.helix.rungs.length} rungs / ${data.helix.strands.length} strands, ` +
-    `${data.changelog.length} changelog entries, ${data.skills.names.length} skills → src/data/`,
+    `${data.changelog.length} changelog entries, ${data.skills.names.length} skills, ` +
+    `${Object.keys(data.componentDocs).length} docs rows, ` +
+    `${Object.keys(data.aiInstructionIndex).length} AI instruction keys, ` +
+    `search checked on ${data.searchProbes} probes → src/data/`,
 );
