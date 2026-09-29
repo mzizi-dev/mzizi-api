@@ -1,6 +1,6 @@
 {
   "repository": "https://github.com/mzizi-dev/mzizi-registry",
-  "ref": "0f9012f89922137d3dab14579539d9b33db42d2e",
+  "ref": "ce68c6446f6e603de7a8e7fc47fa880d8a44b749",
   "pinned": "2026-09-29",
-  "note": "mzizi-registry#373 (search on node and categories; file-backed docs and AI instructions; no database wording). Re-pin to the rebased commit on main once it merges. Bump by hand, then run npm run build:data, npm test and npm run parity."
+  "note": "mzizi-registry main on 2026-09-29, after #373 (search on node and categories; file-backed docs and AI instructions; no database wording) and #371 (docs/roots RFC). Bump by hand, then run npm run build:data, npm test and npm run parity."
 }
