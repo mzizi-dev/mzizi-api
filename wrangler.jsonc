@@ -18,16 +18,12 @@
     "command": "node scripts/build-data.mjs",
   },
 
-  // NO `routes` HERE, ON PURPOSE. This file used to declare `api.mzizi.dev` as a
-  // custom domain. api.mzizi.dev is currently attached to the `mzizi-registry`
-  // Worker, and a production deploy of this Worker with that route would move
-  // the hostname the moment this is merged and built — a cutover nobody chose
-  // to make at that moment. Deploys land on workers.dev only; moving the custom
-  // domain is a deliberate owner step (README, "Cutover"). When it is moved for
-  // good, add the route back in this exact form — a BARE hostname, no `/*`, no
-  // `zone_name` (the three-field form broke mzizi-mcp and the console):
-  //
-  //   "routes": [{ "pattern": "api.mzizi.dev", "custom_domain": true }],
+  // api.mzizi.dev is this Worker's custom domain. The owner moved it here from
+  // the `mzizi-registry` Next.js Worker on 2026-09-29; declaring it here keeps
+  // it under version control so every deploy reasserts it. Keep this exact
+  // form — a BARE hostname, no `/*`, no `zone_name` (the three-field form
+  // broke mzizi-mcp and the console).
+  "routes": [{ "pattern": "api.mzizi.dev", "custom_domain": true }],
   "workers_dev": true,
 
   "observability": { "enabled": true, "head_sampling_rate": 1 },

@@ -48,10 +48,12 @@ in the same PR.
 
 ## `wrangler.jsonc` rules that bite
 
-### No route until the owner cuts over
+### The `routes` block owns `api.mzizi.dev`
 
-`wrangler.jsonc` has no `routes` block, on purpose (README, "Cutover"). Adding
-one moves `api.mzizi.dev` on the next production build.
+`wrangler.jsonc` declares `api.mzizi.dev` as this Worker's custom domain
+(README, "Cutover"). Every production deploy reasserts it. Removing it doesn't
+detach the domain by itself, but it does mean a deploy of another Worker that
+claims the hostname can take it.
 
 ### A custom domain takes a bare hostname, nothing else
 
@@ -97,8 +99,8 @@ deploys.
 
 ### Deployment
 
-Cloudflare Workers Builds, on push to `main`, to `workers.dev` until the owner
-moves the custom domain. See README, "Cutover".
+Cloudflare Workers Builds, on push to `main`. It deploys to `api.mzizi.dev`
+(and `workers.dev`). See README, "Cutover".
 
 ## Code of conduct
 

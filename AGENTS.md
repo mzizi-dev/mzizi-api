@@ -6,7 +6,7 @@
 
 ## What this repo is
 
-A **Hono (TypeScript) Cloudflare Worker**, meant to serve `api.mzizi.dev`, the
+A **Hono (TypeScript) Cloudflare Worker** serving `api.mzizi.dev`, the
 Mzizi registry API. **Owner decision, 2026-09-28:** the API Worker is Hono,
 running its own API, and nothing touches Supabase except the Mzizi console. That
 replaces this repo's earlier "pure-Rust `workers-rs`" position. The Rust proxy is
@@ -17,8 +17,8 @@ Every route answers from JSON generated at build time out of
 `scripts/registry-ref.json`, and bundled into the Worker. No origin, no proxying,
 no database, no Supabase client.
 
-**Read README's "Status" section before touching deployment.** `api.mzizi.dev` is
-still attached to the `mzizi-registry` Worker. Moving it is the owner's step.
+**Read README's "Status" section before touching deployment.** This Worker has
+served `api.mzizi.dev` since 2026-09-29, and a merge to `main` deploys to it.
 
 ## Build, test, run
 
@@ -57,11 +57,10 @@ restart forever.
 
 ## Deployment: read this before touching `wrangler.jsonc`
 
-Cloudflare Workers Builds, on push to `main`. **`wrangler.jsonc` declares no
-route on purpose.** A route there would move `api.mzizi.dev` off the registry
-Worker on the next production build. When the owner cuts over, the route goes
-back in as a **bare hostname** custom domain, with no `/*` and no `zone_name`
-(the three-field form broke `mzizi-mcp` and the console):
+Cloudflare Workers Builds, on push to `main`, deploys to `api.mzizi.dev`.
+**`wrangler.jsonc` declares that custom domain** (moved here from the registry
+Worker on 2026-09-29). Keep it a **bare hostname**, with no `/*` and no
+`zone_name` (the three-field form broke `mzizi-mcp` and the console):
 
 ```jsonc
 "routes": [{ "pattern": "api.mzizi.dev", "custom_domain": true }],

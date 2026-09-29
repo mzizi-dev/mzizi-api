@@ -24,13 +24,12 @@ public `/v1` API itself, from files.
 
 ## Status
 
-**Built and parity-tested. Not yet serving `api.mzizi.dev`.**
+**Live on `api.mzizi.dev` since 2026-09-29.**
 
-`api.mzizi.dev` is still attached to the `mzizi-registry` Worker (the registry's
-Next.js app on OpenNext; its responses carry `x-opennext: 1`). Moving the custom
-domain to this Worker is a deliberate owner step, described in
-[Cutover](#cutover). That's why `wrangler.jsonc` declares **no route**: a merge
-deploys to `workers.dev` only.
+The owner moved the custom domain from the `mzizi-registry` Worker (the
+registry's Next.js app on OpenNext) to this Worker on 2026-09-29, and
+`wrangler.jsonc` now declares it, so every production deploy keeps it. See
+[Cutover](#cutover) for how it was done and how to roll it back.
 
 You can tell which Worker answered: every response from this one carries
 `X-Mzizi-Source: mzizi-api-gateway; registry=<commit>`.
@@ -192,7 +191,9 @@ the job summary.
 
 ## Cutover
 
-Owner steps. Nothing in this repository performs them.
+**Done 2026-09-29.** Parity before the move, against the deployed Worker on
+`workers.dev`: 1359 requests, 0 unexplained differences. The steps are kept
+here as the record, and because rollback reverses step 3.
 
 1. **Deploy.** Merge to `main`. Workers Builds builds and deploys this Worker
    to `workers.dev` (see the Workers Builds settings in the pull request that
@@ -204,25 +205,26 @@ Owner steps. Nothing in this repository performs them.
 3. **Move the domain.** In the Cloudflare dashboard: _Workers & Pages →
    `mzizi-registry` → Settings → Domains & Routes_, remove `api.mzizi.dev`. Then
    _`mzizi-api-gateway` → Settings → Domains & Routes → Add → Custom domain_,
-   add `api.mzizi.dev`. To make it reviewable, add the route to
-   `wrangler.jsonc` in the same form as the comment there, so the next deploy
-   keeps it.
+   add `api.mzizi.dev`. Then declare it in `wrangler.jsonc` (done), so the
+   next deploy keeps it.
 4. **Re-run parity** with baseline `https://mzizi-registry.nyuchi.workers.dev`
    and candidate `https://api.mzizi.dev`, and check that `X-Mzizi-Source` is
    present on `https://api.mzizi.dev/v1/health`.
-5. **Roll back** if needed. Remove `api.mzizi.dev` from `mzizi-api-gateway` and
-   re-add it to `mzizi-registry`, in the same dashboard pages. The registry
-   Worker is untouched by all of this, so rolling back is only this domain move.
+5. **Roll back** if needed. Revert the `routes` entry in `wrangler.jsonc`
+   first, or the next deploy takes the domain back. Then remove `api.mzizi.dev`
+   from `mzizi-api-gateway` and re-add it to `mzizi-registry`, in the same
+   dashboard pages. The registry Worker is untouched by all of this and still
+   answers on `mzizi-registry.nyuchi.workers.dev`.
 
 ## Related repositories
 
 | Repository                                                      | What it is                                     | Address                                |
 | --------------------------------------------------------------- | ---------------------------------------------- | -------------------------------------- |
 | [`mzizi`](https://github.com/mzizi-dev/mzizi)                   | The language: Rust compiler research, Phase 0  | —                                      |
-| [`mzizi-registry`](https://github.com/mzizi-dev/mzizi-registry) | The component registry, brand and architecture | Currently serves `api.mzizi.dev`       |
+| [`mzizi-registry`](https://github.com/mzizi-dev/mzizi-registry) | The component registry, brand and architecture | [mzizi.dev](https://mzizi.dev)         |
 | [`mzizi-console`](https://github.com/mzizi-dev/mzizi-console)   | The console, run under Nyuchi; reads this API  | [app.mzizi.dev](https://app.mzizi.dev) |
 | [`mzizi-site`](https://github.com/mzizi-dev/mzizi-site)         | Mzizi's front door                             | [mzizi.dev](https://mzizi.dev)         |
-| `mzizi-api-gateway`                                             | This repository                                | Target: `api.mzizi.dev`                |
+| `mzizi-api-gateway`                                             | This repository                                | [api.mzizi.dev](https://api.mzizi.dev) |
 
 ## Contributing
 
