@@ -6,143 +6,22 @@ import type { Hono } from "hono";
 import {
   brand,
   changelog,
+  components,
   doctrine,
   readAiInstruction,
   samples,
   skills,
 } from "../data";
+import { aiInstructionNotFound, discoveryDocument } from "../projections";
 import { CORS, CORS_CACHE, cache, json } from "../http";
 
 type Row = Record<string, unknown>;
 
-/**
- * The discovery document gates its `database` block on Supabase being
- * configured, and on api.mzizi.dev it is not — so the live document reads
- * `not_configured` / `0`, and so does this one. (The count would come from
- * files if the gate were lifted; that is a registry-side wording fix, not
- * something to change silently during a cutover.)
- */
-const componentCount = 0;
-
 export function registerContent(v1: Hono) {
+  // app/api/v1/route.ts. The document is src/projections.ts, checked against
+  // the handler at build time; the count is every bundled item, as there.
   v1.get("/", () =>
-    json(
-      {
-        $schema: "https://mzizi.dev/schema/api.json",
-        "@context": "https://schema.org",
-        "@type": "WebAPI",
-        name: "Mzizi API",
-        version: "1.0.0",
-        description:
-          "The Mzizi API — components, brand, architecture, and design system. Mzizi is an independent open-architecture project, operated and developed by Nyuchi.",
-        homepage: "https://mzizi.dev",
-        database: {
-          status: "not_configured",
-          components: componentCount,
-        },
-        resources: {
-          brand: {
-            href: "/api/v1/brand",
-            description:
-              "Brand system — Seven African Minerals palette, typography, spacing, ecosystem brands.",
-          },
-          ui: {
-            href: "/api/v1/ui",
-            description: `Component registry — ${componentCount} items served from database.`,
-          },
-          ecosystem: {
-            href: "/api/v1/ecosystem",
-            description:
-              "Architecture principles, framework decision, and Ubuntu philosophy.",
-          },
-          // The helix is the only architecture model served. #191 removed the
-          // two axis entries from this document without adding the helix in
-          // their place, which left a live route undiscoverable — retiring the
-          // wrong model is only half the job if the right one is not advertised.
-          architecture: {
-            href: "/api/v1/architecture",
-            description:
-              "The Mzizi DNA double helix — every node and rung with its covenant and live component count, plus the strands grouping them by backbone. No axes, no outliers.",
-          },
-          architectureNode: {
-            href: "/api/v1/architecture/nodes/{n}",
-            description:
-              "One node or rung of the helix. `n` has no upper bound — node numbers are labels, not a sequence, and the set is never capped.",
-          },
-          dataLayer: {
-            href: "/api/v1/data-layer",
-            description: "Local-first data layer and cloud services.",
-          },
-          pipeline: {
-            href: "/api/v1/pipeline",
-            description: "Open data pipeline — Redpanda, Flink, Doris.",
-          },
-          sovereignty: {
-            href: "/api/v1/sovereignty",
-            description: "Technology sovereignty assessments.",
-          },
-          health: {
-            href: "/api/v1/health",
-            description: "Service health check — database and registry status.",
-          },
-          ubuntuPillars: {
-            href: "/api/v1/ubuntu/pillars",
-            description:
-              "Five Ubuntu pillars — spheres in which Ubuntu is lived.",
-          },
-          ubuntuPrinciples: {
-            href: "/api/v1/ubuntu/principles",
-            description:
-              "Five Ubuntu principles — operating rules translating Ubuntu to software.",
-          },
-          mcp: {
-            href: "https://mcp.mzizi.dev/mcp",
-            description:
-              "Model Context Protocol server — Streamable HTTP transport.",
-          },
-          search: {
-            href: "/api/v1/search",
-            description:
-              "Search components by name/description; filter by layer and category.",
-          },
-          componentDocs: {
-            href: "/api/v1/ui/{name}/docs",
-            description:
-              "Component documentation — use cases, variants, accessibility.",
-          },
-          componentVersions: {
-            href: "/api/v1/ui/{name}/versions",
-            description: "Component version history.",
-          },
-          docs: {
-            href: "/api/v1/docs",
-            description:
-              "GONE (HTTP 410). Long-form documentation moved to the standalone Mzizi docs site — see https://docs.mzizi.dev.",
-            status: "gone",
-          },
-          changelog: {
-            href: "/api/v1/changelog",
-            description: "Release changelog.",
-          },
-          aiInstructions: {
-            href: "/api/v1/ai/instructions",
-            description:
-              "AI assistant instructions (Claude, Copilot, Cursor, MCP).",
-          },
-          skills: {
-            href: "/api/v1/skills",
-            description:
-              "Agent-skill MDX bodies — reusable workflows AI assistants invoke on specific tasks. Use /skills/{name} for a single skill's full body, /skills/summary for the cheap version-drift check.",
-          },
-          stats: {
-            href: "/api/v1/stats",
-            description: "Public usage statistics (CC BY 4.0).",
-          },
-        },
-      },
-      200,
-      CORS_CACHE,
-    ),
+    json(discoveryDocument(components.length), 200, CORS_CACHE),
   );
 
   v1.get("/health", () => {
@@ -415,13 +294,13 @@ export function registerContent(v1: Hono) {
       cache(300, 3600),
     );
   });
-  // app/api/v1/ai/instructions/[name]/route.ts with data present (mzizi-registry
-  // 0b1819e): the whole doctrine row, by name and then by target.
+  // app/api/v1/ai/instructions/[name]/route.ts: the whole doctrine row, by name
+  // and then by target. Checked against the handler at build time.
   v1.get("/ai/instructions/:name", (c) => {
     const name = c.req.param("name");
     const instruction = readAiInstruction(name);
     if (!instruction) {
-      return json({ error: `AI instruction "${name}" not found` }, 404, CORS);
+      return json(aiInstructionNotFound(name), 404, CORS);
     }
     return json(instruction, 200, cache(300, 3600));
   });

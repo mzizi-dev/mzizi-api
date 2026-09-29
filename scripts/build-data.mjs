@@ -11,7 +11,12 @@
  *      files only), and @supabase/supabase-js stays replaced by a stub that
  *      throws, so a reader that ever reached for one again fails the build
  *      instead of silently shipping empty data.
- *   3. Run the bundle and split its output into one JSON module per concern.
+ *      `next/server` is replaced by scripts/next-server-stub.mjs (just
+ *      `NextResponse.json`), so extract.ts can run the registry's own route
+ *      handlers and check this Worker's answers against theirs.
+ *   3. Run the bundle, which checks this Worker's search and projections
+ *      against the registry's route handlers, and split its output (a JSON
+ *      file) into one JSON module per concern.
  *
  * No registry dependencies are installed: the modules it reads (registry.json,
  * lib/*.generated.*, lib/tokens, lib/samples, content-derived doctrine) are
@@ -99,6 +104,9 @@ await build({
         b.onResolve({ filter: /^@supabase\/supabase-js$/ }, () => ({
           path: join(root, "scripts/supabase-stub.mjs"),
         }));
+        b.onResolve({ filter: /^next\/server$/ }, () => ({
+          path: join(root, "scripts/next-server-stub.mjs"),
+        }));
         b.onResolve({ filter: /^@\// }, (args) =>
           b.resolve("./" + args.path.slice(2), {
             resolveDir: registryDir,
@@ -110,13 +118,18 @@ await build({
   ],
 });
 
-const raw = execFileSync(process.execPath, [outfile], {
-  maxBuffer: 256 * 1024 * 1024,
-  stdio: ["ignore", "pipe", "inherit"],
+const dataFile = join(
+  root,
+  ".registry",
+  `extract-${pin.ref.slice(0, 12)}.json`,
+);
+execFileSync(process.execPath, [outfile, dataFile], {
+  // The extractor's stdout is the registry handlers' log lines: onto stderr.
+  stdio: ["ignore", 2, "inherit"],
   // Unset, so any registry code that checks for Supabase sees "not configured".
   env: { PATH: process.env.PATH },
 });
-const data = JSON.parse(raw.toString());
+const data = JSON.parse(readFileSync(dataFile, "utf8"));
 
 const outDir = join(root, "src/data");
 mkdirSync(outDir, { recursive: true });
@@ -155,5 +168,6 @@ console.error(
     `${data.changelog.length} changelog entries, ${data.skills.names.length} skills, ` +
     `${Object.keys(data.componentDocs).length} docs rows, ` +
     `${Object.keys(data.aiInstructionIndex).length} AI instruction keys, ` +
-    `search checked on ${data.searchProbes} probes → src/data/`,
+    `search checked on ${data.searchProbes} probes, ` +
+    `${data.handlerChecks} answers checked against the registry's handlers → src/data/`,
 );

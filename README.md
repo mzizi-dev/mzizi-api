@@ -48,7 +48,7 @@ base paths answer: `/v1/...` (canonical) and `/api/v1/...`.
 | `GET /v1/ui/{name}`: the shadcn install endpoint                                                              | Item plus its source file                         |
 | `GET /v1/ui/{name}/docs`                                                                                      | The item's `meta` block in `registry.json`        |
 | `GET /v1/rs/{name}`                                                                                           | The Dioxus (`.rs`) source, where one exists       |
-| `GET /v1/search` (`q`, and the handler's two legacy filters)                                                  | Component names and descriptions                  |
+| `GET /v1/search` (`q`, `node`, `category`; `layer` is a deprecated alias of `node`)                           | `registry.json`                                   |
 | `GET /v1/brand`                                                                                               | `lib/tokens`: 21 colour families, and the rest    |
 | `GET /v1/architecture` · `/v1/architecture/nodes/{n}`                                                         | The DNA double helix: 8 nodes, 4 rungs, 6 strands |
 | `GET /v1/data-layer` · `/ecosystem` · `/pipeline` · `/sovereignty` · `/ubuntu/pillars` · `/ubuntu/principles` | `content/doctrine/**`                             |
@@ -76,8 +76,11 @@ Also answered, as they are today:
 - **Read-only.** A path with a `GET` handler answers `OPTIONS` with `204` and
   `Allow: GET, HEAD, OPTIONS`, and every other method with an empty `405`.
 
-The differences from the registry Worker this replaced are all on purpose, and
-each is listed in `EXPECTED` in [`scripts/parity.mjs`](scripts/parity.mjs):
+The differences from the registry Worker this replaced were all on purpose, and
+were listed in `EXPECTED` in [`scripts/parity.mjs`](scripts/parity.mjs) at the
+cutover (mzizi-api-gateway#13 and before). Since then the baseline is
+api.mzizi.dev itself, so `EXPECTED` lists only what the current pin bump
+changes. The cutover differences were:
 
 - The bare `/v1` serves the discovery document (the registry Worker answered it
   with the website's HTML 404).
@@ -126,37 +129,48 @@ hop and a second deploy artefact for no benefit at this size. Revisit it only if
 
 Three routes used to answer `503 {"error":"Database not configured"}` even though
 their data was in files: the registry handlers gated them on Supabase
-credentials that were never set on the registry Worker. The registry has since
-dropped Supabase and reduced those handlers to `503` stubs, noting that serving
-them from files was a deliberate follow-up. This Worker is that follow-up. Each
-route answers what its registry handler answered with data present, from the
-registry's own readers. The handlers are the ones at
-[`0b1819e`](https://github.com/mzizi-dev/mzizi-registry/tree/0b1819e10dd34c7acb24a990b5434708d56c78ec/app/api/v1),
-the last registry commit before the Supabase removal
-([mzizi-registry#368](https://github.com/mzizi-dev/mzizi-registry/pull/368)):
+credentials that were never set on the registry Worker. This Worker started
+serving them from files at the cutover, porting the handlers from
+[`0b1819e`](https://github.com/mzizi-dev/mzizi-registry/tree/0b1819e10dd34c7acb24a990b5434708d56c78ec/app/api/v1).
+The registry's own handlers now serve them from files too
+([mzizi-registry#373](https://github.com/mzizi-dev/mzizi-registry/pull/373)),
+so this Worker ports the handlers at the pin:
 
-| Route                        | Reader (mzizi-registry `lib/db`)                                                | Answer                                                                                                       |
-| ---------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `/v1/ui/{name}/docs`         | `getComponentWithDocs`: the docs row and demo flag from the item's `meta` block | `name`, `description`, `node`, `nodeLabel`, `owner`, `collection`, `docs`, `demo`; `404` for an unknown name |
-| `/v1/search`                 | `searchComponents`, `getComponentsByLayer`, `getComponentsByCategory`           | `{ data, meta: { total, query, layer, category } }`; `400` with none of the three parameters                 |
-| `/v1/ai/instructions/{name}` | `getAiInstruction`, then `getAiInstructionByTarget`                             | The whole doctrine row, by name or by target; `404` for neither                                              |
+| Route                        | Reader (mzizi-registry `lib/db`)                                                | Answer                                                                                                                                                          |
+| ---------------------------- | ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/v1/ui/{name}/docs`         | `getComponentWithDocs`: the docs row and demo flag from the item's `meta` block | `name`, `description`, `node`, `nodeLabel`, `owner`, `collection`, `docs`, `demo`; `404` for an unknown name                                                    |
+| `/v1/search`                 | `searchComponents`, then `node` and `categories` filters                        | `{ data, meta: { total, query, node, category } }`, each hit `name`, `type`, `title`, `description`, `categories`, `node`, `nodeLabel`; `400` with no parameter |
+| `/v1/ai/instructions/{name}` | `getAiInstruction`, then `getAiInstructionByTarget`                             | The whole doctrine row, by name or by target; `404` for neither                                                                                                 |
 
 `build-data` stores what the first and third need (`src/data/component-docs.json`,
 `src/data/ai-instruction-index.json`). Search is computed per request, so it runs
 [`src/search.ts`](src/search.ts) over `components.json`, which is the output of
-`readComponents()`. `scripts/extract.ts` checks that code against the
-registry's own three readers on about 1,200 queries, and fails the build if
-they ever disagree.
+`readComponents()`. The per-route projections for docs, AI instructions, the
+versions `503` and the discovery document are in
+[`src/projections.ts`](src/projections.ts).
 
-**Search carries its handler's quirks, on purpose.** Registry items carry `node`
-and `categories`. The handler filters on `layer` and `category` (the retired
-database row's field names), so a `layer` or `category` parameter matches
-nothing, and a hit has only `name` and `description`. A port that fixed this
-here would fork the contract from the registry. The fix belongs in the
-registry's handler first, and a pin bump brings it here.
+**Both are checked against the registry's own route handlers at build time.**
+`scripts/extract.ts` imports the handlers from `app/api/v1/**/route.ts` at the
+pin and runs them in-process, with `next/server` replaced by
+[`scripts/next-server-stub.mjs`](scripts/next-server-stub.mjs) (just
+`NextResponse.json`). It compares their answers with this Worker's: search on
+about 1,300 queries (status, body and the `Deprecation` header), docs for every
+component and for unknown names, every AI instruction key, the versions `503`
+and the discovery document. A disagreement fails the build.
 
-The discovery document is unchanged. Its `database` block still reads
-`not_configured` / `0`, as the registry's does.
+**Search filters on `node` and `categories`,** combined (AND), as the registry
+handler does since mzizi-registry#373. `?layer=` still works as a **deprecated
+alias of `?node=`**: the answer carries `meta.deprecation` and a
+`Deprecation: true` header, and `node` wins when both are given. Before that
+the handler filtered on `layer` and `category`, the retired database row's
+field names, so those filters matched nothing and a hit had only `name` and
+`description`.
+
+**The discovery document says what serves it.** Its `data` block is
+`{ source: "files", repository, components }`, with the live count, and its
+description names Mzizi as the operator of the registry and this API, and the
+Bundu Foundation as the project's home. It used to carry
+`database: { status: "not_configured", components: 0 }`.
 
 ### Not served from files
 

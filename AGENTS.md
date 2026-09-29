@@ -49,9 +49,11 @@ restart forever.
   `scripts/extract.ts`, which calls mzizi-registry's own `lib/*` functions.
   Route handlers in `src/routes/` do only the per-endpoint projection, mirroring
   `app/api/v1/**/route.ts` in the registry. The one query-time computation,
-  `/v1/search`, lives in `src/search.ts`, and `extract.ts` fails the build if it
-  disagrees with the registry's `searchComponents`, `getComponentsByLayer` or
-  `getComponentsByCategory`. Change both sides together, or neither.
+  `/v1/search`, lives in `src/search.ts`, and the projections for docs, AI
+  instructions, versions and discovery live in `src/projections.ts`.
+  `extract.ts` runs the registry's own route handlers (with `next/server`
+  stubbed) and fails the build if either disagrees with them. Change both sides
+  together, or neither.
 - **Port handlers; don't fix them here.** A registry handler's quirk (for example
   `/v1/search` filtering on fields registry items don't carry) is fixed in the
   registry first and reaches this Worker through a pin bump.

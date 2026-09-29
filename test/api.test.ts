@@ -16,10 +16,22 @@ describe("discovery and health", () => {
       expect(res.status).toBe(200);
       const body = (await res.json()) as {
         name: string;
+        data: unknown;
         resources: Record<string, unknown>;
       };
       expect(body.name).toBe("Mzizi API");
       expect(Object.keys(body.resources)).toContain("architecture");
+      // Files are the data layer; there is no database block, and Mzizi, not
+      // Nyuchi, is named as the operator.
+      expect(body).not.toHaveProperty("database");
+      expect(body.data).toEqual({
+        source: "files",
+        repository: "https://github.com/mzizi-dev/mzizi-registry",
+        components: components.length,
+      });
+      expect(JSON.stringify(body)).not.toMatch(
+        /operated and developed by Nyuchi|served from database/i,
+      );
     }
   });
 
@@ -173,14 +185,15 @@ describe("file-backed routes", () => {
     expect(res.headers.get("cache-control")).toBe(
       "public, max-age=300, s-maxage=3600",
     );
+    expect(res.headers.get("deprecation")).toBeNull();
     const body = (await res.json()) as {
-      data: Array<{ name: string; description: string }>;
+      data: Array<Record<string, unknown>>;
       meta: Record<string, unknown>;
     };
     expect(body.meta).toEqual({
       total: body.data.length,
       query: "BUTTON",
-      layer: null,
+      node: null,
       category: null,
     });
     const names = body.data.map((d) => d.name);
@@ -193,47 +206,99 @@ describe("file-backed routes", () => {
       )
       .map((c) => c.name);
     expect(names).toEqual(expected);
-    // The handler's projection: registry items carry no `registry_type`,
-    // `category` or `layer`, so only name and description remain.
-    for (const hit of body.data)
-      expect(Object.keys(hit)).toEqual(["name", "description"]);
+    // Each hit carries the fields registry items have.
+    const button = body.data.find((d) => d.name === "button");
+    expect(Object.keys(button!)).toEqual([
+      "name",
+      "type",
+      "title",
+      "description",
+      "categories",
+      "node",
+      "nodeLabel",
+    ]);
+    expect(button!.type).toBe("registry:ui");
+    expect(typeof button!.node).toBe("number");
   });
 
   it("answers the registry handler's 400 without a query", async () => {
     for (const path of [
       "/v1/search",
       "/v1/search?q=%20%20",
+      "/v1/search?node=",
       "/v1/search?layer=",
     ]) {
       const res = await get(path);
       expect(res.status, path).toBe(400);
       expect(await res.json()).toEqual({
-        error: "At least one of q, layer, or category is required",
+        error: "At least one of q, node, or category is required",
       });
     }
   });
 
-  it("filters by layer and category exactly as the registry handler does", async () => {
-    // Registry items carry `node` and `categories`, not the retired `layer` and
-    // `category` the handler filters on, so these match nothing (see README).
-    const layer = (await (await get("/v1/search?layer=2")).json()) as {
+  it("filters on node and categories, combined", async () => {
+    const onNode2 = components.filter((c) => c.node === 2).map((c) => c.name);
+    expect(onNode2.length).toBeGreaterThan(0);
+    const res = await get("/v1/search?node=2");
+    expect(res.headers.get("deprecation")).toBeNull();
+    const node = (await res.json()) as {
+      data: Array<{ name: string; node: number }>;
+      meta: Record<string, unknown>;
+    };
+    expect(node.data.map((d) => d.name)).toEqual(onNode2);
+    expect(node.meta).toEqual({
+      total: onNode2.length,
+      query: null,
+      node: "2",
+      category: null,
+    });
+
+    const category = components[0].categories?.[0];
+    expect(category).toBeDefined();
+    const both = (await (
+      await get(`/api/v1/search?q=a&node=2&category=${category}`)
+    ).json()) as {
+      data: Array<{ name: string; node: number; categories: string[] }>;
+      meta: Record<string, unknown>;
+    };
+    const want = components
+      .filter(
+        (c) =>
+          c.node === 2 &&
+          (c.categories ?? []).includes(category!) &&
+          (c.name.includes("a") ||
+            (c.description ?? "").toLowerCase().includes("a")),
+      )
+      .map((c) => c.name);
+    expect(both.data.map((d) => d.name)).toEqual(want);
+    expect(both.meta).toMatchObject({ query: "a", node: "2", category });
+  });
+
+  it("keeps ?layer= as a deprecated alias of ?node=", async () => {
+    const node = (await (await get("/v1/search?node=2")).json()) as {
+      data: unknown[];
+    };
+    const res = await get("/v1/search?layer=2");
+    expect(res.status).toBe(200);
+    expect(res.headers.get("deprecation")).toBe("true");
+    const layer = (await res.json()) as {
       data: unknown[];
       meta: Record<string, unknown>;
     };
-    expect(layer).toEqual({
-      data: [],
-      meta: { total: 0, query: null, layer: "2", category: null },
-    });
-    const both = (await (
-      await get("/api/v1/search?q=button&category=forms")
-    ).json()) as { data: unknown[]; meta: Record<string, unknown> };
-    expect(both.data).toEqual([]);
-    expect(both.meta).toEqual({
-      total: 0,
-      query: "button",
-      layer: null,
-      category: "forms",
-    });
+    expect(layer.data).toEqual(node.data);
+    expect(layer.meta.node).toBe("2");
+    expect(layer.meta.deprecation).toMatch(/deprecated alias of `node`/);
+    expect(layer.meta).not.toHaveProperty("layer");
+
+    // `node` wins, and then there is no deprecation notice.
+    const res2 = await get("/v1/search?layer=3&node=2");
+    expect(res2.headers.get("deprecation")).toBeNull();
+    const both = (await res2.json()) as {
+      data: unknown[];
+      meta: Record<string, unknown>;
+    };
+    expect(both.data).toEqual(node.data);
+    expect(both.meta).not.toHaveProperty("deprecation");
   });
 
   it("serves an AI instruction set by name and by target", async () => {

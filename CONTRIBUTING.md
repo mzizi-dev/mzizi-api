@@ -31,8 +31,9 @@ npm run dev
    shape. Write a new file in `src/data/` rather than growing an existing one, so
    a pin bump's diff stays easy to read. If the route computes per request (as
    `/v1/search` does), put the computation in a pure module under `src/` and
-   check it against the registry's reader in `extract.ts`, as
-   `src/search.ts` is.
+   check it against the registry's route handler in `extract.ts`, as
+   `src/search.ts` is. A per-route projection goes in `src/projections.ts` and
+   is checked the same way.
    - If the registry handler at the pin is a stub (the registry removed
      Supabase in
      [mzizi-registry#368](https://github.com/mzizi-dev/mzizi-registry/pull/368)

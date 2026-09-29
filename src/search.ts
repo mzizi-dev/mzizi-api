@@ -1,41 +1,43 @@
 /**
  * `/v1/search` over the bundled registry index — mzizi-registry's
- * app/api/v1/search/route.ts as it answered with data present (the handler at
- * 0b1819e, before the registry's Supabase removal reduced it to a 503 stub),
- * with its three readers from `lib/db` (`searchComponents`,
- * `getComponentsByLayer`, `getComponentsByCategory`) applied to the same
- * `readComponents()` output that src/data/components.json holds.
+ * app/api/v1/search/route.ts (mzizi-registry#373): `q` is a case-insensitive
+ * substring of a component's name or description, `node` its node on the
+ * helix, `category` one of its `categories`; they combine (AND). `?layer=` is a
+ * deprecated alias of `?node=`.
  *
  * Pure: it takes the items and the query string, so scripts/extract.ts can run
- * it against the registry's own readers at build time and fail the build if
- * the two ever disagree. The Worker and that check share this one copy.
+ * it against the registry's own handler at build time and fail the build if
+ * the two ever disagree — status, body and headers. The Worker and that check
+ * share this one copy.
  */
 
-/** The fields of a registry item the search handler reads. */
+/** The fields of a registry item the search handler reads and returns. */
 export interface SearchableItem {
   name: string;
+  type?: string;
+  title?: string;
   description?: string;
+  categories?: string[];
   node?: number;
+  nodeLabel?: string;
 }
-
-/**
- * A field the handler reads that registry items do not declare — the retired
- * Supabase row's `registry_type`, `category` and `layer`. Read, not assumed
- * absent, so the day an item carries one, both sides see it.
- */
-const field = (c: SearchableItem, key: string): unknown =>
-  (c as unknown as Record<string, unknown>)[key];
 
 export interface SearchHit {
   name: string;
-  type?: unknown;
-  description?: unknown;
-  category?: unknown;
-  layer?: unknown;
+  type?: string;
+  title?: string;
+  description?: string;
+  categories?: string[];
+  node?: number;
+  nodeLabel?: string;
 }
 
+/** The registry handler's `LAYER_DEPRECATION`. */
+export const LAYER_DEPRECATION =
+  "`layer` is a deprecated alias of `node` and will be removed. Filter with `?node=` instead.";
+
 export type SearchAnswer =
-  | { status: 400; body: { error: string } }
+  | { status: 400; body: { error: string }; headers: Record<string, string> }
   | {
       status: 200;
       body: {
@@ -43,10 +45,13 @@ export type SearchAnswer =
         meta: {
           total: number;
           query: string | null;
-          layer: string | null;
+          node: string | null;
           category: string | null;
+          deprecation?: string;
         };
       };
+      /** Beyond the route's cache headers: `Deprecation: true` for `?layer=`. */
+      headers: Record<string, string>;
     };
 
 /** lib/db `searchComponents`: case-insensitive substring of name or description. */
@@ -63,64 +68,58 @@ export function searchComponents<T extends SearchableItem>(
   });
 }
 
-/** lib/db `getComponentsByLayer`. */
-export function getComponentsByLayer<T extends SearchableItem>(
-  items: readonly T[],
-  layer: string,
-): T[] {
-  return items.filter(
-    (c) => String(c.node) === layer || field(c, "layer") === layer,
-  );
-}
+const onNode = (c: SearchableItem, node: string) =>
+  typeof c.node === "number" && String(c.node) === node;
+const inCategory = (c: SearchableItem, category: string) =>
+  (c.categories ?? []).includes(category);
 
-/** lib/db `getComponentsByCategory`. */
-export function getComponentsByCategory<T extends SearchableItem>(
-  items: readonly T[],
-  category: string,
-): T[] {
-  return items.filter((c) => field(c, "category") === category);
-}
-
-/**
- * The handler body. Field for field, including what it reads that registry
- * items do not carry (`registry_type`, `category`, `layer` are the retired
- * Supabase row's names): those come out `undefined`, and `JSON.stringify` drops
- * them, exactly as `NextResponse.json` did.
- */
+/** The handler body, field for field. */
 export function search(
   items: readonly SearchableItem[],
   params: URLSearchParams,
 ): SearchAnswer {
   const q = (params.get("q") ?? "").trim();
-  const layer = params.get("layer");
-  const category = params.get("category");
+  const nodeParam = params.get("node")?.trim() || null;
+  const layerParam = params.get("layer")?.trim() || null;
+  const node = nodeParam ?? layerParam;
+  const viaLayer = nodeParam === null && layerParam !== null;
+  const category = params.get("category")?.trim() || null;
 
   let results: SearchableItem[];
   if (q) results = searchComponents(items, q);
-  else if (layer) results = getComponentsByLayer(items, layer);
-  else if (category) results = getComponentsByCategory(items, category);
+  else if (node) results = items.filter((c) => onNode(c, node));
+  else if (category) results = items.filter((c) => inCategory(c, category));
   else
     return {
       status: 400,
-      body: { error: "At least one of q, layer, or category is required" },
+      body: { error: "At least one of q, node, or category is required" },
+      headers: {},
     };
 
-  if (layer) results = results.filter((c) => field(c, "layer") === layer);
-  if (category)
-    results = results.filter((c) => field(c, "category") === category);
+  if (node) results = results.filter((c) => onNode(c, node));
+  if (category) results = results.filter((c) => inCategory(c, category));
 
   const data = results.map((c) => ({
     name: c.name,
-    type: field(c, "registry_type"),
+    type: c.type,
+    title: c.title,
     description: c.description,
-    category: field(c, "category"),
-    layer: field(c, "layer"),
+    categories: c.categories,
+    node: c.node,
+    nodeLabel: c.nodeLabel,
   }));
   return {
     status: 200,
     body: {
       data,
-      meta: { total: data.length, query: q || null, layer, category },
+      meta: {
+        total: data.length,
+        query: q || null,
+        node,
+        category,
+        ...(viaLayer ? { deprecation: LAYER_DEPRECATION } : {}),
+      },
     },
+    headers: viaLayer ? { Deprecation: "true" } : {},
   };
 }

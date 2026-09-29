@@ -11,6 +11,7 @@ import {
   readSource,
 } from "../data";
 import { CORS, CORS_CACHE, cache, json } from "../http";
+import { VERSIONS_NOT_SERVED, docsBody, docsNotFound } from "../projections";
 import { search } from "../search";
 
 /** app/api/v1/ui/route.ts `positiveInt`. */
@@ -24,20 +25,9 @@ function positiveInt(raw: string | null): number | undefined {
 /**
  * Version history is the one registry route with no file behind it. It is
  * machine-written data that the Mzizi console owns, and this Worker holds no
- * database, so it stays at 503, now saying why.
+ * database, so it stays at 503 and says why — the registry handler's body.
  */
-const versionsNotServed = () =>
-  json(
-    {
-      error: "Version history is not served by this API",
-      message:
-        "Component version history is machine-written data owned by the Mzizi console " +
-        "(app.mzizi.dev), not part of the registry's files. api.mzizi.dev serves those files " +
-        "and has no database. Release history is at https://api.mzizi.dev/v1/changelog.",
-    },
-    503,
-    CORS,
-  );
+const versionsNotServed = () => json(VERSIONS_NOT_SERVED, 503, CORS);
 
 export function registerRegistry(v1: Hono) {
   v1.get("/ui", (c) => {
@@ -100,41 +90,25 @@ export function registerRegistry(v1: Hono) {
     );
   });
 
-  // app/api/v1/ui/[name]/docs/route.ts with data present (mzizi-registry
-  // 0b1819e; the pinned handler is a 503 stub with a note that serving it is a
-  // deliberate follow-up, which this is). The docs row and demo flag come from
-  // the registry's `getComponentWithDocs`; the rest is the component itself.
+  // app/api/v1/ui/[name]/docs/route.ts. The docs row and demo flag come from the
+  // registry's `getComponentWithDocs`; the rest is the component itself. The
+  // projection is src/projections.ts, checked against the handler at build time.
   v1.get("/ui/:name/docs", (c) => {
     const name = c.req.param("name");
     const component = readComponent(name);
     const withDocs = component ? readComponentDocs(component.name) : null;
-    if (!component || !withDocs) {
-      return json({ error: `Component "${name}" not found` }, 404, CORS);
-    }
-    return json(
-      {
-        name: component.name,
-        description: component.description,
-        node: component.node,
-        nodeLabel: component.nodeLabel,
-        owner: component.meta?.owner,
-        collection: component.meta?.collection,
-        docs: withDocs.docs ?? null,
-        demo: withDocs.demo ?? null,
-      },
-      200,
-      CORS_CACHE,
-    );
+    if (!component || !withDocs) return json(docsNotFound(name), 404, CORS);
+    return json(docsBody(component, withDocs), 200, CORS_CACHE);
   });
 
   v1.get("/ui/:name/versions", versionsNotServed);
 
-  // app/api/v1/search/route.ts with data present (0b1819e); see src/search.ts.
+  // app/api/v1/search/route.ts; see src/search.ts.
   const SEARCH_CACHE = cache(300, 3600);
   v1.get("/search", (c) => {
     const answer = search(components, new URL(c.req.url).searchParams);
     return answer.status === 200
-      ? json(answer.body, 200, SEARCH_CACHE)
+      ? json(answer.body, 200, { ...SEARCH_CACHE, ...answer.headers })
       : json(answer.body, answer.status, CORS);
   });
 

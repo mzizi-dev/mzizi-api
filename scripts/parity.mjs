@@ -60,6 +60,8 @@ const HEADERS = [
   "strict-transport-security",
   "x-dns-prefetch-control",
   "x-openapi-version",
+  // RFC 9745; /v1/search sends `Deprecation: true` for the `?layer=` alias.
+  "deprecation",
 ];
 
 /**
@@ -67,112 +69,59 @@ const HEADERS = [
  * `allow` lists the only kinds of difference the entry excuses — `status`,
  * `location`, `body` or `header:<name>` — so a new regression on the same
  * request (a 500, a lost header) still fails the run.
+ *
+ * The baseline is api.mzizi.dev, which this Worker already serves, so these
+ * are only what the current registry pin changes. The cutover's differences
+ * from the registry Worker are in mzizi-api-gateway#13 and earlier.
  */
-const NOT_FOUND_PAGE = [
-  "body",
-  "header:content-type",
-  "header:access-control-allow-origin",
-];
-/**
- * A route that answered 503 and now serves from files: a new status, a body,
- * and a Cache-Control the 503 lacked (the route's own on a 200, the uncacheable
- * one on a 404). Its CORS and security headers must still match.
- */
-const WAS_503 = ["status", "body", "header:cache-control"];
+const SEARCH_FIX =
+  "mzizi-registry#373: search filters on `node` and `categories` (AND) and each hit carries `name`, `type`, `title`, `description`, `categories`, `node`, `nodeLabel`; `meta` is `{ total, query, node, category }`. It used to filter on `layer`/`category`, which no registry item has, and project `registry_type`.";
 const EXPECTED = {
-  "GET /v1": {
-    allow: [
-      "status",
-      "body",
-      "header:content-type",
-      "header:cache-control",
-      "header:access-control-allow-origin",
-    ],
-    why: "Live answers the bare /v1 with the site's HTML 404 (the Next rewrite never matched it; README called this out). This Worker serves the discovery document there, identical to /api/v1.",
-  },
-  "* /v1/this-route-does-not-exist": {
-    allow: NOT_FOUND_PAGE,
-    why: "Both 404. Live renders the website's 93 KB HTML 404 page; an API host with no website answers a small JSON 404.",
-  },
-  "* /api/v1/this-route-does-not-exist": {
-    allow: NOT_FOUND_PAGE,
-    why: "Both 404: the website's HTML 404 page vs a small JSON 404 (this host serves no website).",
-  },
-  "* /v1/does-not-exist": {
-    allow: NOT_FOUND_PAGE,
-    why: "Both 404, for every method: the website's HTML 404 page vs a small JSON 404.",
-  },
-  "GET /.well-known/security.txt": {
-    allow: ["body"],
-    why: "Owner decision 2026-09-28: Contact is security@bundu.org; Canonical and Policy point at this host and this repository.",
-  },
-  // ── File-backed routes, served from the registry's files (were 503) ───────
   ...Object.fromEntries(
-    [
-      "/v1/ui/button/docs",
-      "/v1/ui/mzizi-tokens/docs",
-      "/api/v1/ui/button/docs",
-    ].map((p) => [
-      `GET ${p}`,
-      {
-        allow: WAS_503,
-        why: "Was 503 `Database not configured`. Now the registry handler's data-present answer: the docs row and demo flag `getComponentWithDocs` builds from registry.json `meta`.",
-      },
-    ]),
-  ),
-  "GET /v1/ui/does-not-exist/docs": {
-    allow: WAS_503,
-    why: "Was 503. Now the registry handler's 404 for an unknown component.",
-  },
-  ...Object.fromEntries(
-    ["/v1/ui/button/versions", "/api/v1/ui/button/versions"].map((p) => [
+    ["/v1", "/api/v1"].map((p) => [
       `GET ${p}`,
       {
         allow: ["body"],
-        why: "Still 503 with the same headers; the body now says why: version history is console-owned data and this API has no database.",
+        why: 'mzizi-registry#373: the discovery document\'s `database: {status: "not_configured", components: 0}` is `data: {source: "files", repository, components: <live count>}`; the description names Mzizi as operator (not Nyuchi) and the Bundu Foundation; the ui, health and search descriptions drop the database wording and name `node`.',
+      },
+    ]),
+  ),
+  ...Object.fromEntries(
+    ["/openapi", "/api/openapi", "/openapi?format=json"].map((p) => [
+      `GET ${p}`,
+      {
+        allow: ["body"],
+        why: 'mzizi-registry#373: openapi.yaml drops the Supabase / "operated and developed by Nyuchi" wording and the 503 on file-backed routes, and its docs, search and AI-instruction schemas match their handlers.',
       },
     ]),
   ),
   ...Object.fromEntries(
     [
       "/v1/search?q=button",
-      "/v1/search?layer=2",
       "/v1/search?category=forms",
       "/api/v1/search?q=x",
-    ].map((p) => [
+      "/v1/search?layer=3&node=2",
+      "/v1/search?category=primitives",
+      "/v1/search?q=button&node=2&category=primitives",
+    ].map((p) => [`GET ${p}`, { allow: ["body"], why: SEARCH_FIX }]),
+  ),
+  ...Object.fromEntries(
+    ["/v1/search?layer=2", "/api/v1/search?layer=2"].map((p) => [
       `GET ${p}`,
       {
-        allow: WAS_503,
-        why: "Was 503. Now the registry search handler's data-present answer over registry.json (src/search.ts, checked against the registry's `searchComponents` at build time).",
+        allow: ["body", "header:deprecation"],
+        why: `${SEARCH_FIX} \`?layer=\` is kept as a deprecated alias of \`?node=\`: node 2's items, plus \`meta.deprecation\` and \`Deprecation: true\`.`,
       },
     ]),
   ),
-  "GET /v1/search": {
-    allow: ["status", "body"],
-    why: "Was 503. Now the registry search handler's 400: at least one of q, layer or category is required.",
+  "GET /v1/search?node=2": {
+    allow: ["status", "body", "header:cache-control"],
+    why: `${SEARCH_FIX} \`node\` was not a parameter, so this was the 400.`,
   },
-  ...Object.fromEntries(
-    [
-      "/v1/ai/instructions/nyuchi-mcp-system-prompt",
-      "/v1/ai/instructions/mcp-server",
-      "/api/v1/ai/instructions/github-copilot",
-    ].map((p) => [
-      `GET ${p}`,
-      {
-        allow: WAS_503,
-        why: "Was 503. Now the instruction set's doctrine row, by name then by target, as the registry handler serves it.",
-      },
-    ]),
-  ),
-  ...Object.fromEntries(
-    ["/v1/ai/instructions/claude", "/v1/ai/instructions/nope"].map((p) => [
-      `GET ${p}`,
-      {
-        allow: WAS_503,
-        why: "Was 503. Now the registry handler's 404: no instruction set has this name or target (Claude's target is `claude-system-prompt`).",
-      },
-    ]),
-  ),
+  "GET /v1/search": {
+    allow: ["body"],
+    why: "mzizi-registry#373: the 400 reads `At least one of q, node, or category is required`.",
+  },
 };
 
 // ── Build the request list ─────────────────────────────────────────────────
@@ -252,6 +201,10 @@ const paths = [
   "/v1/search?q=button",
   "/v1/search?layer=2",
   "/v1/search?category=forms",
+  "/v1/search?node=2",
+  "/v1/search?layer=3&node=2",
+  "/v1/search?category=primitives",
+  "/v1/search?q=button&node=2&category=primitives",
   "/v1/stats",
   "/v1/stats?days=7",
   "/v1/stats?days=500",
@@ -304,6 +257,7 @@ const paths = [
   "/api/v1/stats",
   "/api/v1/samples",
   "/api/v1/search?q=x",
+  "/api/v1/search?layer=2",
   "/api/v1/ui/button/docs",
   "/api/v1/ui/button/versions",
   "/api/v1/ai/instructions/github-copilot",

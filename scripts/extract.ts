@@ -1,7 +1,8 @@
 /**
  * Runs INSIDE the registry checkout's module graph (bundled by build-data.mjs,
- * with `@/` aliased to the checkout) and prints the data every /v1 route needs
- * as one JSON document on stdout.
+ * with `@/` aliased to the checkout) and writes the data every /v1 route needs
+ * as one JSON document to the file named by argv[2]. Not stdout: the handlers
+ * below log through the registry's logger, which writes to the console.
  *
  * Everything here calls mzizi-registry's own readers — `lib/registry`,
  * `lib/doctrine`, `lib/db` (file-only since the registry's Supabase removal),
@@ -10,10 +11,13 @@
  * them. The route-level projection (which fields each endpoint emits) lives in
  * src/routes/.
  *
- * The one query-time computation, `/v1/search`, is src/search.ts. It is checked
- * here against the registry's own `searchComponents`, `getComponentsByLayer`
- * and `getComponentsByCategory` on about 1,200 queries, and a disagreement
- * fails the build.
+ * The routes that project or compute rather than pass a reader's value
+ * through — `/v1/search` (src/search.ts), the discovery document, component
+ * docs, single AI instruction sets and the versions 503 (src/projections.ts) —
+ * are checked here against mzizi-registry's own route handlers, run in this
+ * process with `next/server` stubbed (scripts/next-server-stub.mjs): search on
+ * about 1,300 queries (status, body and the `Deprecation` header), docs for
+ * every component, every AI instruction key. Any disagreement fails the build.
  */
 import { readComponents, readNodeCounts } from "@/lib/registry";
 import {
@@ -38,9 +42,6 @@ import {
   getAiInstruction,
   getAiInstructionByTarget,
   getComponentWithDocs,
-  searchComponents,
-  getComponentsByLayer,
-  getComponentsByCategory,
 } from "@/lib/db";
 import {
   listSkills,
@@ -65,46 +66,49 @@ import {
 } from "@/lib/tokens/brand.source";
 import { OPENAPI_YAML } from "@/lib/openapi.generated";
 import { COMPONENT_RENAMES } from "@/lib/component-renames";
+import { GET as discoveryHandler } from "@/app/api/v1/route";
+import { GET as searchHandler } from "@/app/api/v1/search/route";
+import { GET as docsHandler } from "@/app/api/v1/ui/[name]/docs/route";
+import { GET as versionsHandler } from "@/app/api/v1/ui/[name]/versions/route";
+import { GET as aiInstructionHandler } from "@/app/api/v1/ai/instructions/[name]/route";
+import { writeFileSync } from "node:fs";
 import { search, type SearchableItem } from "../src/search";
+import {
+  VERSIONS_NOT_SERVED,
+  aiInstructionNotFound,
+  discoveryDocument,
+  docsBody,
+  docsNotFound,
+  type DocsItem,
+} from "../src/projections";
 
-/**
- * app/api/v1/search/route.ts with data present (mzizi-registry 0b1819e), on the
- * registry's own readers: the reference src/search.ts must reproduce.
- */
-async function registrySearch(params: URLSearchParams) {
-  const q = (params.get("q") ?? "").trim();
-  const layer = params.get("layer");
-  const category = params.get("category");
-  // Typed loosely, as the handler's `ComponentRow` cast was.
-  let results: Array<Record<string, unknown>>;
-  if (q) results = (await searchComponents(q)) as never;
-  else if (layer) results = (await getComponentsByLayer(layer)) as never;
-  else if (category)
-    results = (await getComponentsByCategory(category)) as never;
-  else
-    return {
-      status: 400,
-      body: { error: "At least one of q, layer, or category is required" },
-    };
-  if (layer) results = results.filter((c) => c.layer === layer);
-  if (category) results = results.filter((c) => c.category === category);
-  const data = results.map((c) => ({
-    name: c.name,
-    type: c.registry_type,
-    description: c.description,
-    category: c.category,
-    layer: c.layer,
-  }));
-  return {
-    status: 200,
-    body: {
-      data,
-      meta: { total: data.length, query: q || null, layer, category },
-    },
-  };
+const ORIGIN = "https://api.mzizi.dev";
+
+/** A handler's answer, reduced to what a check compares. */
+async function answer(res: Response, headers: string[] = []) {
+  return JSON.stringify({
+    status: res.status,
+    body: await res.json(),
+    headers: Object.fromEntries(headers.map((h) => [h, res.headers.get(h)])),
+  });
 }
 
-/** Fails the build if src/search.ts and the registry's readers ever disagree. */
+function agree(route: string, want: string, got: string) {
+  if (want !== got) {
+    throw new Error(
+      `extract: the gateway disagrees with the registry handler for ${route}\n` +
+        `  registry: ${want.slice(0, 400)}\n  gateway:  ${got.slice(0, 400)}`,
+    );
+  }
+}
+
+/** Next's dynamic-segment context, as the App Router passes it. */
+const segment = (name: string) => ({ params: Promise.resolve({ name }) });
+
+/**
+ * Fails the build if src/search.ts and the registry's search handler ever
+ * disagree: status, body, and the `Deprecation` header `?layer=` adds.
+ */
 async function checkSearch(items: SearchableItem[]): Promise<number> {
   const words = new Set<string>(["", "   ", "button", "BUTTON", " card "]);
   for (const c of items) {
@@ -113,36 +117,127 @@ async function checkSearch(items: SearchableItem[]): Promise<number> {
     const first = String(c.description ?? "").split(/\s+/)[0];
     if (first) words.add(first);
   }
-  const layers = new Set<string>(["", "0", "999", "abc", "-1"]);
-  for (const c of items) layers.add(String(c.node));
-  const categories = new Set<string>(["", "forms", "nope"]);
+  const nodes = new Set<string>([
+    "",
+    " ",
+    "0",
+    "02",
+    " 2 ",
+    "999",
+    "abc",
+    "-1",
+  ]);
+  for (const c of items) nodes.add(String(c.node));
+  const categories = new Set<string>(["", " ", "forms", "nope"]);
   for (const c of items)
-    for (const cat of (c as { categories?: string[] }).categories ?? [])
-      categories.add(cat);
+    for (const cat of c.categories ?? []) categories.add(cat);
 
   const probes: URLSearchParams[] = [new URLSearchParams()];
   for (const q of words) probes.push(new URLSearchParams({ q }));
-  for (const layer of layers) {
-    probes.push(new URLSearchParams({ layer }));
-    probes.push(new URLSearchParams({ q: "button", layer }));
+  for (const node of nodes) {
+    probes.push(new URLSearchParams({ node }));
+    probes.push(new URLSearchParams({ layer: node }));
+    probes.push(new URLSearchParams({ q: "button", node }));
+    probes.push(new URLSearchParams({ q: "button", layer: node }));
+    probes.push(new URLSearchParams({ node, layer: "3" }));
+    probes.push(new URLSearchParams({ layer: node, node: "" }));
   }
   for (const category of categories) {
     probes.push(new URLSearchParams({ category }));
     probes.push(new URLSearchParams({ q: "card", category }));
+    probes.push(new URLSearchParams({ node: "2", category }));
     probes.push(new URLSearchParams({ layer: "2", category }));
   }
 
   for (const params of probes) {
-    const want = JSON.stringify(await registrySearch(params));
-    const got = JSON.stringify(search(items, params));
-    if (want !== got) {
-      throw new Error(
-        `extract: src/search.ts disagrees with the registry's search for ?${params}\n` +
-          `  registry: ${want.slice(0, 300)}\n  gateway:  ${got.slice(0, 300)}`,
-      );
-    }
+    const want = await answer(
+      await searchHandler(new Request(`${ORIGIN}/api/v1/search?${params}`)),
+      ["deprecation"],
+    );
+    const got = search(items, params);
+    agree(
+      `/v1/search?${params}`,
+      want,
+      JSON.stringify({
+        status: got.status,
+        body: got.body,
+        headers: { deprecation: got.headers.Deprecation ?? null },
+      }),
+    );
   }
   return probes.length;
+}
+
+/**
+ * Fails the build if src/projections.ts and the registry's discovery, docs,
+ * versions and AI-instruction handlers ever disagree.
+ */
+async function checkHandlers(
+  components: DocsItem[],
+  componentDocs: Record<string, { docs: unknown; demo: unknown }>,
+  aiInstructions: unknown[],
+  aiInstructionIndex: Record<string, number>,
+): Promise<number> {
+  let checks = 0;
+  const check = (
+    route: string,
+    want: string,
+    status: number,
+    body: unknown,
+  ) => {
+    agree(route, want, JSON.stringify({ status, body, headers: {} }));
+    checks++;
+  };
+
+  check(
+    "/v1",
+    await answer(await discoveryHandler()),
+    200,
+    discoveryDocument(components.length),
+  );
+
+  const req = (path: string) => new Request(`${ORIGIN}/api/v1${path}`);
+  for (const c of components) {
+    const path = `/ui/${c.name}/docs`;
+    check(
+      path,
+      await answer(await docsHandler(req(path), segment(c.name))),
+      200,
+      docsBody(c, componentDocs[c.name]),
+    );
+  }
+  // Unknown names only. A renamed `nyuchi-*` name never reaches this route on
+  // either side: next.config.mjs and src/redirects.ts 308 it first.
+  for (const name of ["does-not-exist", "Button"]) {
+    if (components.some((c) => c.name === name)) continue;
+    const path = `/ui/${name}/docs`;
+    check(
+      path,
+      await answer(await docsHandler(req(path), segment(name))),
+      404,
+      docsNotFound(name),
+    );
+  }
+
+  const path = "/ui/button/versions";
+  check(
+    path,
+    await answer(await versionsHandler(req(path), segment("button"))),
+    503,
+    VERSIONS_NOT_SERVED,
+  );
+
+  for (const key of [...Object.keys(aiInstructionIndex), "nope", "claude"]) {
+    const path = `/ai/instructions/${key}`;
+    const at = aiInstructionIndex[key];
+    check(
+      path,
+      await answer(await aiInstructionHandler(req(path), segment(key))),
+      at === undefined ? 404 : 200,
+      at === undefined ? aiInstructionNotFound(key) : aiInstructions[at],
+    );
+  }
+  return checks;
 }
 
 async function main() {
@@ -210,6 +305,12 @@ async function main() {
   }
 
   const searchProbes = await checkSearch(components as SearchableItem[]);
+  const handlerChecks = await checkHandlers(
+    components as DocsItem[],
+    componentDocs,
+    aiInstructions,
+    aiInstructionIndex,
+  );
 
   const skillNames = listSkillNames();
   const skills: Record<string, unknown> = {};
@@ -259,8 +360,9 @@ async function main() {
     componentDocs,
     aiInstructionIndex,
     searchProbes,
+    handlerChecks,
   };
-  process.stdout.write(JSON.stringify(out));
+  writeFileSync(process.argv[2], JSON.stringify(out));
 }
 
 main().catch((e) => {
