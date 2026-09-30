@@ -36,6 +36,27 @@ To see which registry commit production is serving, read the
 
 ### Changed
 
+- **`/v1/skills` serves `@nyuchi/mzizi-skills` 0.8.4**: the same five
+  skills and descriptions, with `meta.version` `0.8.4`. Three bodies now
+  describe Mzizi as a programming language:
+  - `mzizi-language` opens with Mzizi as a general-purpose programming
+    language built to make Rust better, the way TypeScript makes JavaScript
+    better. It tells the language, the harness at its core and the toolchain
+    apart, and states its goals as goals, not results.
+  - `mzizi-roots` says Roots is the language's component model, not the
+    language.
+  - `mzizi-design` names the language and its toolchain first in the
+    ecosystem identity.
+
+  `mzizi-backend` and `discoverability` are unchanged (registry #386).
+
+- **`/v1/ui/mzizi-tokens-globals` gains a `-text` token per colour family**,
+  the value to use as text on `--base`: `--mineral-*-text`,
+  `--heritage-*-text`, `--exp-*-text` and their `--color-*-text` aliases, in
+  both themes. Every existing token keeps its value (registry #385).
+- The registry pin moves to mzizi-registry `43446ab` (registry #385, #386).
+  Strict parity against production showed 9 differences: the eight
+  `/v1/skills*` requests and `/v1/ui/mzizi-tokens-globals`.
 - The registry pin bot reads the Actions secret `RELEASE_BUMP_TOKEN`, not
   `PIN_BUMP_TOKEN`, the name the owner is creating. The workflow,
   `scripts/registry-pin-bump.mjs` (still byte-identical to agent-tools' copy),

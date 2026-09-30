@@ -80,54 +80,61 @@ const HEADERS = [
  * are only what the current registry pin changes. Earlier bumps' entries are in
  * the PRs that made them (mzizi-api-gateway#13 for the cutover, #18 for
  * skills 0.8.0, #20 for skills 0.8.1 and the mzizi brand row, #21 for
- * mzizi's hematite default `--primary`).
+ * mzizi's hematite default `--primary`, #22 for skills 0.8.2).
  */
-// mzizi-registry#384: `@nyuchi/mzizi-skills` 0.8.1 -> 0.8.2 (agent-tools#153).
-// Still the same five skills; `meta.version` is 0.8.2 everywhere. Three skills'
-// text changes: `mzizi-design` (its description, and its body gains the Mzizi
-// -> hematite row of the brand constellation, the footnote on hematite being a
-// Heritage tone, and "copper is the ecosystem layer, not Mzizi's own
-// surfaces"), `mzizi-roots` (the `--brand-accent` examples add a Mzizi surface
-// = hematite) and `discoverability` (the OG image guidance names the brand's
-// colour). `mzizi-language` and `mzizi-backend` differ only in `meta.version`.
-// #384's other files (the public plugin, the lockfile, the registry's own
-// CHANGELOG.md) change nothing else the API serves.
-const SKILLS_082 =
-  "mzizi-registry#384 serves @nyuchi/mzizi-skills 0.8.2 (agent-tools#153): the same five skills, `meta.version` 0.8.2.";
-const DESIGN_DESC =
-  "`mzizi-design`'s description adds \"Mzizi's own is hematite, a Heritage tone\" to the brand constellation.";
+// mzizi-registry#386: `@nyuchi/mzizi-skills` 0.8.2 -> 0.8.4 (agent-tools#157
+// and #159). Still the same five skills with the same descriptions;
+// `meta.version` is 0.8.4 everywhere. Three skills' bodies change, positioning
+// Mzizi as a programming language: `mzizi-language` (a general-purpose language
+// built to make Rust better, the way TypeScript makes JavaScript better; the
+// language, the harness at its core and the toolchain told apart; goals stated
+// as goals), `mzizi-roots` (Roots supports the language as its component model)
+// and `mzizi-design` (the ecosystem identity names the language and its
+// toolchain). `mzizi-backend` and `discoverability` differ only in
+// `meta.version`. #386's other files (the public plugin, the lockfile, the
+// registry's CHANGELOG.md) change nothing else the API serves.
+//
+// mzizi-registry#385: mzizi-tokens-globals.css gains a `-text` token per colour
+// family (the value to use as text on `--base`). Lines are only added; every
+// existing token keeps its value.
+const SKILLS_084 =
+  "mzizi-registry#386 serves @nyuchi/mzizi-skills 0.8.4 (agent-tools#157, #159): the same five skills and descriptions, `meta.version` 0.8.4.";
 const EXPECTED = {
   "GET /v1/skills": {
     allow: ["body"],
-    why: `${SKILLS_082} ${DESIGN_DESC}`,
+    why: `${SKILLS_084} The list differs only in \`meta.version\`.`,
   },
   "GET /api/v1/skills": {
     allow: ["body"],
-    why: `${SKILLS_082} ${DESIGN_DESC} The /api/v1 spelling serves the same list.`,
+    why: `${SKILLS_084} The /api/v1 spelling serves the same list.`,
   },
   "GET /v1/skills/summary": {
     allow: ["body"],
-    why: `${SKILLS_082} ${DESIGN_DESC}`,
-  },
-  "GET /v1/skills/mzizi-design": {
-    allow: ["body"],
-    why: `${SKILLS_082} ${DESIGN_DESC} Its body adds the Mzizi row (hematite, Root) to the brand constellation, the footnote that hematite is a Heritage tone and how /v1/brand serves it, and that copper is the ecosystem layer, not Mzizi's own surfaces.`,
-  },
-  "GET /v1/skills/mzizi-roots": {
-    allow: ["body"],
-    why: `${SKILLS_082} Its body's \`--brand-accent\` examples add "a Mzizi surface = hematite".`,
-  },
-  "GET /v1/skills/discoverability": {
-    allow: ["body"],
-    why: `${SKILLS_082} Its body's OG image guidance names the brand's colour (for mzizi.dev, hematite) instead of "the brand mineral".`,
+    why: `${SKILLS_084} The summary differs only in \`meta.version\`.`,
   },
   "GET /v1/skills/mzizi-language": {
     allow: ["body"],
-    why: `${SKILLS_082} The skill's text is unchanged; only \`meta.version\` differs.`,
+    why: `${SKILLS_084} Its body now opens: Mzizi is a general-purpose programming language built to make Rust better, the way TypeScript makes JavaScript better; it tells the language, the harness at its core and the toolchain apart, and states its goals as goals, not results.`,
+  },
+  "GET /v1/skills/mzizi-roots": {
+    allow: ["body"],
+    why: `${SKILLS_084} Its body says Mzizi Roots is built to support the language as its component model, the way React is JavaScript's; it is not the language.`,
+  },
+  "GET /v1/skills/mzizi-design": {
+    allow: ["body"],
+    why: `${SKILLS_084} Its body's ecosystem identity names the Mzizi programming language and its toolchain first, instead of "the framework".`,
   },
   "GET /v1/skills/mzizi-backend": {
     allow: ["body"],
-    why: `${SKILLS_082} The skill's text is unchanged; only \`meta.version\` differs.`,
+    why: `${SKILLS_084} The skill's text is unchanged; only \`meta.version\` differs.`,
+  },
+  "GET /v1/skills/discoverability": {
+    allow: ["body"],
+    why: `${SKILLS_084} The skill's text is unchanged; only \`meta.version\` differs.`,
+  },
+  "GET /v1/ui/mzizi-tokens-globals": {
+    allow: ["body"],
+    why: "mzizi-registry#385: `files[0].content` (mzizi-tokens-globals.css) gains a `-text` token per colour family (`--mineral-*-text`, `--heritage-*-text`, `--exp-*-text` and their `--color-*-text` aliases, in both themes), the value to use as text on `--base`. Lines are only added; every existing token keeps its value.",
   },
 };
 

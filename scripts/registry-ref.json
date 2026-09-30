@@ -1,6 +1,6 @@
 {
   "repository": "https://github.com/mzizi-dev/mzizi-registry",
-  "ref": "06389e5fb3c1d9a5faccd397d8cbedd3a6d4b178",
+  "ref": "43446abb889f128adc29c7b9b5e30f739b03e99a",
   "pinned": "2026-09-30",
-  "note": "mzizi-registry main on 2026-09-30, after #384 (@nyuchi/mzizi-skills 0.8.2: /v1/skills serves the 0.8.2 skills, with the Mzizi -> hematite row in mzizi-design; the public plugin is 1.2.1). Bump by hand, then run npm run build:data, npm test and npm run parity."
+  "note": "mzizi-registry main on 2026-09-30, after #385 (a -text token per colour family in mzizi-tokens-globals.css) and #386 (@nyuchi/mzizi-skills 0.8.4: /v1/skills serves the 0.8.4 skills, which position Mzizi as a programming language; the public plugin is 1.2.2). Bump by hand, then run npm run build:data, npm test and npm run parity."
 }
