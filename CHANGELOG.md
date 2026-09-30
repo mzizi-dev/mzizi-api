@@ -36,6 +36,23 @@ To see which registry commit production is serving, read the
 
 ### Changed
 
+- **`/v1/skills` serves `@nyuchi/mzizi-skills` 0.8.1**, the same five skills.
+  `meta.version` is `0.8.1`, and each skill's `source` names the repository
+  that holds it, `mzizi-dev/agent-tools/mzizi-skills/skills/<name>` (it said
+  `mzizi-tools/mzizi-skills/skills/<name>`). `mzizi-roots` now points at the
+  public Claude Code plugin (`/plugin marketplace add mzizi-dev/mzizi-registry`,
+  `/plugin install mzizi@mzizi`) instead of the private agent-tools one. The
+  registry pin moves to mzizi-registry `bcb9b57` (registry #378, #379, #381).
+- **`/v1/brand` lists mzizi in the ecosystem table**: meaning Root, Swahili,
+  mineral hematite (registry #378).
+- **`/v1/architecture` and `/v1/architecture/nodes/12`**: the N12 skills rung
+  now says skills are authored in `mzizi-dev/agent-tools` and served from the
+  published package, with no database copy (registry #381).
+- **`/openapi`**: the `/skills` docs drop the retired `nyuchi-design skills`
+  CLI subcommands, and the skill-name example is `mzizi-design` (registry #381).
+- Strict parity against production showed 16 differences, all on those four
+  route families. `EXPECTED` in `scripts/parity.mjs` now holds only this bump's
+  reasons.
 - The registry-pin bot (`registry-pin-bump.yml`) also re-checks its pull
   request when the Changelog workflow finishes, so a bump never waits an hour
   for that check.

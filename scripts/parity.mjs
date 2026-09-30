@@ -78,57 +78,79 @@ const HEADERS = [
  *
  * The baseline is api.mzizi.dev, which this Worker already serves, so these
  * are only what the current registry pin changes. Earlier bumps' entries are in
- * the PRs that made them (mzizi-api-gateway#13 for the cutover).
+ * the PRs that made them (mzizi-api-gateway#13 for the cutover, #18 for
+ * skills 0.8.0).
  */
-// mzizi-registry#377: `@nyuchi/mzizi-skills` 0.5.1 -> ^0.8.0. The bundle is five
-// skills (mzizi-language, mzizi-roots, mzizi-design, mzizi-backend,
-// discoverability). 0.8.0 merged the rest into those five with no aliases
-// (agent-tools#144), so every other 0.5.1 name is now a 404.
-const SKILLS_080 =
-  "mzizi-registry#377 serves @nyuchi/mzizi-skills 0.8.0: five skills (mzizi-language, mzizi-roots, mzizi-design, mzizi-backend, discoverability), `meta.version` 0.8.0, `meta.count` 5.";
-const REMOVED_SKILLS = {
-  "bundu-design": "renamed to `mzizi-design` in 0.7.0",
-  simplify: 'merged into `mzizi-roots` ("Reuse before build")',
-  "scaffold-component":
-    'merged into `mzizi-roots` ("Contributing a component")',
-  "ecosystem-app-setup":
-    'split between `mzizi-roots` ("Starting an app") and `mzizi-design`',
-  "nyuchi-design": 'merged into `mzizi-design` ("The design system")',
-  "cloudflare-worker-rust": 'merged into `mzizi-backend` ("A Rust Worker")',
-  "mcp-server-cloudflare": 'merged into `mzizi-backend` ("An MCP server")',
-  "mukoko-design":
-    "removed; mukoko is a Nyuchi product and its assets move to a Nyuchi-owned bundle",
-};
+// mzizi-registry#381: `@nyuchi/mzizi-skills` ^0.8.0 -> ^0.8.1. Still the same
+// five skills; `meta.version` is 0.8.1, and every skill's `source` names the
+// repository that really holds it (mzizi-dev/agent-tools, mzizi-skills/) instead
+// of the old `mzizi-tools/mzizi-skills` path. #381 also rewrote N12's text and
+// the /skills examples in openapi.yaml. mzizi-registry#378 adds the mzizi row
+// (mineral hematite) to the brand ecosystem table. #379, also in this range,
+// adds only the public plugin's files, which the API doesn't serve.
+const SKILLS_081 =
+  "mzizi-registry#381 serves @nyuchi/mzizi-skills 0.8.1: the same five skills, `meta.version` 0.8.1, and each skill's `source` is `mzizi-dev/agent-tools/mzizi-skills/skills/<name>` (was `mzizi-tools/mzizi-skills/skills/<name>`).";
+const SKILLS = [
+  "mzizi-language",
+  "mzizi-design",
+  "mzizi-backend",
+  "discoverability",
+];
+const N12 =
+  "mzizi-registry#381 rewrites the N12 skills rung: skills are authored in mzizi-dev/agent-tools and served from the published package, with no database projection (`role`, `description`, `implementation_rules[2..3]`).";
+const OPENAPI =
+  "mzizi-registry#381 updates openapi.yaml's /skills docs: the retired `nyuchi-design skills` CLI subcommands are gone from two descriptions, and the skill-name example is `mzizi-design`.";
+const BRAND =
+  "mzizi-registry#378 adds the mzizi row to the ecosystem table (`ecosystem[17]`: meaning Root, Swahili, mineral hematite).";
 const EXPECTED = {
   "GET /v1/skills": {
     allow: ["body"],
-    why: `${SKILLS_080} The list is the five 0.8.0 skills.`,
+    why: `${SKILLS_081} The list carries the five new \`source\` values.`,
   },
   "GET /api/v1/skills": {
     allow: ["body"],
-    why: `${SKILLS_080} The /api/v1 spelling serves the same list.`,
+    why: `${SKILLS_081} The /api/v1 spelling serves the same list.`,
   },
   "GET /v1/skills/summary": {
     allow: ["body"],
-    why: `${SKILLS_080} The summary lists the five.`,
-  },
-  "GET /v1/skills/does-not-exist": {
-    allow: ["body"],
-    why: `${SKILLS_080} The 404's \`available\` list names the five.`,
-  },
-  "GET /v1/skills/discoverability": {
-    allow: ["body"],
-    why: `${SKILLS_080} \`discoverability\` kept its name; its 0.8.0 text replaces 0.5.1's (\"Mzizi ecosystem\", static Astro, no database).`,
+    why: `${SKILLS_081} The summary carries the same five \`source\` values.`,
   },
   ...Object.fromEntries(
-    Object.entries(REMOVED_SKILLS).map(([name, fate]) => [
+    SKILLS.map((name) => [
       `GET /v1/skills/${name}`,
       {
-        allow: ["status", "body", "header:cache-control"],
-        why: `${SKILLS_080} \`${name}\` is not in 0.8.0 (${fate}), so it answers 404, uncached like every 404 on this route.`,
+        allow: ["body"],
+        why: `${SKILLS_081} \`${name}\`'s text is unchanged; only \`source\` and \`meta.version\` differ.`,
       },
     ]),
   ),
+  "GET /v1/skills/mzizi-roots": {
+    allow: ["body"],
+    why: `${SKILLS_081} \`mzizi-roots\`'s 0.8.1 text also replaces the private agent-tools plugin install with the public plugin (\`/plugin marketplace add mzizi-dev/mzizi-registry\`, \`/plugin install mzizi@mzizi\`).`,
+  },
+  "GET /v1/brand": { allow: ["body"], why: BRAND },
+  "GET /api/v1/brand": {
+    allow: ["body"],
+    why: `${BRAND} The /api/v1 spelling serves the same table.`,
+  },
+  "GET /v1/architecture": {
+    allow: ["body"],
+    why: `${N12} The rung list carries it at \`rungs[3]\`.`,
+  },
+  "GET /api/v1/architecture": {
+    allow: ["body"],
+    why: `${N12} The /api/v1 spelling serves the same rungs.`,
+  },
+  "GET /v1/architecture/nodes/12": { allow: ["body"], why: N12 },
+  "GET /openapi": { allow: ["body"], why: OPENAPI },
+  "GET /api/openapi": {
+    allow: ["body"],
+    why: `${OPENAPI} /api/openapi serves the same document.`,
+  },
+  "GET /openapi?format=json": {
+    allow: ["body"],
+    why: `${OPENAPI} The JSON wrapper's \`yaml\` carries the same text.`,
+  },
 };
 
 // ── Build the request list ─────────────────────────────────────────────────
