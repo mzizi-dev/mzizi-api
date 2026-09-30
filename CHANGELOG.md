@@ -1,0 +1,174 @@
+# Changelog
+
+All notable changes to `mzizi-api-gateway`, the Worker that serves
+[api.mzizi.dev](https://api.mzizi.dev/v1/health), are documented here.
+
+The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+The Worker deploys on every merge to `main` and publishes no versioned
+releases, so sections are dated by the day the change merged (UTC), newest
+first. Within a section, entries sit under Added, Changed, Deprecated, Removed,
+Fixed or Security, and a breaking change is marked **Breaking**.
+
+**The rule (owner, 2026-09-30):** every pull request that changes behaviour, an
+API response, a dependency, a default, the registry pin or a documented fact
+adds an entry under `## [Unreleased]` in the same pull request. The
+`changelog / entry required` check fails a pull request that doesn't. Two
+exemptions: the registry-pin bot's own pull request on `bot/registry-pin`,
+which changes only `scripts/registry-ref.json` and lists the registry commits
+in its body, and pull requests labelled `no-changelog` (pure CI, lint or typo
+changes). When a dated section is cut, the Unreleased entries move under it.
+
+To see which registry commit production is serving, read the
+`X-Mzizi-Source` header on any response.
+
+## [Unreleased]
+
+### Added
+
+- `CHANGELOG.md`, backfilled from every merged pull request since the
+  repository began (2026-09-09).
+- The `changelog / entry required` check (`.github/workflows/changelog.yml`,
+  `scripts/changelog-gate.sh`), which fails a pull request that changes a
+  non-exempt file without adding to this file. `scripts/changelog-gate.test.sh`
+  tests the gate, and the check runs it first. The registry-pin bot's own
+  pull request is exempt only while it changes nothing but the pin; a bump that
+  someone takes over to port a handler change needs an entry like any other.
+
+### Changed
+
+- The registry-pin bot (`registry-pin-bump.yml`) also re-checks its pull
+  request when the Changelog workflow finishes, so a bump never waits an hour
+  for that check.
+
+## [2026-09-30]
+
+### Changed
+
+- **`/v1/skills` serves `@nyuchi/mzizi-skills` 0.8.0: five skills**
+  (`mzizi-language`, `mzizi-roots`, `mzizi-design`, `mzizi-backend`,
+  `discoverability`). The registry pin moves to mzizi-registry `eb4935e`
+  (registry #377). **Breaking:** the eight 0.5.1 skill names that 0.8.0 no
+  longer carries now answer 404 at `/v1/skills/{name}`. Strict parity against
+  production showed 13 differences, all under `/v1/skills`. (#18)
+- The code of conduct names `support@bundu.org` as the reporting address.
+  Security reports stay at `security@bundu.org`. (#17)
+- **`/v1/rs/{name}` names the crate that compiles each component**, instead of
+  `mzizi-ui` for every one, and adds a `git` field. The pin moves to
+  mzizi-registry `9b86e03`, which also brings the first Mzizi Roots batch:
+  twelve N3 brand components that answer `/v1/rs/{name}` with 200 where they
+  answered 404. `/v1/rs/{name}` is now checked against the registry's own
+  handler for every component at build time. (#15)
+
+### Added
+
+- **The registry pin moves by itself.** `registry-pin-bump.yml` keeps one bot
+  pull request on `bot/registry-pin` that sets `scripts/registry-ref.json` to
+  mzizi-registry `main`. It merges (rebase) only when it is the bot's single
+  commit, changes only the pin, moves forward along registry `main`, and every
+  check on it is green; otherwise it waits for review. It needs the
+  `PIN_BUMP_TOKEN` secret and does nothing without it. (#16)
+- The Parity workflow runs on every pull request that changes the pin, or
+  parity itself, against production, in `--strict` mode unless the pull request
+  edits `scripts/parity.mjs`. (#16)
+
+## [2026-09-29]
+
+### Changed
+
+- **Search filters on `node` and `category`** (combined with AND), and each hit
+  carries `name`, `type`, `title`, `description`, `categories`, `node` and
+  `nodeLabel`. It used to filter on fields no registry item carries, so the
+  filters matched nothing. `?layer=` is **deprecated**: it still works as an
+  alias of `?node=`, and its responses carry `meta.deprecation` and a
+  `Deprecation: true` header. The discovery document describes the data as
+  files (`data: { source: "files", repository, components }`) and names Mzizi
+  as the operator. The pin moves to mzizi-registry `ce68c64` (registry #373).
+  (#14)
+- **`/v1/ui/{name}/docs`, `/v1/search` and `/v1/ai/instructions/{name}` answer
+  from the registry's files** instead of `503 {"error":"Database not
+configured"}`. `/v1/ui/{name}/versions` still answers 503, and its body now
+  says why: version history is console-owned data and this API has no
+  database. The pin moves to mzizi-registry `f19bb0b`. (#13)
+- `wrangler.jsonc` declares `api.mzizi.dev` as this Worker's custom domain, so
+  every production deploy keeps it. The owner moved the domain from the
+  mzizi-registry Worker to this one on 2026-09-29; parity after the move was
+  1,359 requests with 0 unexplained differences. (#12)
+
+### Added
+
+- **A Hono Worker serves the whole public `/v1` API itself**, from registry
+  data generated at a pinned mzizi-registry commit (`scripts/registry-ref.json`)
+  and bundled into the Worker. It has no origin, no database and no Supabase.
+  It keeps the contract api.mzizi.dev served: both `/v1` and `/api/v1`, the
+  same query parameters, status codes, bodies and CORS, cache and security
+  headers, the `nyuchi-*` to `mzizi-*` 308 redirects and the 410s.
+  `scripts/parity.mjs` compares all of it with production. Every response
+  carries `X-Mzizi-Source: mzizi-api-gateway; registry=<commit>`, and
+  `/.well-known/security.txt` names `security@bundu.org`. (#11)
+
+### Removed
+
+- **Breaking for contributors:** the retired `workers-rs` Rust proxy
+  (`Cargo.toml`, `src/lib.rs`) and its build configuration. (#11)
+
+### Security
+
+- A path with repeated leading slashes (`//evil.com/`) no longer produces a
+  protocol-relative `Location` on the trailing-slash redirect, which a browser
+  would have followed off-site. Repeated slashes are collapsed first, as the
+  registry's Next.js host does. (#11)
+
+## [2026-09-27]
+
+### Changed
+
+- README and AGENTS.md: Mzizi owns and operates the gateway, the framework,
+  the registry and the docs; Nyuchi runs the console and the revenue side. The
+  Bundu Foundation is no longer named as owner. (#9, #10)
+- The README's Docs link points at docs.mzizi.dev. (#8)
+- The README is split: the human narrative stays in `README.md`, and the
+  commands, deployment mechanics and honesty rules move to a new `AGENTS.md`.
+  (#8)
+
+## [2026-09-26]
+
+### Fixed
+
+- The Rust proxy answered 500 on every proxied route, because it tried to add
+  CORS headers to the runtime's immutable response headers. It now copies
+  status, headers and body into a new response. Its origin also moved from the
+  apex (which was becoming the static site) to the mzizi-registry Worker. (#6)
+- The proxy no longer forwards the origin's `Content-Encoding` and
+  `Content-Length` on a body it has already decompressed. (#7)
+
+## [2026-09-11]
+
+### Added
+
+- `CONTRIBUTING.md`, `SECURITY.md` and `CODE_OF_CONDUCT.md` (Contributor
+  Covenant 2.1). (#2)
+- The org lint gate (`lint / actionlint`, `lint / JSON validity`,
+  `lint / prettier`, `lint / markdownlint`, `lint / yamllint`) and its config
+  files, later brought in line with the current org canon. (#3, #5)
+
+### Fixed
+
+- The README no longer says ported routes read Supabase: the registry's data
+  is its files. It also says api.mzizi.dev was answered by the registry's own
+  Worker, not this one, at the time. The origin repository is named as
+  mzizi-dev/mzizi-registry, not mzizi-dev/mzizi (the language). (#2, #4)
+
+## [2026-09-09]
+
+### Added
+
+- The first version: a `workers-rs` Worker for api.mzizi.dev that answered
+  `/v1/health` itself, forwarded every other read-only `/v1` route to the
+  registry, and answered 405 to anything but GET. It was replaced by the Hono
+  Worker on 2026-09-29.
+
+### Fixed
+
+- `worker build` now uses a `worker-build` version that matches the `worker`
+  0.8 library, and the release profile strips only debug info, so wasm-bindgen
+  can generate its catch wrappers. (#1)

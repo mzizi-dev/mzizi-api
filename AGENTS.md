@@ -106,6 +106,28 @@ run against production, is green (README, "Registry pin bump").
 - Keep `scripts/registry-pin-bump.mjs` identical to the copy in
   `mzizi-dev/agent-tools`.
 
+## Changelog (hard rule)
+
+Owner's rule, 2026-09-30: "changelogs are super important".
+
+- **Every pull request that changes behaviour, an API response, a dependency,
+  a default, the registry pin or a documented fact adds an entry under
+  `## [Unreleased]` in `CHANGELOG.md`**, in the same pull request. Use the Keep
+  a Changelog headings (Added, Changed, Deprecated, Removed, Fixed, Security),
+  mark breaking changes **Breaking**, and say what changed for a caller of the
+  API, not the commit text.
+- The `changelog / entry required` check (`.github/workflows/changelog.yml`)
+  fails a pull request without one. It is exempt for the pin bot's own pull
+  request on `bot/registry-pin` while it changes only
+  `scripts/registry-ref.json` (its body lists the registry commits), for pull
+  requests that touch only `.github/`,
+  lockfiles or lint config, and for pull requests labelled `no-changelog`
+  (pure CI, lint or typo changes). If you take a bump over to port a handler,
+  add the entry.
+- The logic is `scripts/changelog-gate.sh`, tested by
+  `scripts/changelog-gate.test.sh`. Keep both identical to the copies in the
+  other Mzizi repositories.
+
 ## Merge convention
 
 This repository is rebase-only: `allow_rebase_merge` is `true`, and
