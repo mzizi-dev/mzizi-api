@@ -36,6 +36,22 @@ To see which registry commit production is serving, read the
 
 ### Changed
 
+- **`/v1/skills` serves `@nyuchi/mzizi-skills` 0.8.5**, with the same five
+  skills and `meta.version` `0.8.5`. The skills now follow language main
+  `62a0f32`:
+  - `mzizi-language` says to check `LANGUAGE-TRACKER.md` before claiming a
+    capability. It teaches the backend `service` (RFC-0011), `mz contract` on
+    a service, `mz build` and the MZ08xx codes, and cites RFC-0012 (the
+    harness, a draft) and charter v0.4.
+  - `mzizi-backend` describes the language's one backend slice: no Workers
+    target, and nothing live.
+  - `mzizi-roots` says only a service lowers, not a component.
+
+  The `mzizi-language` and `mzizi-backend` descriptions change too.
+  `mzizi-design` and `discoverability` are unchanged. The registry pin moves
+  to mzizi-registry `270af9f` (registry #387). Strict parity against
+  production showed 8 differences, all on `/v1/skills*`.
+
 - **`/v1/skills` serves `@nyuchi/mzizi-skills` 0.8.4**: the same five
   skills and descriptions, with `meta.version` `0.8.4`. Three bodies now
   describe Mzizi as a programming language:

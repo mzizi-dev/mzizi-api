@@ -80,61 +80,56 @@ const HEADERS = [
  * are only what the current registry pin changes. Earlier bumps' entries are in
  * the PRs that made them (mzizi-api-gateway#13 for the cutover, #18 for
  * skills 0.8.0, #20 for skills 0.8.1 and the mzizi brand row, #21 for
- * mzizi's hematite default `--primary`, #22 for skills 0.8.2).
+ * mzizi's hematite default `--primary`, #22 for skills 0.8.2, #25 for skills 0.8.4
+ * and the `-text` colour tokens).
  */
-// mzizi-registry#386: `@nyuchi/mzizi-skills` 0.8.2 -> 0.8.4 (agent-tools#157
-// and #159). Still the same five skills with the same descriptions;
-// `meta.version` is 0.8.4 everywhere. Three skills' bodies change, positioning
-// Mzizi as a programming language: `mzizi-language` (a general-purpose language
-// built to make Rust better, the way TypeScript makes JavaScript better; the
-// language, the harness at its core and the toolchain told apart; goals stated
-// as goals), `mzizi-roots` (Roots supports the language as its component model)
-// and `mzizi-design` (the ecosystem identity names the language and its
-// toolchain). `mzizi-backend` and `discoverability` differ only in
-// `meta.version`. #386's other files (the public plugin, the lockfile, the
-// registry's CHANGELOG.md) change nothing else the API serves.
-//
-// mzizi-registry#385: mzizi-tokens-globals.css gains a `-text` token per colour
-// family (the value to use as text on `--base`). Lines are only added; every
-// existing token keeps its value.
-const SKILLS_084 =
-  "mzizi-registry#386 serves @nyuchi/mzizi-skills 0.8.4 (agent-tools#157, #159): the same five skills and descriptions, `meta.version` 0.8.4.";
+// mzizi-registry#387: `@nyuchi/mzizi-skills` 0.8.4 -> 0.8.5 (agent-tools#166),
+// which follows language main 62a0f32. Still the same five skills; `meta.version`
+// is 0.8.5 everywhere. `mzizi-language` (LANGUAGE-TRACKER.md before any
+// capability claim, the backend `service` slice of RFC-0011, `mz build`, the
+// MZ08xx codes, RFC-0012 as the harness's draft design, charter v0.4) and
+// `mzizi-backend` (the language's one backend slice, with no Workers target and
+// nothing live) change their bodies and descriptions; `mzizi-roots` (only a
+// service lowers, not a component) changes its body. `mzizi-design` and
+// `discoverability` differ only in `meta.version`. #387's other files (the
+// public plugin 1.2.3, the lockfile, the registry's CHANGELOG.md) change nothing
+// else the API serves.
+const SKILLS_085 =
+  "mzizi-registry#387 serves @nyuchi/mzizi-skills 0.8.5 (agent-tools#166, the language at 62a0f32): the same five skills, `meta.version` 0.8.5.";
+const DESCRIPTIONS =
+  "The `mzizi-language` description adds LANGUAGE-TRACKER.md, the backend `service` (RFC-0011), `mz build` and the new diagnostic codes; the `mzizi-backend` description says the language's service slice runs in process and lowers to a local Rust + axum package, with no Workers target and nothing deployed.";
 const EXPECTED = {
   "GET /v1/skills": {
     allow: ["body"],
-    why: `${SKILLS_084} The list differs only in \`meta.version\`.`,
+    why: `${SKILLS_085} ${DESCRIPTIONS}`,
   },
   "GET /api/v1/skills": {
     allow: ["body"],
-    why: `${SKILLS_084} The /api/v1 spelling serves the same list.`,
+    why: `${SKILLS_085} ${DESCRIPTIONS} The /api/v1 spelling serves the same list.`,
   },
   "GET /v1/skills/summary": {
     allow: ["body"],
-    why: `${SKILLS_084} The summary differs only in \`meta.version\`.`,
+    why: `${SKILLS_085} ${DESCRIPTIONS}`,
   },
   "GET /v1/skills/mzizi-language": {
     allow: ["body"],
-    why: `${SKILLS_084} Its body now opens: Mzizi is a general-purpose programming language built to make Rust better, the way TypeScript makes JavaScript better; it tells the language, the harness at its core and the toolchain apart, and states its goals as goals, not results.`,
-  },
-  "GET /v1/skills/mzizi-roots": {
-    allow: ["body"],
-    why: `${SKILLS_084} Its body says Mzizi Roots is built to support the language as its component model, the way React is JavaScript's; it is not the language.`,
-  },
-  "GET /v1/skills/mzizi-design": {
-    allow: ["body"],
-    why: `${SKILLS_084} Its body's ecosystem identity names the Mzizi programming language and its toolchain first, instead of "the framework".`,
+    why: `${SKILLS_085} Its description and body change: the body points at LANGUAGE-TRACKER.md before any capability claim and summarises its gaps, teaches the backend \`service\` (routes, handlers with \`when\`, \`header\` and \`respond\`, \`example\` and \`ensure\` contracts), \`mz contract\` on a service and \`mz build\`, adds the MZ08xx codes and MZ0606/MZ0611-MZ0613, and cites RFC-0012 (draft) and charter v0.4.`,
   },
   "GET /v1/skills/mzizi-backend": {
     allow: ["body"],
-    why: `${SKILLS_084} The skill's text is unchanged; only \`meta.version\` differs.`,
+    why: `${SKILLS_085} Its description and body change: the language has one backend slice (a \`service\` run in process by \`mz contract\` and lowered by \`mz build\` to a local axum package, with no Workers target and nothing live), shown in a new "A Mzizi service" section, and the body cites charter v0.4.`,
+  },
+  "GET /v1/skills/mzizi-roots": {
+    allow: ["body"],
+    why: `${SKILLS_085} Its body says only a Mzizi \`service\` lowers, not a component, so \`mz contract\` does not read a Roots \`CONTRACT\`, and names the contracts-everywhere RFC as RFC-0010.`,
+  },
+  "GET /v1/skills/mzizi-design": {
+    allow: ["body"],
+    why: `${SKILLS_085} The skill's text is unchanged; only \`meta.version\` differs.`,
   },
   "GET /v1/skills/discoverability": {
     allow: ["body"],
-    why: `${SKILLS_084} The skill's text is unchanged; only \`meta.version\` differs.`,
-  },
-  "GET /v1/ui/mzizi-tokens-globals": {
-    allow: ["body"],
-    why: "mzizi-registry#385: `files[0].content` (mzizi-tokens-globals.css) gains a `-text` token per colour family (`--mineral-*-text`, `--heritage-*-text`, `--exp-*-text` and their `--color-*-text` aliases, in both themes), the value to use as text on `--base`. Lines are only added; every existing token keeps its value.",
+    why: `${SKILLS_085} The skill's text is unchanged; only \`meta.version\` differs.`,
   },
 };
 
