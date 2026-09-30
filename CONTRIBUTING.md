@@ -48,6 +48,14 @@ npm run dev
 
 ## Bumping the registry pin
 
+**The bot does this hourly** (README, "Registry pin bump"): it opens
+`bot/registry-pin`, and merges it when CI and a `--strict` parity run against
+production are green. You bump by hand when it stops for review, that is when
+the registry changed a handler that has to be ported here. Push the port to
+`bot/registry-pin` (the bot then leaves the branch to you), or open your own
+pull request (the bot opens none while yours moves the pin to registry `main`,
+and closes its own once yours lands). Either way:
+
 ```bash
 # edit scripts/registry-ref.json → "ref": "<mzizi-registry commit sha>"
 npm run build:data && npm test && npm run parity
@@ -55,7 +63,9 @@ npm run build:data && npm test && npm run parity
 
 Paste the parity summary into the PR. A difference after a bump usually means
 the registry changed a handler, not only its data. Port the handler change here
-in the same PR.
+in the same PR, and list each intentional difference in `EXPECTED` in
+`scripts/parity.mjs`: a pull request that edits that file runs parity without
+`--strict`, so its `EXPECTED` entries apply.
 
 Check that the bump changed only what the registry changed: keep a copy of
 `src/data/` from before the bump and `cmp` each file after it. `meta.json`

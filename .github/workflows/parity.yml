@@ -1,11 +1,27 @@
 name: Parity
 
-# Run by hand. Before the cutover: baseline https://api.mzizi.dev (the registry
-# Worker), candidate blank (this commit under `wrangler dev`) or this Worker's
-# workers.dev URL. After it: baseline https://mzizi-registry.nyuchi.workers.dev,
-# candidate https://api.mzizi.dev. Read-only requests; the report is the job
-# summary.
+# Two ways in:
+#
+# - Every pull request that moves the registry pin (scripts/registry-ref.json),
+#   including the automated bumps from registry-pin-bump.yml. Baseline is
+#   production, https://api.mzizi.dev; candidate is the pull request under
+#   `wrangler dev`. Any unexplained difference fails the check, and a failed
+#   check stops the automated bump for review. When the pull request doesn't
+#   touch scripts/parity.mjs, the run is `--strict`: EXPECTED then holds only an
+#   earlier bump's reasons, which production already serves, so nothing in it
+#   may excuse a difference.
+# - By hand (workflow_dispatch), against any two URLs. Before the cutover:
+#   baseline https://api.mzizi.dev (the registry Worker), candidate blank (this
+#   commit under `wrangler dev`) or this Worker's workers.dev URL. After it:
+#   baseline https://mzizi-registry.nyuchi.workers.dev, candidate
+#   https://api.mzizi.dev.
+#
+# Read-only requests; the report is the job summary.
 on:
+  pull_request:
+    branches: [main]
+    paths:
+      - scripts/registry-ref.json
   workflow_dispatch:
     inputs:
       baseline:
@@ -20,12 +36,19 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: parity-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   parity:
+    name: parity
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-node@v5
         with:
@@ -37,7 +60,7 @@ jobs:
       - run: npm run build:data
 
       - name: Start wrangler dev
-        if: inputs.candidate == ''
+        if: github.event_name == 'pull_request' || inputs.candidate == ''
         run: |
           npx wrangler dev --port 8787 > wrangler-dev.log 2>&1 &
           for _ in $(seq 1 60); do
@@ -47,12 +70,26 @@ jobs:
           cat wrangler-dev.log
           exit 1
 
+      - name: Strict unless this pull request edits EXPECTED
+        id: mode
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if git diff --quiet "$BASE_SHA...$HEAD_SHA" -- scripts/parity.mjs; then
+            echo "flags=--strict" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Parity
         env:
-          BASELINE: ${{ inputs.baseline }}
+          BASELINE: ${{ inputs.baseline || 'https://api.mzizi.dev' }}
           CANDIDATE: ${{ inputs.candidate || 'http://localhost:8787' }}
+          FLAGS: ${{ steps.mode.outputs.flags }}
         run: |
           status=0
-          node scripts/parity.mjs --baseline "$BASELINE" --candidate "$CANDIDATE" --report parity.md || status=$?
+          # FLAGS is empty or a single flag.
+          # shellcheck disable=SC2086
+          node scripts/parity.mjs --baseline "$BASELINE" --candidate "$CANDIDATE" --report parity.md $FLAGS || status=$?
           cat parity.md >> "$GITHUB_STEP_SUMMARY"
           exit $status

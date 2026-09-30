@@ -24,14 +24,22 @@ supply-chain problem for everything that consumes it.
 
 ## Controls that already exist
 
-| Control                              | Where                                         | What it stops                                                                                               |
-| ------------------------------------ | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| Non-`GET` answered `405` locally     | `src/index.ts`                                | No request method other than `GET`/`HEAD`/`OPTIONS` reaches a handler                                       |
-| Data pinned to one registry commit   | `scripts/registry-ref.json`, `build-data.mjs` | The build fails unless the checkout is exactly the pinned SHA; changing what is served is a reviewed commit |
-| No request-time fetches              | `src/`                                        | No request input can steer the Worker to another host; there is no origin to poison or SSRF                 |
-| Supabase replaced by a throwing stub | `scripts/supabase-stub.mjs`                   | A registry reader that reached for the database fails the build instead of shipping                         |
-| No secrets or bindings               | `wrangler.jsonc`                              | There's nothing in the Worker's environment to exfiltrate                                                   |
-| `gitleaks` on full history           | `.github/workflows/ci.yml`                    | A credential committed by accident fails CI rather than shipping                                            |
+| Control                              | Where                                         | What it stops                                                                                                     |
+| ------------------------------------ | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Non-`GET` answered `405` locally     | `src/index.ts`                                | No request method other than `GET`/`HEAD`/`OPTIONS` reaches a handler                                             |
+| Data pinned to one registry commit   | `scripts/registry-ref.json`, `build-data.mjs` | The build fails unless the checkout is exactly the pinned SHA; changing what is served is a commit that passes CI |
+| No request-time fetches              | `src/`                                        | No request input can steer the Worker to another host; there is no origin to poison or SSRF                       |
+| Supabase replaced by a throwing stub | `scripts/supabase-stub.mjs`                   | A registry reader that reached for the database fails the build instead of shipping                               |
+| No secrets or bindings               | `wrangler.jsonc`                              | There's nothing in the Worker's environment to exfiltrate                                                         |
+| `gitleaks` on full history           | `.github/workflows/ci.yml`                    | A credential committed by accident fails CI rather than shipping                                                  |
+
+**The automated pin bump** (README, "Registry pin bump") merges without a
+person only a commit that moves the pin forward along mzizi-registry `main`,
+changes nothing else, and passes CI and a `--strict` parity run against
+production with zero differences. Anything else waits for review. Its token,
+`PIN_BUMP_TOKEN`, is an Actions secret used only by
+`.github/workflows/registry-pin-bump.yml`, which runs from `main` and never
+checks out pull request code.
 
 `Access-Control-Allow-Origin: *` is deliberate and isn't a finding. The data is
 public, no route takes credentials, and browsers never attach cookies to these

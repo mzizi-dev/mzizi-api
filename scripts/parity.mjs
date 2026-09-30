@@ -3,7 +3,7 @@
  * Parity: the acceptance test for this Worker.
  *
  *   npm run parity                     # https://api.mzizi.dev vs http://localhost:8787
- *   node scripts/parity.mjs --baseline <url> --candidate <url> [--report parity.md] [--sample N]
+ *   node scripts/parity.mjs --baseline <url> --candidate <url> [--report parity.md] [--sample N] [--strict]
  *
  * Before the cutover the baseline is api.mzizi.dev (the registry Worker) and the
  * candidate is this Worker (wrangler dev, or its workers.dev URL). After it, the
@@ -22,6 +22,11 @@
  * Genuinely volatile values (the health timestamp, security.txt's Expires) are
  * normalised. Differences this port makes ON PURPOSE are listed in EXPECTED
  * with the reason; anything else fails the run (exit 1).
+ *
+ * `--strict` ignores EXPECTED: every difference is unexplained. CI passes it on
+ * a pull request that doesn't touch this file (every automated pin bump), since
+ * EXPECTED then only holds an earlier bump's reasons, which production already
+ * serves, and they must not excuse a new difference on the same route.
  */
 import { readFileSync, writeFileSync } from "node:fs";
 
@@ -44,6 +49,7 @@ const LOCAL = (args.candidate ?? args.local ?? "http://localhost:8787").replace(
   "",
 );
 const SAMPLE = args.sample ? Number(args.sample) : Infinity;
+const STRICT = args.strict === true;
 const CONCURRENCY = 6;
 
 const HEADERS = [
@@ -412,6 +418,7 @@ await Promise.all(
 results.sort((a, b) => (a.path + a.method).localeCompare(b.path + b.method));
 const key = (r) => `${r.method} ${r.path}`;
 const expectation = (r) => {
+  if (STRICT) return undefined;
   const e = EXPECTED[key(r)] ?? EXPECTED[`* ${r.path}`];
   return e && r.kinds.every((k) => e.allow.includes(k)) ? e : undefined;
 };
@@ -428,6 +435,12 @@ const lines = [
   ``,
   `Baseline \`${LIVE}\` vs candidate \`${LOCAL}\` — ${new Date().toISOString()}`,
   ``,
+  ...(STRICT
+    ? [
+        "Strict: `EXPECTED` is ignored, so every difference counts as unexplained.",
+        ``,
+      ]
+    : []),
   `| | Requests |`,
   `| --- | ---: |`,
   `| Total | ${results.length} |`,

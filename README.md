@@ -195,30 +195,91 @@ to Supabase. This Worker doesn't implement it:
 }
 ```
 
-### Rebuilding when the registry changes
+### Registry pin bump
 
 The pin is deliberate: a registry change reaches `api.mzizi.dev` only through a
-commit to this repository that CI (typecheck, tests, bundle) has checked. It's
-**not wired up yet**. This is the intended mechanism:
+commit to this repository that CI has checked. **Owner decision, 2026-09-30:**
+keep the pin, and move it automatically.
+[`.github/workflows/registry-pin-bump.yml`](.github/workflows/registry-pin-bump.yml)
+runs [`scripts/registry-pin-bump.mjs`](scripts/registry-pin-bump.mjs), which
+keeps one bot pull request, from the branch `bot/registry-pin`, that sets `ref`
+in `scripts/registry-ref.json` to registry `main`:
 
-1. **In `mzizi-registry`**, a workflow on `push` to `main` checks out this
-   repository, sets `ref` in `scripts/registry-ref.json` to `${{ github.sha }}`,
-   and opens (or updates) a pull request here, for example with
-   `peter-evans/create-pull-request`.
-2. **The secret it needs:** `MZIZI_API_GATEWAY_TOKEN`, stored in
-   `mzizi-registry`'s Actions secrets. That's a fine-grained personal access
-   token, or better, a GitHub App installation token, scoped to
-   `mzizi-dev/mzizi-api-gateway` only, with **Contents: read and write** and
-   **Pull requests: read and write**. The default `GITHUB_TOKEN` can't write to
-   another repository.
-3. CI runs here on that pull request. Merging it (by hand, or with
-   `gh pr merge --rebase --auto`) pushes to `main`, and Workers Builds redeploys.
-   Before merging, run the **Parity** workflow if the bump changes what live
-   serves.
+1. **Every hour** it compares the pin on `main` with mzizi-registry `main`
+   (`git ls-remote`, public, no token). When they differ, `bot/registry-pin`
+   becomes one bot commit on top of the current `main` that moves the pin, and
+   the pull request is opened, or updated if one is open. There is only ever
+   one. Its body lists the registry commits between the old pin and the new
+   one. It's rebuilt whenever `main` or registry `main` moves, so it's never
+   behind `main`.
+2. **CI runs on it** like on any pull request: `worker` (build, typecheck,
+   tests, format, wrangler bundle), `secret scan`, the five `lint / *` checks,
+   Workers Builds, and **`parity`**: [`parity.yml`](.github/workflows/parity.yml)
+   runs on every pull request that changes `scripts/registry-ref.json`,
+   building the pull request under `wrangler dev` and comparing it with
+   production `https://api.mzizi.dev`. On a pull request that doesn't edit
+   `scripts/parity.mjs`, as every bot bump, parity runs `--strict`: `EXPECTED`
+   then holds only an earlier bump's reasons, which production already serves,
+   so any difference at all fails it.
+3. **When a check finishes** on `bot/registry-pin` (`workflow_run` for CI, Lint
+   and Parity; `check_run` for Workers Builds), and on the hourly run, the bot
+   gates the pull request. It merges (rebase) only when the pull request is
+   the bot's single commit on the current `main`, changes nothing but
+   `scripts/registry-ref.json`, moves the pin forward along registry `main`, and
+   every check and status on its head commit has finished green, including
+   `worker`, `secret scan`, `parity`, Workers Builds and every check `main`'s
+   rules require. If GitHub doesn't allow the merge yet, it turns on auto-merge
+   (rebase) instead, which waits for the required checks. Nothing bypasses the
+   branch rules. The merge deploys through Workers Builds as usual.
+4. **A failed check stops it.** The bot comments with the failed checks and
+   waits for a person. An unexplained parity difference usually means the
+   registry changed a route handler, which has to be ported here (see
+   [CONTRIBUTING.md](CONTRIBUTING.md), "Bumping the registry pin"). To take
+   the bump over, push to `bot/registry-pin`: the bot leaves a branch with any
+   commit it didn't make alone, and a person merges it. Delete the branch to
+   hand the bump back. Closing the pull request without merging declines that
+   registry commit; the bot opens a new one when registry `main` moves again.
+5. **A bump by hand still works.** While another open pull request moves the
+   pin to registry `main`, the bot opens none. When a bump lands on `main` any
+   other way, the bot closes its own pull request and deletes the branch.
 
-A Workers Builds deploy hook alone wouldn't do it: rebuilding at an unchanged
-pin produces an identical bundle. The pin has to move, and moving it is a
-commit.
+Every trigger runs the same idempotent reconcile from `main`'s copy of the
+workflow, and no step checks out or runs pull request code.
+`node scripts/registry-pin-bump.mjs --dry-run` (with `GITHUB_REPOSITORY` and
+`PIN_FILE` set) prints what it would do without writing anything. The same
+script and workflow are in `mzizi-dev/agent-tools` for `mzizi-mcp`'s pin.
+
+#### Owner setup
+
+`GITHUB_TOKEN` can't do this: GitHub starts no workflows for a push or a pull
+request made with it, so no required check would ever run on the bump. The bot
+uses its own token:
+
+1. **Create a fine-grained personal access token** (GitHub, Settings,
+   Developer settings, Fine-grained tokens), ideally on a machine account with
+   write access that isn't an organisation owner, so the org ruleset's owner
+   bypass can never apply to it:
+   - Resource owner: `mzizi-dev`.
+   - Repository access: only `mzizi-dev/mzizi-api-gateway` and
+     `mzizi-dev/agent-tools`.
+   - Repository permissions: **Contents: Read and write**, **Pull requests:
+     Read and write**, **Workflows: Read and write** (Metadata: Read is added
+     automatically). Workflows is there only because the bot moves its branch
+     onto the current `main`: GitHub refuses a token push that carries a
+     workflow file change, even one already on `main`, without it. The script
+     writes only the pin file.
+   - If the organisation requires approval for fine-grained tokens, approve it
+     (organisation Settings, Personal access tokens, Pending requests).
+2. **Store it as the Actions secret `PIN_BUMP_TOKEN`** in both repositories
+   (Settings, Secrets and variables, Actions), or once as an organisation
+   secret shared with those two repositories. Until it exists, every run logs
+   a warning and does nothing.
+3. **Allow auto-merge** (Settings, General, Pull Requests) must stay on, with
+   rebase merging. Both are on in both repositories (read off the GitHub API on
+   2026-09-30).
+4. Nothing is needed in mzizi-registry. To see it work, run **Registry pin
+   bump** from the Actions tab. When the token expires, the runs fail at
+   checkout, so renew it before then.
 
 ## Mzizi Roots: Rust components first
 
@@ -281,8 +342,12 @@ the script with their reasons. Anything else fails the run.
 node scripts/parity.mjs --baseline https://api.mzizi.dev --candidate http://localhost:8787
 ```
 
-The **Parity** GitHub workflow (run by hand) does the same, with the report as
-the job summary.
+The **Parity** GitHub workflow does the same, with the report as the job
+summary. It runs by hand against any two URLs, and on every pull request that
+changes `scripts/registry-ref.json`, against production. There it passes
+`--strict` unless the pull request edits `scripts/parity.mjs`: `--strict`
+ignores `EXPECTED`, so every difference counts as unexplained (see
+[Registry pin bump](#registry-pin-bump)).
 
 ## Cutover
 

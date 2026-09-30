@@ -1,0 +1,74 @@
+name: Registry pin bump
+
+# Keeps scripts/registry-ref.json on mzizi-registry `main` through one bot pull
+# request (branch bot/registry-pin) that merges itself, rebase, when every check
+# on it is green, and otherwise waits for review. The logic is
+# scripts/registry-pin-bump.mjs; README, "Registry pin bump", has the flow and
+# the owner setup.
+#
+# Every trigger runs the same idempotent reconcile:
+#
+# - schedule: hourly. Compares the pin with registry `main` (`git ls-remote`,
+#   public) and opens, rebuilds or closes the bump. No cross-repo dispatch, so
+#   the registry needs no token.
+# - workflow_run / check_run: a check on the bump branch finished, so see
+#   whether everything is green and it can merge. check_run covers the
+#   Cloudflare Workers Builds check; GitHub never sends it for Actions' own.
+# - workflow_dispatch: run it now.
+#
+# PIN_BUMP_TOKEN (not GITHUB_TOKEN) pushes, opens and merges: GitHub starts no
+# workflows for a push or pull request made with GITHUB_TOKEN, so CI would
+# never run on the bump. Without the secret the run warns and does nothing.
+# These triggers all run this file as it is on `main`, and no step here checks
+# out or runs pull request code.
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+  workflow_run:
+    workflows: [CI, Lint, Parity]
+    types: [completed]
+  check_run:
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  reconcile:
+    if: >-
+      (github.event_name != 'workflow_run' ||
+        github.event.workflow_run.head_branch == 'bot/registry-pin') &&
+      (github.event_name != 'check_run' ||
+        github.event.check_run.check_suite.head_branch == 'bot/registry-pin')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # One reconcile at a time, never cancelled mid-push. A newer queued run
+    # replacing an older one loses nothing: every run does the whole job.
+    concurrency:
+      group: registry-pin-bump
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.PIN_BUMP_TOKEN || github.token }}
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Reconcile the bump pull request
+        run: node scripts/registry-pin-bump.mjs
+        env:
+          PIN_BUMP_TOKEN: ${{ secrets.PIN_BUMP_TOKEN }}
+          PIN_FILE: scripts/registry-ref.json
+          PIN_BUMP_BRANCH: bot/registry-pin
+          # Must be present and green on the bump's head commit before it
+          # merges, on top of every other check that ran on it.
+          EXPECTED_CHECKS: |
+            worker
+            secret scan
+            parity
+            Workers Builds: mzizi-api-gateway

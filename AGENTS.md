@@ -87,6 +87,25 @@ Worker on 2026-09-29). Keep it a **bare hostname**, with no `/*` and no
 error only shows on the production deploy. The same commit can be green on a PR
 and red on `main`.
 
+## The registry pin moves by itself
+
+`.github/workflows/registry-pin-bump.yml` keeps one bot pull request, branch
+`bot/registry-pin`, that moves `scripts/registry-ref.json` to mzizi-registry
+`main`, and merges it (rebase) when every check, including a `--strict` parity
+run against production, is green (README, "Registry pin bump").
+
+- **Never push to `bot/registry-pin` unless you're taking the bump over.** Any
+  commit the bot didn't make hands the branch to people: the bot stops
+  rebuilding and merging it. Delete the branch to hand it back.
+- **A bump that stops for review** usually needs a handler ported. Do it on
+  that branch, or in your own pull request (the bot opens none while an open
+  pull request moves the pin to registry `main`).
+- **`--strict` parity ignores `EXPECTED`** on any pull request that doesn't edit
+  `scripts/parity.mjs`. After a bump deploys, its `EXPECTED` entries are stale;
+  a later change may prune them.
+- Keep `scripts/registry-pin-bump.mjs` identical to the copy in
+  `mzizi-dev/agent-tools`.
+
 ## Merge convention
 
 This repository is rebase-only: `allow_rebase_merge` is `true`, and
