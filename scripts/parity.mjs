@@ -79,18 +79,55 @@ const HEADERS = [
  * The baseline is api.mzizi.dev, which this Worker already serves, so these
  * are only what the current registry pin changes. Earlier bumps' entries are in
  * the PRs that made them (mzizi-api-gateway#13 for the cutover, #18 for
- * skills 0.8.0, #20 for skills 0.8.1 and the mzizi brand row).
+ * skills 0.8.0, #20 for skills 0.8.1 and the mzizi brand row, #21 for
+ * mzizi's hematite default `--primary`).
  */
-// mzizi-registry#380: mzizi's default `--primary` in mzizi-tokens-globals.css is
-// hematite (`var(--heritage-hematite-aa)`), read from the brand ecosystem row
-// that #378 added, instead of gold. #383 (dependency override floors) and #382
-// (the registry's own CHANGELOG.md backfill and changelog gate), also in this
-// range, change nothing the API serves: /v1/changelog reads
-// lib/changelog.generated.ts, which this range doesn't touch.
+// mzizi-registry#384: `@nyuchi/mzizi-skills` 0.8.1 -> 0.8.2 (agent-tools#153).
+// Still the same five skills; `meta.version` is 0.8.2 everywhere. Three skills'
+// text changes: `mzizi-design` (its description, and its body gains the Mzizi
+// -> hematite row of the brand constellation, the footnote on hematite being a
+// Heritage tone, and "copper is the ecosystem layer, not Mzizi's own
+// surfaces"), `mzizi-roots` (the `--brand-accent` examples add a Mzizi surface
+// = hematite) and `discoverability` (the OG image guidance names the brand's
+// colour). `mzizi-language` and `mzizi-backend` differ only in `meta.version`.
+// #384's other files (the public plugin, the lockfile, the registry's own
+// CHANGELOG.md) change nothing else the API serves.
+const SKILLS_082 =
+  "mzizi-registry#384 serves @nyuchi/mzizi-skills 0.8.2 (agent-tools#153): the same five skills, `meta.version` 0.8.2.";
+const DESIGN_DESC =
+  "`mzizi-design`'s description adds \"Mzizi's own is hematite, a Heritage tone\" to the brand constellation.";
 const EXPECTED = {
-  "GET /v1/ui/mzizi-tokens-globals": {
+  "GET /v1/skills": {
     allow: ["body"],
-    why: 'mzizi-registry#380: `files[0].content` (mzizi-tokens-globals.css) sets mzizi\'s default `--primary` to `var(--heritage-hematite-aa)` instead of `var(--mineral-gold-aa)`, in both the `:root` default and the `[data-brand="mzizi"]` block, sourced from /v1/brand ecosystem[name=mzizi].mineral. Its comments change to match.',
+    why: `${SKILLS_082} ${DESIGN_DESC}`,
+  },
+  "GET /api/v1/skills": {
+    allow: ["body"],
+    why: `${SKILLS_082} ${DESIGN_DESC} The /api/v1 spelling serves the same list.`,
+  },
+  "GET /v1/skills/summary": {
+    allow: ["body"],
+    why: `${SKILLS_082} ${DESIGN_DESC}`,
+  },
+  "GET /v1/skills/mzizi-design": {
+    allow: ["body"],
+    why: `${SKILLS_082} ${DESIGN_DESC} Its body adds the Mzizi row (hematite, Root) to the brand constellation, the footnote that hematite is a Heritage tone and how /v1/brand serves it, and that copper is the ecosystem layer, not Mzizi's own surfaces.`,
+  },
+  "GET /v1/skills/mzizi-roots": {
+    allow: ["body"],
+    why: `${SKILLS_082} Its body's \`--brand-accent\` examples add "a Mzizi surface = hematite".`,
+  },
+  "GET /v1/skills/discoverability": {
+    allow: ["body"],
+    why: `${SKILLS_082} Its body's OG image guidance names the brand's colour (for mzizi.dev, hematite) instead of "the brand mineral".`,
+  },
+  "GET /v1/skills/mzizi-language": {
+    allow: ["body"],
+    why: `${SKILLS_082} The skill's text is unchanged; only \`meta.version\` differs.`,
+  },
+  "GET /v1/skills/mzizi-backend": {
+    allow: ["body"],
+    why: `${SKILLS_082} The skill's text is unchanged; only \`meta.version\` differs.`,
   },
 };
 

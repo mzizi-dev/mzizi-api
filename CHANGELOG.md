@@ -36,6 +36,16 @@ To see which registry commit production is serving, read the
 
 ### Changed
 
+- **`/v1/skills` serves `@nyuchi/mzizi-skills` 0.8.2**, the same five skills,
+  with `meta.version` `0.8.2`. `mzizi-design` now has the Mzizi row
+  (hematite, Root) in its brand constellation, says hematite is a Heritage
+  tone, and says copper is the ecosystem layer rather than Mzizi's own
+  surfaces. Its description changes to match. `mzizi-roots` adds "a Mzizi
+  surface = hematite" to its `--brand-accent` examples. `discoverability`'s
+  OG image guidance names the brand's colour. `mzizi-language` and
+  `mzizi-backend` are unchanged. The registry pin moves to mzizi-registry
+  `06389e5` (registry #384). Strict parity against production showed 8
+  differences, all on `/v1/skills*`.
 - **`/v1/ui/mzizi-tokens-globals`: mzizi's default `--primary` is hematite.**
   The stylesheet sets `--primary: var(--heritage-hematite-aa)`, where it was
   `var(--mineral-gold-aa)`. That covers both the default and the
