@@ -102,6 +102,12 @@ To see which registry commit production is serving, read the
   request when the Changelog workflow finishes, so a bump never waits an hour
   for that check.
 
+### Fixed
+
+- README, "Registry pin bump", lists **Checks: Read-only** and **Commit statuses:
+  Read-only** for `RELEASE_BUMP_TOKEN`. The bot reads a bump's check runs and
+  status before merging; without them it fails with a 403.
+
 ## [2026-09-30]
 
 ### Changed

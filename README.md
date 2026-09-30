@@ -268,7 +268,10 @@ uses its own token:
      automatically). Workflows is there only because the bot moves its branch
      onto the current `main`: GitHub refuses a token push that carries a
      workflow file change, even one already on `main`, without it. The script
-     writes only the pin file.
+     writes only the pin file. Add **Checks: Read-only** and **Commit statuses:
+     Read-only** too: the bot reads the bump's check runs and commit status
+     before it merges, and without them that read fails with `403 Resource not
+accessible by personal access token`.
    - If the organisation requires approval for fine-grained tokens, approve it
      (organisation Settings, Personal access tokens, Pending requests).
 2. **Store it as the Actions secret `RELEASE_BUMP_TOKEN`** in both repositories
