@@ -37,7 +37,7 @@ supply-chain problem for everything that consumes it.
 person only a commit that moves the pin forward along mzizi-registry `main`,
 changes nothing else, and passes CI and a `--strict` parity run against
 production with zero differences. Anything else waits for review. Its token,
-`PIN_BUMP_TOKEN`, is an Actions secret used only by
+`RELEASE_BUMP_TOKEN`, is an Actions secret used only by
 `.github/workflows/registry-pin-bump.yml`, which runs from `main` and never
 checks out pull request code.
 

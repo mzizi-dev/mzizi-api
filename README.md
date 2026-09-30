@@ -271,7 +271,7 @@ uses its own token:
      writes only the pin file.
    - If the organisation requires approval for fine-grained tokens, approve it
      (organisation Settings, Personal access tokens, Pending requests).
-2. **Store it as the Actions secret `PIN_BUMP_TOKEN`** in both repositories
+2. **Store it as the Actions secret `RELEASE_BUMP_TOKEN`** in both repositories
    (Settings, Secrets and variables, Actions), or once as an organisation
    secret shared with those two repositories. Until it exists, every run logs
    a warning and does nothing.

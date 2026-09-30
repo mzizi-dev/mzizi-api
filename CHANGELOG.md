@@ -36,6 +36,12 @@ To see which registry commit production is serving, read the
 
 ### Changed
 
+- The registry pin bot reads the Actions secret `RELEASE_BUMP_TOKEN`, not
+  `PIN_BUMP_TOKEN`, the name the owner is creating. The workflow,
+  `scripts/registry-pin-bump.mjs` (still byte-identical to agent-tools' copy),
+  README and SECURITY.md use the new name. Until the secret exists, every run
+  warns and does nothing, as before.
+
 - **`/v1/skills` serves `@nyuchi/mzizi-skills` 0.8.2**, the same five skills,
   with `meta.version` `0.8.2`. `mzizi-design` now has the Mzizi row
   (hematite, Root) in its brand constellation, says hematite is a Heritage

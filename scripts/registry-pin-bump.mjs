@@ -33,7 +33,7 @@
  * never rewritten or merged by the bot: taking over a bump is pushing to it.
  *
  * Environment:
- *   PIN_BUMP_TOKEN     token that pushes, opens and merges (see README). Unset:
+ *   RELEASE_BUMP_TOKEN token that pushes, opens and merges (see README). Unset:
  *                      the run warns and exits 0 without writing anything.
  *   PIN_FILE           the pin, relative to the repository root.
  *   PIN_BUMP_BRANCH    the bot's branch (default bot/registry-pin).
@@ -51,7 +51,7 @@ import { join } from "node:path";
 
 const env = process.env;
 const DRY_RUN = env.DRY_RUN === "1" || process.argv.includes("--dry-run");
-const TOKEN = env.PIN_BUMP_TOKEN ?? "";
+const TOKEN = env.RELEASE_BUMP_TOKEN ?? "";
 const REPO = env.GITHUB_REPOSITORY ?? "";
 const PIN_FILE = env.PIN_FILE ?? "";
 const BRANCH = env.PIN_BUMP_BRANCH || "bot/registry-pin";
@@ -82,7 +82,7 @@ if (!REPO.includes("/")) fail("GITHUB_REPOSITORY must be owner/name.");
 if (!PIN_FILE) fail("PIN_FILE is required.");
 if (!TOKEN && !DRY_RUN) {
   console.log(
-    "::warning::registry-pin-bump: the PIN_BUMP_TOKEN secret is not set, so no " +
+    "::warning::registry-pin-bump: the RELEASE_BUMP_TOKEN secret is not set, so no " +
       "bump pull request can be opened or merged. See README, 'Registry pin bump'.",
   );
   process.exit(0);
