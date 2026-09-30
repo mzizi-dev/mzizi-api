@@ -79,77 +79,18 @@ const HEADERS = [
  * The baseline is api.mzizi.dev, which this Worker already serves, so these
  * are only what the current registry pin changes. Earlier bumps' entries are in
  * the PRs that made them (mzizi-api-gateway#13 for the cutover, #18 for
- * skills 0.8.0).
+ * skills 0.8.0, #20 for skills 0.8.1 and the mzizi brand row).
  */
-// mzizi-registry#381: `@nyuchi/mzizi-skills` ^0.8.0 -> ^0.8.1. Still the same
-// five skills; `meta.version` is 0.8.1, and every skill's `source` names the
-// repository that really holds it (mzizi-dev/agent-tools, mzizi-skills/) instead
-// of the old `mzizi-tools/mzizi-skills` path. #381 also rewrote N12's text and
-// the /skills examples in openapi.yaml. mzizi-registry#378 adds the mzizi row
-// (mineral hematite) to the brand ecosystem table. #379, also in this range,
-// adds only the public plugin's files, which the API doesn't serve.
-const SKILLS_081 =
-  "mzizi-registry#381 serves @nyuchi/mzizi-skills 0.8.1: the same five skills, `meta.version` 0.8.1, and each skill's `source` is `mzizi-dev/agent-tools/mzizi-skills/skills/<name>` (was `mzizi-tools/mzizi-skills/skills/<name>`).";
-const SKILLS = [
-  "mzizi-language",
-  "mzizi-design",
-  "mzizi-backend",
-  "discoverability",
-];
-const N12 =
-  "mzizi-registry#381 rewrites the N12 skills rung: skills are authored in mzizi-dev/agent-tools and served from the published package, with no database projection (`role`, `description`, `implementation_rules[2..3]`).";
-const OPENAPI =
-  "mzizi-registry#381 updates openapi.yaml's /skills docs: the retired `nyuchi-design skills` CLI subcommands are gone from two descriptions, and the skill-name example is `mzizi-design`.";
-const BRAND =
-  "mzizi-registry#378 adds the mzizi row to the ecosystem table (`ecosystem[17]`: meaning Root, Swahili, mineral hematite).";
+// mzizi-registry#380: mzizi's default `--primary` in mzizi-tokens-globals.css is
+// hematite (`var(--heritage-hematite-aa)`), read from the brand ecosystem row
+// that #378 added, instead of gold. #383 (dependency override floors) and #382
+// (the registry's own CHANGELOG.md backfill and changelog gate), also in this
+// range, change nothing the API serves: /v1/changelog reads
+// lib/changelog.generated.ts, which this range doesn't touch.
 const EXPECTED = {
-  "GET /v1/skills": {
+  "GET /v1/ui/mzizi-tokens-globals": {
     allow: ["body"],
-    why: `${SKILLS_081} The list carries the five new \`source\` values.`,
-  },
-  "GET /api/v1/skills": {
-    allow: ["body"],
-    why: `${SKILLS_081} The /api/v1 spelling serves the same list.`,
-  },
-  "GET /v1/skills/summary": {
-    allow: ["body"],
-    why: `${SKILLS_081} The summary carries the same five \`source\` values.`,
-  },
-  ...Object.fromEntries(
-    SKILLS.map((name) => [
-      `GET /v1/skills/${name}`,
-      {
-        allow: ["body"],
-        why: `${SKILLS_081} \`${name}\`'s text is unchanged; only \`source\` and \`meta.version\` differ.`,
-      },
-    ]),
-  ),
-  "GET /v1/skills/mzizi-roots": {
-    allow: ["body"],
-    why: `${SKILLS_081} \`mzizi-roots\`'s 0.8.1 text also replaces the private agent-tools plugin install with the public plugin (\`/plugin marketplace add mzizi-dev/mzizi-registry\`, \`/plugin install mzizi@mzizi\`).`,
-  },
-  "GET /v1/brand": { allow: ["body"], why: BRAND },
-  "GET /api/v1/brand": {
-    allow: ["body"],
-    why: `${BRAND} The /api/v1 spelling serves the same table.`,
-  },
-  "GET /v1/architecture": {
-    allow: ["body"],
-    why: `${N12} The rung list carries it at \`rungs[3]\`.`,
-  },
-  "GET /api/v1/architecture": {
-    allow: ["body"],
-    why: `${N12} The /api/v1 spelling serves the same rungs.`,
-  },
-  "GET /v1/architecture/nodes/12": { allow: ["body"], why: N12 },
-  "GET /openapi": { allow: ["body"], why: OPENAPI },
-  "GET /api/openapi": {
-    allow: ["body"],
-    why: `${OPENAPI} /api/openapi serves the same document.`,
-  },
-  "GET /openapi?format=json": {
-    allow: ["body"],
-    why: `${OPENAPI} The JSON wrapper's \`yaml\` carries the same text.`,
+    why: 'mzizi-registry#380: `files[0].content` (mzizi-tokens-globals.css) sets mzizi\'s default `--primary` to `var(--heritage-hematite-aa)` instead of `var(--mineral-gold-aa)`, in both the `:root` default and the `[data-brand="mzizi"]` block, sourced from /v1/brand ecosystem[name=mzizi].mineral. Its comments change to match.',
   },
 };
 

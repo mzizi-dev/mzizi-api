@@ -36,6 +36,14 @@ To see which registry commit production is serving, read the
 
 ### Changed
 
+- **`/v1/ui/mzizi-tokens-globals`: mzizi's default `--primary` is hematite.**
+  The stylesheet sets `--primary: var(--heritage-hematite-aa)`, where it was
+  `var(--mineral-gold-aa)`. That covers both the default and the
+  `[data-brand="mzizi"]` block, and the value is read from the `/v1/brand`
+  mzizi row. A page that loads this stylesheet without setting `data-brand`
+  now gets hematite instead of gold. The registry pin moves to mzizi-registry
+  `e1c1c89` (registry #380, #382, #383). #382 and #383 change nothing the API
+  serves. Strict parity against production showed 1 difference, on that item.
 - **`/v1/skills` serves `@nyuchi/mzizi-skills` 0.8.1**, the same five skills.
   `meta.version` is `0.8.1`, and each skill's `source` names the repository
   that holds it, `mzizi-dev/agent-tools/mzizi-skills/skills/<name>` (it said

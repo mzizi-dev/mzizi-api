@@ -1,6 +1,6 @@
 {
   "repository": "https://github.com/mzizi-dev/mzizi-registry",
-  "ref": "bcb9b57dc7a49ec45a6eca2fc93930b8879a831d",
+  "ref": "e1c1c89ed98f7222db702cf25fdb7f88419f5bcb",
   "pinned": "2026-09-30",
-  "note": "mzizi-registry main on 2026-09-30, after #378 (mzizi -> hematite in the brand ecosystem table), #379 (the public plugin; nothing the API serves) and #381 (@nyuchi/mzizi-skills ^0.8.1: /v1/skills serves the five 0.8.1 skills; the public plugin moves to plugin/). Bump by hand, then run npm run build:data, npm test and npm run parity."
+  "note": "mzizi-registry main on 2026-09-30, after #383 (dependency override floors), #380 (mzizi's default --primary is hematite in mzizi-tokens-globals.css, read from the brand ecosystem row) and #382 (the registry's CHANGELOG backfill and changelog gate). Bump by hand, then run npm run build:data, npm test and npm run parity."
 }
