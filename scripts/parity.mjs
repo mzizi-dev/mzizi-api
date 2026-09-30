@@ -80,44 +80,53 @@ const HEADERS = [
  * are only what the current registry pin changes. Earlier bumps' entries are in
  * the PRs that made them (mzizi-api-gateway#13 for the cutover).
  */
-// mzizi-registry#372, batch 1 of Mzizi Roots: twelve N3 brand components gain
-// a Dioxus implementation, compiled by the `mzizi-brand` crate.
-const ROOTS_BATCH_1 = [
-  "mzizi-alert-banner",
-  "mzizi-avatar-stack",
-  "mzizi-cover-header",
-  "mzizi-empty-state",
-  "mzizi-escalation-card",
-  "mzizi-gauge-card",
-  "mzizi-hero-stat",
-  "mzizi-meta-tile",
-  "mzizi-stats-row",
-  "mzizi-success-screen",
-  "mzizi-suitability-card",
-  "mzizi-user-card",
-];
-const CRATE_FIX =
-  "mzizi-registry#372: `crate` names the crate that compiles the component (`mzizi-rs/crate-for-node.json`: N2 `mzizi-ui`, N3 `mzizi-brand`, N7 `mzizi-shell`, N8 `mzizi-assurance`, N9 `mzizi-fundi`, N10 `mzizi-docs`, N11 `mzizi-discovery`, N1 `mzizi-tokens`) and gains `git: https://github.com/mzizi-dev/mzizi-registry`. It read `mzizi-ui` for every component.";
-// Every other component with Rust source: same file, corrected `crate`.
-const rustComponents = JSON.parse(
-  readFileSync(new URL("../src/data/components.json", import.meta.url), "utf8"),
-)
-  .filter((c) => c.rsPath && !ROOTS_BATCH_1.includes(c.name))
-  .map((c) => c.name);
+// mzizi-registry#377: `@nyuchi/mzizi-skills` 0.5.1 -> ^0.8.0. The bundle is five
+// skills (mzizi-language, mzizi-roots, mzizi-design, mzizi-backend,
+// discoverability). 0.8.0 merged the rest into those five with no aliases
+// (agent-tools#144), so every other 0.5.1 name is now a 404.
+const SKILLS_080 =
+  "mzizi-registry#377 serves @nyuchi/mzizi-skills 0.8.0: five skills (mzizi-language, mzizi-roots, mzizi-design, mzizi-backend, discoverability), `meta.version` 0.8.0, `meta.count` 5.";
+const REMOVED_SKILLS = {
+  "bundu-design": "renamed to `mzizi-design` in 0.7.0",
+  simplify: 'merged into `mzizi-roots` ("Reuse before build")',
+  "scaffold-component":
+    'merged into `mzizi-roots` ("Contributing a component")',
+  "ecosystem-app-setup":
+    'split between `mzizi-roots` ("Starting an app") and `mzizi-design`',
+  "nyuchi-design": 'merged into `mzizi-design` ("The design system")',
+  "cloudflare-worker-rust": 'merged into `mzizi-backend` ("A Rust Worker")',
+  "mcp-server-cloudflare": 'merged into `mzizi-backend` ("An MCP server")',
+  "mukoko-design":
+    "removed; mukoko is a Nyuchi product and its assets move to a Nyuchi-owned bundle",
+};
 const EXPECTED = {
+  "GET /v1/skills": {
+    allow: ["body"],
+    why: `${SKILLS_080} The list is the five 0.8.0 skills.`,
+  },
+  "GET /api/v1/skills": {
+    allow: ["body"],
+    why: `${SKILLS_080} The /api/v1 spelling serves the same list.`,
+  },
+  "GET /v1/skills/summary": {
+    allow: ["body"],
+    why: `${SKILLS_080} The summary lists the five.`,
+  },
+  "GET /v1/skills/does-not-exist": {
+    allow: ["body"],
+    why: `${SKILLS_080} The 404's \`available\` list names the five.`,
+  },
+  "GET /v1/skills/discoverability": {
+    allow: ["body"],
+    why: `${SKILLS_080} \`discoverability\` kept its name; its 0.8.0 text replaces 0.5.1's (\"Mzizi ecosystem\", static Astro, no database).`,
+  },
   ...Object.fromEntries(
-    ROOTS_BATCH_1.map((n) => [
-      `GET /v1/rs/${n}`,
+    Object.entries(REMOVED_SKILLS).map(([name, fate]) => [
+      `GET /v1/skills/${name}`,
       {
         allow: ["status", "body", "header:cache-control"],
-        why: `${CRATE_FIX} This component had no \`.rs\` (404, uncached); it now serves its Dioxus source from \`components/registry/n3-brand/\` in \`mzizi-brand\` (200, cached like every 200 on this route).`,
+        why: `${SKILLS_080} \`${name}\` is not in 0.8.0 (${fate}), so it answers 404, uncached like every 404 on this route.`,
       },
-    ]),
-  ),
-  ...Object.fromEntries(
-    rustComponents.map((n) => [
-      `GET /v1/rs/${n}`,
-      { allow: ["body"], why: CRATE_FIX },
     ]),
   ),
 };

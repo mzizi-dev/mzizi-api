@@ -1,6 +1,6 @@
 {
   "repository": "https://github.com/mzizi-dev/mzizi-registry",
-  "ref": "9b86e034ffd84cff9ae0214201dc4bc4b15b2885",
+  "ref": "eb4935e1f04d9e91c8b1a4f3f6c628254b7a27d0",
   "pinned": "2026-09-30",
-  "note": "mzizi-registry main on 2026-09-30, after #372 (first Mzizi Roots batch: twelve N3 brand components in Rust, /v1/rs/{name} names the crate that compiles the component, the mzizi-roots / mzizi-roots-server umbrella crates), #374 (Mzizi named as operator in README, NOTICE and the plugin manifest) and #375 (freshness rule, docs only). Bump by hand, then run npm run build:data, npm test and npm run parity."
+  "note": "mzizi-registry main on 2026-09-30, after #377 (@nyuchi/mzizi-skills ^0.8.0: /v1/skills serves the five 0.8.0 skills) and 4f40c26 (code of conduct reports to support@bundu.org). Bump by hand, then run npm run build:data, npm test and npm run parity."
 }
