@@ -5,13 +5,22 @@
 import type { Hono } from "hono";
 import {
   components,
+  crateGit,
   nodeCounts,
   readComponent,
   readComponentDocs,
   readSource,
 } from "../data";
 import { CORS, CORS_CACHE, cache, json } from "../http";
-import { VERSIONS_NOT_SERVED, docsBody, docsNotFound } from "../projections";
+import {
+  VERSIONS_NOT_SERVED,
+  docsBody,
+  docsNotFound,
+  rsBody,
+  rsNoCrate,
+  rsNoRust,
+  rsNotFound,
+} from "../projections";
 import { search } from "../search";
 
 /** app/api/v1/ui/route.ts `positiveInt`. */
@@ -208,43 +217,16 @@ export function registerRegistry(v1: Hono) {
   v1.get("/rs/:name", (c) => {
     const name = c.req.param("name");
     const component = readComponent(name);
-    if (!component) {
-      return json(
-        { error: `Component "${name}" not found in registry` },
-        404,
-        CORS,
-      );
-    }
+    if (!component) return json(rsNotFound(name), 404, CORS);
     const source = readSource(name, "rs");
-    if (source === null) {
-      return json(
-        {
-          error: `"${name}" has no Rust implementation`,
-          message:
-            "This component ships for React only. The contract, tokens and variants are on " +
-            `https://api.mzizi.dev/v1/ui/${encodeURIComponent(name)} — the Dioxus source is ` +
-            "yours to write against them.",
-        },
-        404,
-        CORS,
-      );
-    }
+    if (source === null) return json(rsNoRust(name), 404, CORS);
+    // The crate that compiles the component (mzizi-registry lib/rust-crates.ts),
+    // resolved at build time. `null` is the registry handler's 500: Rust source
+    // no crate claims, which the registry's generator refuses.
+    const crate = component.rsCrate ?? null;
+    if (crate === null) return json(rsNoCrate(name), 500, CORS);
     return json(
-      {
-        $schema: "https://ui.shadcn.com/schema/registry-item.json",
-        name: component.name,
-        type: component.type,
-        target: "dioxus",
-        description: component.description,
-        crate: { name: "mzizi-ui", registry: "crates.io" },
-        files: [
-          {
-            path: component.rsPath ?? `${name}.rs`,
-            type: "registry:rust",
-            content: source,
-          },
-        ],
-      },
+      rsBody(component, name, source, crate, crateGit),
       200,
       CORS_CACHE,
     );

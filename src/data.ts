@@ -43,6 +43,8 @@ export interface RegistryItem {
   tailwind?: Loose;
   /** `sources.rs` from the registry's on-disk index, when the item has a Dioxus file. */
   rsPath?: string;
+  /** mzizi-registry `crateFor(rsPath)`: the crate that compiles the `.rs`, when there is one. */
+  rsCrate?: string | null;
 }
 
 export const components = componentsJson as unknown as RegistryItem[];
@@ -50,6 +52,8 @@ const byName = new Map(components.map((c) => [c.name, c]));
 
 export const renames = metaJson.renames as Record<string, string>;
 export const openapiYaml: string = metaJson.openapiYaml;
+/** mzizi-registry `CRATE_GIT`: the git install for every Roots crate, on `/v1/rs/{name}`. */
+export const crateGit: string = metaJson.crateGit;
 
 /** lib/registry.ts `readComponent`: by name, then by the name it was renamed from. */
 export function readComponent(name: string): RegistryItem | null {

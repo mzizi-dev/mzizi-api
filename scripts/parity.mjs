@@ -71,57 +71,49 @@ const HEADERS = [
  * request (a 500, a lost header) still fails the run.
  *
  * The baseline is api.mzizi.dev, which this Worker already serves, so these
- * are only what the current registry pin changes. The cutover's differences
- * from the registry Worker are in mzizi-api-gateway#13 and earlier.
+ * are only what the current registry pin changes. Earlier bumps' entries are in
+ * the PRs that made them (mzizi-api-gateway#13 for the cutover).
  */
-const SEARCH_FIX =
-  "mzizi-registry#373: search filters on `node` and `categories` (AND) and each hit carries `name`, `type`, `title`, `description`, `categories`, `node`, `nodeLabel`; `meta` is `{ total, query, node, category }`. It used to filter on `layer`/`category`, which no registry item has, and project `registry_type`.";
+// mzizi-registry#372, batch 1 of Mzizi Roots: twelve N3 brand components gain
+// a Dioxus implementation, compiled by the `mzizi-brand` crate.
+const ROOTS_BATCH_1 = [
+  "mzizi-alert-banner",
+  "mzizi-avatar-stack",
+  "mzizi-cover-header",
+  "mzizi-empty-state",
+  "mzizi-escalation-card",
+  "mzizi-gauge-card",
+  "mzizi-hero-stat",
+  "mzizi-meta-tile",
+  "mzizi-stats-row",
+  "mzizi-success-screen",
+  "mzizi-suitability-card",
+  "mzizi-user-card",
+];
+const CRATE_FIX =
+  "mzizi-registry#372: `crate` names the crate that compiles the component (`mzizi-rs/crate-for-node.json`: N2 `mzizi-ui`, N3 `mzizi-brand`, N7 `mzizi-shell`, N8 `mzizi-assurance`, N9 `mzizi-fundi`, N10 `mzizi-docs`, N11 `mzizi-discovery`, N1 `mzizi-tokens`) and gains `git: https://github.com/mzizi-dev/mzizi-registry`. It read `mzizi-ui` for every component.";
+// Every other component with Rust source: same file, corrected `crate`.
+const rustComponents = JSON.parse(
+  readFileSync(new URL("../src/data/components.json", import.meta.url), "utf8"),
+)
+  .filter((c) => c.rsPath && !ROOTS_BATCH_1.includes(c.name))
+  .map((c) => c.name);
 const EXPECTED = {
   ...Object.fromEntries(
-    ["/v1", "/api/v1"].map((p) => [
-      `GET ${p}`,
+    ROOTS_BATCH_1.map((n) => [
+      `GET /v1/rs/${n}`,
       {
-        allow: ["body"],
-        why: 'mzizi-registry#373: the discovery document\'s `database: {status: "not_configured", components: 0}` is `data: {source: "files", repository, components: <live count>}`; the description names Mzizi as operator (not Nyuchi) and the Bundu Foundation; the ui, health and search descriptions drop the database wording and name `node`.',
+        allow: ["status", "body", "header:cache-control"],
+        why: `${CRATE_FIX} This component had no \`.rs\` (404, uncached); it now serves its Dioxus source from \`components/registry/n3-brand/\` in \`mzizi-brand\` (200, cached like every 200 on this route).`,
       },
     ]),
   ),
   ...Object.fromEntries(
-    ["/openapi", "/api/openapi", "/openapi?format=json"].map((p) => [
-      `GET ${p}`,
-      {
-        allow: ["body"],
-        why: 'mzizi-registry#373: openapi.yaml drops the Supabase / "operated and developed by Nyuchi" wording and the 503 on file-backed routes, and its docs, search and AI-instruction schemas match their handlers.',
-      },
+    rustComponents.map((n) => [
+      `GET /v1/rs/${n}`,
+      { allow: ["body"], why: CRATE_FIX },
     ]),
   ),
-  ...Object.fromEntries(
-    [
-      "/v1/search?q=button",
-      "/v1/search?category=forms",
-      "/api/v1/search?q=x",
-      "/v1/search?layer=3&node=2",
-      "/v1/search?category=primitives",
-      "/v1/search?q=button&node=2&category=primitives",
-    ].map((p) => [`GET ${p}`, { allow: ["body"], why: SEARCH_FIX }]),
-  ),
-  ...Object.fromEntries(
-    ["/v1/search?layer=2", "/api/v1/search?layer=2"].map((p) => [
-      `GET ${p}`,
-      {
-        allow: ["body", "header:deprecation"],
-        why: `${SEARCH_FIX} \`?layer=\` is kept as a deprecated alias of \`?node=\`: node 2's items, plus \`meta.deprecation\` and \`Deprecation: true\`.`,
-      },
-    ]),
-  ),
-  "GET /v1/search?node=2": {
-    allow: ["status", "body", "header:cache-control"],
-    why: `${SEARCH_FIX} \`node\` was not a parameter, so this was the 400.`,
-  },
-  "GET /v1/search": {
-    allow: ["body"],
-    why: "mzizi-registry#373: the 400 reads `At least one of q, node, or category is required`.",
-  },
 };
 
 // ── Build the request list ─────────────────────────────────────────────────

@@ -151,6 +151,7 @@ const files = {
     repository: pin.repository,
     ref: pin.ref,
     renames: data.renames,
+    crateGit: data.crateGit,
     openapiYaml: data.openapiYaml,
   },
 };

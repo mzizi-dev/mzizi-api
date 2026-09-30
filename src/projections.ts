@@ -163,3 +163,65 @@ export const discoveryDocument = (componentCount: number) => ({
     },
   },
 });
+
+/** The fields of a registry item `/v1/rs/{name}` reads. */
+export interface RsItem {
+  name: string;
+  type?: string;
+  description?: string;
+  /** `sources.rs` from the registry's on-disk index. */
+  rsPath?: string;
+  /**
+   * mzizi-registry `crateFor(rsPath)` (lib/rust-crates.ts): the crate that
+   * compiles this component, from `mzizi-rs/crate-for-node.json`. `null` when
+   * the item's node directory has no crate, which the registry's generator
+   * refuses, so it only appears on an item with no Rust source.
+   */
+  rsCrate?: string | null;
+}
+
+/** app/api/v1/rs/[name]/route.ts: the 404 body for an unknown name. */
+export const rsNotFound = (name: string) => ({
+  error: `Component "${name}" not found in registry`,
+});
+
+/** app/api/v1/rs/[name]/route.ts: the 404 body for an item with no `.rs`. */
+export const rsNoRust = (name: string) => ({
+  error: `"${name}" has no Rust implementation`,
+  message:
+    "This component ships for React only. The contract, tokens and variants are on " +
+    `https://api.mzizi.dev/v1/ui/${encodeURIComponent(name)} — the Dioxus source is ` +
+    "yours to write against them.",
+});
+
+/** app/api/v1/rs/[name]/route.ts: the 500 body when no crate compiles the `.rs`. */
+export const rsNoCrate = (name: string) => ({
+  error: `"${name}" has Rust source but no crate compiles it`,
+});
+
+/**
+ * app/api/v1/rs/[name]/route.ts: the 200 body. `crate` names the crate that
+ * compiles the component (mzizi-registry#372); it read `mzizi-ui` for every
+ * component before, which was wrong for everything outside N2.
+ */
+export const rsBody = (
+  component: RsItem,
+  name: string,
+  source: string,
+  crate: string,
+  crateGit: string,
+) => ({
+  $schema: "https://ui.shadcn.com/schema/registry-item.json",
+  name: component.name,
+  type: component.type,
+  target: "dioxus",
+  description: component.description,
+  crate: { name: crate, registry: "crates.io", git: crateGit },
+  files: [
+    {
+      path: component.rsPath ?? `${name}.rs`,
+      type: "registry:rust",
+      content: source,
+    },
+  ],
+});

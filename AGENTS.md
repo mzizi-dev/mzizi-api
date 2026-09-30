@@ -68,8 +68,9 @@ restart forever.
 - **Rust first.** Mzizi Roots (Rust components) are the direction; React/TSX
   components are deprioritised but keep working. Present a Rust implementation
   first where one exists. Roots routes follow the registry's Roots RFC
-  (`docs/roots/` in mzizi-registry, in progress). Until it lands, don't add
-  Roots-specific routes here (README, "Mzizi Roots").
+  (`docs/roots/RFC-roots.md` in mzizi-registry, proposed). They land in the
+  registry's handlers first; don't add Roots-specific routes here ahead of
+  them (README, "Mzizi Roots").
 
 ## Deployment: read this before touching `wrangler.jsonc`
 

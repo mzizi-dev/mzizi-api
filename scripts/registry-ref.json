@@ -1,6 +1,6 @@
 {
   "repository": "https://github.com/mzizi-dev/mzizi-registry",
-  "ref": "ce68c6446f6e603de7a8e7fc47fa880d8a44b749",
-  "pinned": "2026-09-29",
-  "note": "mzizi-registry main on 2026-09-29, after #373 (search on node and categories; file-backed docs and AI instructions; no database wording) and #371 (docs/roots RFC). Bump by hand, then run npm run build:data, npm test and npm run parity."
+  "ref": "9b86e034ffd84cff9ae0214201dc4bc4b15b2885",
+  "pinned": "2026-09-30",
+  "note": "mzizi-registry main on 2026-09-30, after #372 (first Mzizi Roots batch: twelve N3 brand components in Rust, /v1/rs/{name} names the crate that compiles the component, the mzizi-roots / mzizi-roots-server umbrella crates), #374 (Mzizi named as operator in README, NOTICE and the plugin manifest) and #375 (freshness rule, docs only). Bump by hand, then run npm run build:data, npm test and npm run parity."
 }

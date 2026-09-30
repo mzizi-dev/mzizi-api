@@ -146,7 +146,7 @@ so this Worker ports the handlers at the pin:
 `src/data/ai-instruction-index.json`). Search is computed per request, so it runs
 [`src/search.ts`](src/search.ts) over `components.json`, which is the output of
 `readComponents()`. The per-route projections for docs, AI instructions, the
-versions `503` and the discovery document are in
+versions `503`, the discovery document and `/v1/rs/{name}` are in
 [`src/projections.ts`](src/projections.ts).
 
 **Both are checked against the registry's own route handlers at build time.**
@@ -155,8 +155,10 @@ pin and runs them in-process, with `next/server` replaced by
 [`scripts/next-server-stub.mjs`](scripts/next-server-stub.mjs) (just
 `NextResponse.json`). It compares their answers with this Worker's: search on
 about 1,300 queries (status, body and the `Deprecation` header), docs for every
-component and for unknown names, every AI instruction key, the versions `503`
-and the discovery document. A disagreement fails the build.
+component and for unknown names, every AI instruction key, the versions `503`,
+the discovery document, and `/v1/rs/{name}` for every component (the `.rs`
+source, its path and the crate that compiles it) and for unknown names. A
+disagreement fails the build.
 
 **Search filters on `node` and `categories`,** combined (AND), as the registry
 handler does since mzizi-registry#373. `?layer=` still works as a **deprecated
@@ -229,17 +231,26 @@ comes first.
 What that means for this API:
 
 - **Today**, `/v1/rs/{name}` serves the Rust (Dioxus) source for every item
-  that has one, and `/v1/ui/{name}` serves the React source that the shadcn CLI
-  installs. Both come from the same pinned registry files. Neither changes in
-  this repository before the registry changes.
+  that has one (55 at the current pin), and `/v1/ui/{name}` serves the React
+  source that the shadcn CLI installs. Both come from the same pinned registry
+  files. Neither changes in this repository before the registry changes.
+- **`crate` on `/v1/rs/{name}`** names the crate that compiles the component,
+  read from the registry's `mzizi-rs/crate-for-node.json` at build time:
+  `mzizi-ui` for the N2 primitives, `mzizi-brand` for the N3 brand components
+  (Roots batch 1, mzizi-registry#372), `mzizi-shell`, `mzizi-assurance`,
+  `mzizi-fundi`, `mzizi-docs`, `mzizi-discovery` and `mzizi-tokens` for the
+  rest. It also carries `git`, the install that resolves before and after a
+  crates.io release. `scripts/extract.ts` checks every `/v1/rs/{name}` answer
+  against the registry's own handler.
 - **The direction** is for Rust to be the first answer: Roots components listed
   and described ahead of their React counterparts, and new component endpoints
   designed around the Rust implementation. Each such change lands in the
   registry's handlers first and reaches this Worker through a pin bump, with
   parity recording the difference.
-- **The design** is the Roots RFC, which is being written in `mzizi-registry`
-  under `docs/roots/`. This section will link it once it lands. Until then,
-  don't build Roots-specific routes here.
+- **The design** is the
+  [Roots RFC](https://github.com/mzizi-dev/mzizi-registry/blob/main/docs/roots/RFC-roots.md)
+  in mzizi-registry (status: proposed). Roots-specific routes follow it, and
+  land in the registry first; don't build them here ahead of it.
 
 ## Developing
 

@@ -100,6 +100,50 @@ describe("registry", () => {
     const api = await get("/api/v1/rs/nyuchi-a11y");
     expect(api.headers.get("location")).toBe("/api/v1/rs/mzizi-a11y");
   });
+
+  type RsItem = {
+    target: string;
+    crate: { name: string; registry: string; git: string };
+    files: Array<{ path: string; type: string; content: string }>;
+  };
+
+  it("serves a Roots brand component's Rust, naming the crate that compiles it", async () => {
+    const res = await get("/v1/rs/mzizi-meta-tile");
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as RsItem;
+    expect(body.target).toBe("dioxus");
+    expect(body.crate).toEqual({
+      name: "mzizi-brand",
+      registry: "crates.io",
+      git: "https://github.com/mzizi-dev/mzizi-registry",
+    });
+    expect(body.files[0].path).toBe(
+      "components/registry/n3-brand/mzizi-meta-tile.rs",
+    );
+    expect(body.files[0].content.length).toBeGreaterThan(0);
+  });
+
+  it("names the crate by node directory, not mzizi-ui for everything", async () => {
+    const crates = new Map<string, string>();
+    for (const c of components.filter((c) => c.rsPath)) {
+      const res = await get(`/v1/rs/${c.name}`);
+      expect(res.status).toBe(200);
+      const body = (await res.json()) as RsItem;
+      crates.set(c.rsPath!.split("/").at(-2)!, body.crate.name);
+    }
+    expect(crates.get("n2-primitives")).toBe("mzizi-ui");
+    expect(crates.get("n3-brand")).toBe("mzizi-brand");
+    expect(crates.get("n7-shell")).toBe("mzizi-shell");
+  });
+
+  it("404s /v1/rs for a component with no Rust source", async () => {
+    const tsxOnly = components.find((c) => !c.rsPath)!;
+    const res = await get(`/v1/rs/${tsxOnly.name}`);
+    expect(res.status).toBe(404);
+    expect(((await res.json()) as { error: string }).error).toBe(
+      `"${tsxOnly.name}" has no Rust implementation`,
+    );
+  });
 });
 
 describe("file-backed routes", () => {

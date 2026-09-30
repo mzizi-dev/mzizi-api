@@ -17,7 +17,9 @@
  * are checked here against mzizi-registry's own route handlers, run in this
  * process with `next/server` stubbed (scripts/next-server-stub.mjs): search on
  * about 1,300 queries (status, body and the `Deprecation` header), docs for
- * every component, every AI instruction key. Any disagreement fails the build.
+ * every component, every AI instruction key, and `/v1/rs/{name}` (source,
+ * file path and the crate that compiles it) for every component. Any
+ * disagreement fails the build.
  */
 import { readComponents, readNodeCounts } from "@/lib/registry";
 import {
@@ -66,11 +68,13 @@ import {
 } from "@/lib/tokens/brand.source";
 import { OPENAPI_YAML } from "@/lib/openapi.generated";
 import { COMPONENT_RENAMES } from "@/lib/component-renames";
+import { CRATE_GIT, crateFor } from "@/lib/rust-crates";
 import { GET as discoveryHandler } from "@/app/api/v1/route";
 import { GET as searchHandler } from "@/app/api/v1/search/route";
 import { GET as docsHandler } from "@/app/api/v1/ui/[name]/docs/route";
 import { GET as versionsHandler } from "@/app/api/v1/ui/[name]/versions/route";
 import { GET as aiInstructionHandler } from "@/app/api/v1/ai/instructions/[name]/route";
+import { GET as rsHandler } from "@/app/api/v1/rs/[name]/route";
 import { writeFileSync } from "node:fs";
 import { search, type SearchableItem } from "../src/search";
 import {
@@ -79,7 +83,12 @@ import {
   discoveryDocument,
   docsBody,
   docsNotFound,
+  rsBody,
+  rsNoCrate,
+  rsNoRust,
+  rsNotFound,
   type DocsItem,
+  type RsItem,
 } from "../src/projections";
 
 const ORIGIN = "https://api.mzizi.dev";
@@ -173,10 +182,11 @@ async function checkSearch(items: SearchableItem[]): Promise<number> {
  * versions and AI-instruction handlers ever disagree.
  */
 async function checkHandlers(
-  components: DocsItem[],
+  components: (DocsItem & RsItem)[],
   componentDocs: Record<string, { docs: unknown; demo: unknown }>,
   aiInstructions: unknown[],
   aiInstructionIndex: Record<string, number>,
+  sources: Record<string, { primary: string | null; rs: string | null }>,
 ): Promise<number> {
   let checks = 0;
   const check = (
@@ -227,6 +237,36 @@ async function checkHandlers(
     VERSIONS_NOT_SERVED,
   );
 
+  // /v1/rs/{name}: every component (200 with its crate, or the no-Rust 404),
+  // plus an unknown name. The 200 carries the whole `.rs` file.
+  for (const c of components) {
+    const path = `/rs/${c.name}`;
+    const rs = sources[c.name]?.rs ?? null;
+    const crate = c.rsCrate ?? null;
+    const [status, body] =
+      rs === null
+        ? [404, rsNoRust(c.name)]
+        : crate === null
+          ? [500, rsNoCrate(c.name)]
+          : [200, rsBody(c, c.name, rs, crate, CRATE_GIT)];
+    check(
+      path,
+      await answer(await rsHandler(req(path), segment(c.name))),
+      status,
+      body,
+    );
+  }
+  for (const name of ["does-not-exist", "Button"]) {
+    if (components.some((c) => c.name === name)) continue;
+    const path = `/rs/${name}`;
+    check(
+      path,
+      await answer(await rsHandler(req(path), segment(name))),
+      404,
+      rsNotFound(name),
+    );
+  }
+
   for (const key of [...Object.keys(aiInstructionIndex), "nope", "claude"]) {
     const path = `/ai/instructions/${key}`;
     const at = aiInstructionIndex[key];
@@ -252,7 +292,12 @@ async function main() {
       sources?: Record<string, string>;
       sourcePath?: string;
     };
-    return { ...item, ...(sources?.rs ? { rsPath: sources.rs } : {}) };
+    return {
+      ...item,
+      ...(sources?.rs
+        ? { rsPath: sources.rs, rsCrate: crateFor(sources.rs) }
+        : {}),
+    };
   });
 
   const sources: Record<string, { primary: string | null; rs: string | null }> =
@@ -306,10 +351,11 @@ async function main() {
 
   const searchProbes = await checkSearch(components as SearchableItem[]);
   const handlerChecks = await checkHandlers(
-    components as DocsItem[],
+    components as (DocsItem & RsItem)[],
     componentDocs,
     aiInstructions,
     aiInstructionIndex,
+    sources,
   );
 
   const skillNames = listSkillNames();
@@ -357,6 +403,7 @@ async function main() {
     },
     openapiYaml: OPENAPI_YAML,
     renames: COMPONENT_RENAMES,
+    crateGit: CRATE_GIT,
     componentDocs,
     aiInstructionIndex,
     searchProbes,
