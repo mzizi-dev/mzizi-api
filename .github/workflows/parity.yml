@@ -3,9 +3,9 @@ name: Parity
 # Two ways in:
 #
 # - Every pull request that moves the registry pin (scripts/registry-ref.json),
-#   including the automated bumps from registry-pin-bump.yml. Baseline is
-#   production, https://api.mzizi.dev; candidate is the pull request under
-#   `wrangler dev`. Any unexplained difference fails the check, and a failed
+#   including the automated bumps from registry-pin-bump.yml, or that changes
+#   parity itself. Baseline is production, https://api.mzizi.dev; candidate is
+#   the pull request under `wrangler dev`. Any unexplained difference fails the check, and a failed
 #   check stops the automated bump for review. When the pull request doesn't
 #   touch scripts/parity.mjs, the run is `--strict`: EXPECTED then holds only an
 #   earlier bump's reasons, which production already serves, so nothing in it
@@ -22,6 +22,9 @@ on:
     branches: [main]
     paths:
       - scripts/registry-ref.json
+      # And a change to parity itself, so it is exercised before it gates.
+      - scripts/parity.mjs
+      - .github/workflows/parity.yml
   workflow_dispatch:
     inputs:
       baseline:

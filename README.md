@@ -215,7 +215,8 @@ in `scripts/registry-ref.json` to registry `main`:
 2. **CI runs on it** like on any pull request: `worker` (build, typecheck,
    tests, format, wrangler bundle), `secret scan`, the five `lint / *` checks,
    Workers Builds, and **`parity`**: [`parity.yml`](.github/workflows/parity.yml)
-   runs on every pull request that changes `scripts/registry-ref.json`,
+   runs on every pull request that changes `scripts/registry-ref.json` (or
+   parity itself),
    building the pull request under `wrangler dev` and comparing it with
    production `https://api.mzizi.dev`. On a pull request that doesn't edit
    `scripts/parity.mjs`, as every bot bump, parity runs `--strict`: `EXPECTED`
