@@ -36,11 +36,14 @@ jobs:
       # generates src/data/. Everything below reads it.
       - run: npm run build:data
 
+      # tsc over the tsconfig program (src/, test/), as before.
       - run: npm run typecheck
 
-      - run: npm test
+      # vp check: oxfmt + oxlint + type-aware lint and type check, the org's
+      # Vite+ standard (replaces the old prettier format:check).
+      - run: npm run check
 
-      - run: npm run format:check
+      - run: npm test
 
       # The real artefact: wrangler's own bundle of the Worker, the same step
       # Cloudflare Workers Builds runs (including the custom build in

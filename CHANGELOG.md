@@ -23,6 +23,10 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — Vite+ 1.0 replaces prettier and vitest (2026-10-03)
+
+- **Dev tooling only; no API change.** `vite-plus` 1.0.0 replaces the `prettier` and `vitest` dev dependencies. `npm run check` (`vp check`: format, lint, type-aware lint and type check) replaces `npm run format:check` in CI, and `npm test` is `vp test`. The test include moved from `vitest.config.ts` into `vite.config.ts`.
+
 ### Changed — the registry pin moves past the registry's Next.js app (2026-10-02)
 
 - **The registry pin moves to mzizi-registry `a38a4d8`** (main, after

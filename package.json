@@ -13,10 +13,12 @@
     "build": "npm run build:data && wrangler deploy --dry-run --outdir=.wrangler/dryrun",
     "dev": "wrangler dev",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
+    "test": "vp test",
     "parity": "node scripts/parity.mjs",
-    "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "check": "vp check",
+    "lint": "vp lint",
+    "fmt": "vp fmt",
+    "ci:prepare": "npm run build:data"
   },
   "dependencies": {
     "hono": "^4.13.10"
@@ -24,9 +26,8 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260928.1",
     "esbuild": "^0.28.2",
-    "prettier": "^3.9.9",
     "typescript": "^5.9.3",
-    "vitest": "^5.0.2",
+    "vite-plus": "^1.0.0",
     "wrangler": "^4.147.0"
   }
 }

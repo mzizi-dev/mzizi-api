@@ -3,7 +3,7 @@
  * held by `npm run parity`; these catch a broken build or routing regression in
  * CI without touching the network. Requires `npm run build:data` first.
  */
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import app from "../src/index";
 import { components } from "../src/data";
 

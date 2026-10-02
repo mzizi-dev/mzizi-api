@@ -27,7 +27,7 @@ npm ci
 npm run build:data      # checkout the pinned registry ref → src/data/*.json
 npm run typecheck
 npm test                # offline route tests
-npm run format:check
+npm run check           # vp check: format, lint, type check (vp fmt to fix)
 npm run dev             # wrangler dev, http://localhost:8787
 npm run parity          # live api.mzizi.dev vs local; must report 0 unexplained
 npx wrangler deploy --dry-run --outdir=.wrangler/dryrun
