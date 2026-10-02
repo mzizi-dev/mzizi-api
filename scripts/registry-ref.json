@@ -1,6 +1,6 @@
 {
   "repository": "https://github.com/mzizi-dev/mzizi-registry",
-  "ref": "a38a4d8993d8efda5753775cf618fcbdff0f3c03",
+  "ref": "2231abcdc5732c4ee2d9089dff07afa4190ffb9f",
   "pinned": "2026-10-02",
-  "note": "mzizi-registry main on 2026-10-02, after #389 and #391 (the Next.js app and the mzizi-api Worker removed; the registry is the registry and nothing else). The handlers scripts/extract.ts checks against are ported into scripts/registry-handlers/ from 270af9f. Bump by hand, then run npm run build:data, npm test and npm run parity."
+  "note": "mzizi-registry main at 2231abc on 2026-10-02, set by .github/workflows/registry-pin-bump.yml. The commits since the last pin are listed in its pull request."
 }
