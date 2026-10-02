@@ -23,6 +23,10 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — lint runs once, from the org-required workflow (2026-10-03)
+
+- **Removed `.github/workflows/lint.yml`.** The `mzizi-dev` org ruleset now runs the shared lint on every pull request through `mzizi-dev/.github`'s `org-lint.yml`, publishing the same five `lint / …` checks, so the repo's own caller only ran lint a second time.
+
 ### Added
 
 - `CHANGELOG.md`, backfilled from every merged pull request since the
