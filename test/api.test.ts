@@ -476,7 +476,7 @@ describe("HTTP behaviour", () => {
 
   it("publishes security.txt with the owner-chosen contact", async () => {
     const text = await (await get("/.well-known/security.txt")).text();
-    expect(text).toContain("Contact: mailto:security@bundu.org");
+    expect(text).toContain("Contact: mailto:security@nyuchi.com");
     expect(text).toMatch(/^Expires: \d{4}-/m);
   });
 

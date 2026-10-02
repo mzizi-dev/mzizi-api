@@ -139,11 +139,11 @@ for (const path of ["/openapi", "/api/openapi"]) {
   );
 }
 
-// ── RFC 9116. Contact is security@bundu.org by owner decision (2026-09-28). ──
+// ── RFC 9116. Contact is security@nyuchi.com by owner decision (2026-10-03). ──
 app.get("/.well-known/security.txt", () => {
   const expires = new Date();
   expires.setFullYear(expires.getFullYear() + 1);
-  const body = `Contact: mailto:security@bundu.org
+  const body = `Contact: mailto:security@nyuchi.com
 Expires: ${expires.toISOString()}
 Canonical: https://api.mzizi.dev/.well-known/security.txt
 Policy: https://github.com/mzizi-dev/mzizi-api-gateway/blob/main/SECURITY.md

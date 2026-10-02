@@ -23,6 +23,10 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Security — security reports go to `security@nyuchi.com` (2026-10-03)
+
+- **`/.well-known/security.txt` now names `Contact: mailto:security@nyuchi.com`**, and `SECURITY.md`'s email fallback behind GitHub private advisories matches, in place of `security@bundu.org` (owner decision, 2026-10-03: one security contact for every repository). `Expires`, `Canonical`, `Policy` and `Preferred-Languages` are unchanged.
+
 ### Changed — Vite+ 1.0 replaces prettier and vitest (2026-10-03)
 
 - **Dev tooling only; no API change.** `vite-plus` 1.0.0 replaces the `prettier` and `vitest` dev dependencies. `npm run check` (`vp check`: format, lint, type-aware lint and type check) replaces `npm run format:check` in CI, and `npm test` is `vp test`. The test include moved from `vitest.config.ts` into `vite.config.ts`.

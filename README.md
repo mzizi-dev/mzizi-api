@@ -58,7 +58,7 @@ base paths answer: `/v1/...` (canonical) and `/api/v1/...`.
 | `GET /v1/samples` · `/v1/samples/{type}`                                                                      | `lib/samples/data.ts`                             |
 | `GET /v1/stats`                                                                                               | Zeroed usage figures plus real per-node counts    |
 | `GET /openapi` · `/api/openapi`                                                                               | `lib/openapi.generated.ts`                        |
-| `GET /.well-known/security.txt`                                                                               | Contact `security@bundu.org`                      |
+| `GET /.well-known/security.txt`                                                                               | Contact `security@nyuchi.com`                     |
 
 Also answered, as they are today:
 

@@ -51,7 +51,7 @@ requests, so a wildcard gives a caller nothing it couldn't get with `curl`.
 
 1. Use GitHub's private advisory flow:
    <https://github.com/mzizi-dev/mzizi-api-gateway/security/advisories/new>
-2. If that is unavailable to you, email `security@bundu.org` (also the
+2. If that is unavailable to you, email `security@nyuchi.com` (also the
    `Contact` in `https://api.mzizi.dev/.well-known/security.txt`).
 
 Include the request that reproduces it (full URL and method), what the gateway
