@@ -23,6 +23,38 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — the registry pin moves past the registry's Next.js app (2026-10-02)
+
+- **The registry pin moves to mzizi-registry `a38a4d8`** (main, after
+  mzizi-registry#389 and #391, which removed the registry's Next.js app and its
+  `mzizi-api` Worker). One string the API serves changes: the `mzizi-tokens`
+  description now says the tokens are generated from `styles/globals.css` in
+  mzizi-dev/mzizi-registry, so the theme and the stylesheet it is read from
+  cannot disagree (it said `app/globals.css`, so the registry and the site
+  cannot disagree). It appears on `/v1/ui`, `/v1/ui/mzizi-tokens`,
+  `/v1/ui/mzizi-tokens/docs` and anywhere else the item's description is
+  listed or searched. No other field of any answer changes.
+- **The build no longer imports the registry's `app/` tree.** `scripts/extract.ts`
+  checks `/v1/search`, the discovery document, `/v1/ui/{name}/docs`,
+  `/v1/ui/{name}/versions`, `/v1/ai/instructions/{name}` and `/v1/rs/{name}`
+  against the registry's route handlers, which #389 deleted. Those six
+  handlers are now ported, unchanged but for formatting, from the registry's
+  last commit with them (`270af9f`) into `scripts/registry-handlers/`. They still
+  call the pinned registry's own `lib/` readers, so the check is the same
+  1,289 search probes and 1,168 handler answers as before. At `270af9f` the
+  ported check produces byte-identical `src/data/`.
+
+### Security — undici 7.29.1 (2026-10-02)
+
+- **`undici` 7.29.0 → 7.29.1 and `wrangler` 4.142.0 → 4.147.0** (development
+  dependencies; supersedes dependabot's mzizi-api-gateway#28). undici 7.29.1
+  fixes two high-severity advisories (GHSA-w293-vg96-wgc3: `BalancedPool`
+  could drop custom TLS validation callbacks; GHSA-rfgv-xxqx-mfg5: an
+  unrequested WebSocket subprotocol could crash the process) and several
+  medium and low ones. undici reaches this repository only through wrangler
+  and miniflare, for `wrangler dev` and the build; it is not in the Worker
+  bundle, so nothing `api.mzizi.dev` serves changes.
+
 ### Changed — lint runs once, from the org-required workflow (2026-10-03)
 
 - **Removed `.github/workflows/lint.yml`.** The `mzizi-dev` org ruleset now runs the shared lint on every pull request through `mzizi-dev/.github`'s `org-lint.yml`, publishing the same five `lint / …` checks, so the repo's own caller only ran lint a second time.

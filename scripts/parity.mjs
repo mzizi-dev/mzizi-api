@@ -81,56 +81,29 @@ const HEADERS = [
  * the PRs that made them (mzizi-api-gateway#13 for the cutover, #18 for
  * skills 0.8.0, #20 for skills 0.8.1 and the mzizi brand row, #21 for
  * mzizi's hematite default `--primary`, #22 for skills 0.8.2, #25 for skills 0.8.4
- * and the `-text` colour tokens).
+ * and the `-text` colour tokens, #27 for skills 0.8.5).
  */
-// mzizi-registry#387: `@nyuchi/mzizi-skills` 0.8.4 -> 0.8.5 (agent-tools#166),
-// which follows language main 62a0f32. Still the same five skills; `meta.version`
-// is 0.8.5 everywhere. `mzizi-language` (LANGUAGE-TRACKER.md before any
-// capability claim, the backend `service` slice of RFC-0011, `mz build`, the
-// MZ08xx codes, RFC-0012 as the harness's draft design, charter v0.4) and
-// `mzizi-backend` (the language's one backend slice, with no Workers target and
-// nothing live) change their bodies and descriptions; `mzizi-roots` (only a
-// service lowers, not a component) changes its body. `mzizi-design` and
-// `discoverability` differ only in `meta.version`. #387's other files (the
-// public plugin 1.2.3, the lockfile, the registry's CHANGELOG.md) change nothing
-// else the API serves.
-const SKILLS_085 =
-  "mzizi-registry#387 serves @nyuchi/mzizi-skills 0.8.5 (agent-tools#166, the language at 62a0f32): the same five skills, `meta.version` 0.8.5.";
-const DESCRIPTIONS =
-  "The `mzizi-language` description adds LANGUAGE-TRACKER.md, the backend `service` (RFC-0011), `mz build` and the new diagnostic codes; the `mzizi-backend` description says the language's service slice runs in process and lowers to a local Rust + axum package, with no Workers target and nothing deployed.";
+// mzizi-registry#389 (8415960), which removed the registry's Next.js app, also
+// rewrote one sentence of `mzizi-tokens`'s description in registry.json: the
+// tokens are generated from `styles/globals.css` (moved from `app/globals.css`)
+// in mzizi-dev/mzizi-registry, "so the theme and the stylesheet it is read from
+// cannot disagree" (was "so the registry and the site cannot disagree"). That
+// is the only difference this pin makes to any answer: every route that
+// carries the item's description differs in that string and nothing else.
+// #389's other changes (the deleted `app/` and `mzizi-api/` trees, a comment in
+// the design-tokens doctrine source that no route serves) change nothing the
+// API serves, and the handlers extract.ts checks against are now ported into
+// scripts/registry-handlers/ from 270af9f.
+const N1_DESCRIPTION =
+  "mzizi-registry#389 rewrote the `mzizi-tokens` description in registry.json: generated from `styles/globals.css` in mzizi-dev/mzizi-registry, so the theme and the stylesheet it is read from cannot disagree (was `app/globals.css`, so the registry and the site cannot disagree). No other field differs.";
 const EXPECTED = {
-  "GET /v1/skills": {
-    allow: ["body"],
-    why: `${SKILLS_085} ${DESCRIPTIONS}`,
-  },
-  "GET /api/v1/skills": {
-    allow: ["body"],
-    why: `${SKILLS_085} ${DESCRIPTIONS} The /api/v1 spelling serves the same list.`,
-  },
-  "GET /v1/skills/summary": {
-    allow: ["body"],
-    why: `${SKILLS_085} ${DESCRIPTIONS}`,
-  },
-  "GET /v1/skills/mzizi-language": {
-    allow: ["body"],
-    why: `${SKILLS_085} Its description and body change: the body points at LANGUAGE-TRACKER.md before any capability claim and summarises its gaps, teaches the backend \`service\` (routes, handlers with \`when\`, \`header\` and \`respond\`, \`example\` and \`ensure\` contracts), \`mz contract\` on a service and \`mz build\`, adds the MZ08xx codes and MZ0606/MZ0611-MZ0613, and cites RFC-0012 (draft) and charter v0.4.`,
-  },
-  "GET /v1/skills/mzizi-backend": {
-    allow: ["body"],
-    why: `${SKILLS_085} Its description and body change: the language has one backend slice (a \`service\` run in process by \`mz contract\` and lowered by \`mz build\` to a local axum package, with no Workers target and nothing live), shown in a new "A Mzizi service" section, and the body cites charter v0.4.`,
-  },
-  "GET /v1/skills/mzizi-roots": {
-    allow: ["body"],
-    why: `${SKILLS_085} Its body says only a Mzizi \`service\` lowers, not a component, so \`mz contract\` does not read a Roots \`CONTRACT\`, and names the contracts-everywhere RFC as RFC-0010.`,
-  },
-  "GET /v1/skills/mzizi-design": {
-    allow: ["body"],
-    why: `${SKILLS_085} The skill's text is unchanged; only \`meta.version\` differs.`,
-  },
-  "GET /v1/skills/discoverability": {
-    allow: ["body"],
-    why: `${SKILLS_085} The skill's text is unchanged; only \`meta.version\` differs.`,
-  },
+  "GET /v1/ui": { allow: ["body"], why: N1_DESCRIPTION },
+  "GET /v1/ui?limit=abc": { allow: ["body"], why: N1_DESCRIPTION },
+  "GET /v1/ui?node=-1": { allow: ["body"], why: N1_DESCRIPTION },
+  "GET /v1/ui?owner=mzizi": { allow: ["body"], why: N1_DESCRIPTION },
+  "GET /v1/ui?type=registry%3Atheme": { allow: ["body"], why: N1_DESCRIPTION },
+  "GET /v1/ui/mzizi-tokens": { allow: ["body"], why: N1_DESCRIPTION },
+  "GET /v1/ui/mzizi-tokens/docs": { allow: ["body"], why: N1_DESCRIPTION },
 };
 
 // ── Build the request list ─────────────────────────────────────────────────

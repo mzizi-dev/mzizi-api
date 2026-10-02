@@ -149,9 +149,14 @@ so this Worker ports the handlers at the pin:
 versions `503`, the discovery document and `/v1/rs/{name}` are in
 [`src/projections.ts`](src/projections.ts).
 
-**Both are checked against the registry's own route handlers at build time.**
-`scripts/extract.ts` imports the handlers from `app/api/v1/**/route.ts` at the
-pin and runs them in-process, with `next/server` replaced by
+**Both are checked against the registry's route handlers at build time.**
+The registry removed its Next.js app, and with it `app/api/v1/**/route.ts`, in
+[mzizi-registry#389](https://github.com/mzizi-dev/mzizi-registry/pull/389), so
+the six handlers this check needs are ported from its last commit with them,
+[`270af9f`](https://github.com/mzizi-dev/mzizi-registry/tree/270af9fbbded5dcca3fad4dcbc09ee3b7e307c7d/app/api/v1),
+into [`scripts/registry-handlers/`](scripts/registry-handlers/), unchanged but
+for formatting. They still call the pinned registry's own `lib/` readers.
+`scripts/extract.ts` runs them in-process, with `next/server` replaced by
 [`scripts/next-server-stub.mjs`](scripts/next-server-stub.mjs) (just
 `NextResponse.json`). It compares their answers with this Worker's: search on
 about 1,300 queries (status, body and the `Deprecation` header), docs for every
@@ -234,7 +239,8 @@ in `scripts/registry-ref.json` to registry `main`:
    branch rules. The merge deploys through Workers Builds as usual.
 4. **A failed check stops it.** The bot comments with the failed checks and
    waits for a person. An unexplained parity difference usually means the
-   registry changed a route handler, which has to be ported here (see
+   registry changed data or a `lib/` reader a route serves, which has to be
+   reviewed, and explained in `EXPECTED`, here (see
    [CONTRIBUTING.md](CONTRIBUTING.md), "Bumping the registry pin"). To take
    the bump over, push to `bot/registry-pin`: the bot leaves a branch with any
    commit it didn't make alone, and a person merges it. Delete the branch to
@@ -306,12 +312,13 @@ What that means for this API:
   `mzizi-fundi`, `mzizi-docs`, `mzizi-discovery` and `mzizi-tokens` for the
   rest. It also carries `git`, the install that resolves before and after a
   crates.io release. `scripts/extract.ts` checks every `/v1/rs/{name}` answer
-  against the registry's own handler.
+  against the registry's last handler for it (`scripts/registry-handlers/rs.ts`,
+  ported from 270af9f).
 - **The direction** is for Rust to be the first answer: Roots components listed
   and described ahead of their React counterparts, and new component endpoints
-  designed around the Rust implementation. Each such change lands in the
-  registry's handlers first and reaches this Worker through a pin bump, with
-  parity recording the difference.
+  designed around the Rust implementation. The registry has had no route
+  handlers since mzizi-registry#389, so such a change lands here, with a
+  CHANGELOG entry and parity recording the difference.
 - **The design** is the
   [Roots RFC](https://github.com/mzizi-dev/mzizi-registry/blob/main/docs/roots/RFC-roots.md)
   in mzizi-registry (status: proposed). Roots-specific routes follow it, and

@@ -12,8 +12,11 @@
  *      throws, so a reader that ever reached for one again fails the build
  *      instead of silently shipping empty data.
  *      `next/server` is replaced by scripts/next-server-stub.mjs (just
- *      `NextResponse.json`), so extract.ts can run the registry's own route
- *      handlers and check this Worker's answers against theirs.
+ *      `NextResponse.json`), so extract.ts can run the registry's route
+ *      handlers and check this Worker's answers against theirs. The registry
+ *      removed its Next.js app (mzizi-registry#389), so those handlers are
+ *      ported from its last commit with them, 270af9f, into
+ *      scripts/registry-handlers/; they still call the pinned checkout's lib/.
  *   3. Run the bundle, which checks this Worker's search and projections
  *      against the registry's route handlers, and split its output (a JSON
  *      file) into one JSON module per concern.

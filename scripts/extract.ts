@@ -14,12 +14,16 @@
  * The routes that project or compute rather than pass a reader's value
  * through — `/v1/search` (src/search.ts), the discovery document, component
  * docs, single AI instruction sets and the versions 503 (src/projections.ts) —
- * are checked here against mzizi-registry's own route handlers, run in this
- * process with `next/server` stubbed (scripts/next-server-stub.mjs): search on
- * about 1,300 queries (status, body and the `Deprecation` header), docs for
- * every component, every AI instruction key, and `/v1/rs/{name}` (source,
- * file path and the crate that compiles it) for every component. Any
- * disagreement fails the build.
+ * are checked here against mzizi-registry's route handlers, run in this
+ * process with `next/server` stubbed (scripts/next-server-stub.mjs). The
+ * registry no longer ships them (mzizi-registry#389 removed its Next.js app),
+ * so they are ported from 270af9f, its last commit with them, into
+ * scripts/registry-handlers/, and still call the pinned registry's own lib/
+ * readers. Nothing here imports the registry's deleted `app/` tree. The
+ * checks cover search on about 1,300 queries (status, body and the
+ * `Deprecation` header), docs for every component, every AI instruction key,
+ * and `/v1/rs/{name}` (source, file path and the crate that compiles it) for
+ * every component. Any disagreement fails the build.
  */
 import { readComponents, readNodeCounts } from "@/lib/registry";
 import {
@@ -69,12 +73,12 @@ import {
 import { OPENAPI_YAML } from "@/lib/openapi.generated";
 import { COMPONENT_RENAMES } from "@/lib/component-renames";
 import { CRATE_GIT, crateFor } from "@/lib/rust-crates";
-import { GET as discoveryHandler } from "@/app/api/v1/route";
-import { GET as searchHandler } from "@/app/api/v1/search/route";
-import { GET as docsHandler } from "@/app/api/v1/ui/[name]/docs/route";
-import { GET as versionsHandler } from "@/app/api/v1/ui/[name]/versions/route";
-import { GET as aiInstructionHandler } from "@/app/api/v1/ai/instructions/[name]/route";
-import { GET as rsHandler } from "@/app/api/v1/rs/[name]/route";
+import { GET as discoveryHandler } from "./registry-handlers/discovery";
+import { GET as searchHandler } from "./registry-handlers/search";
+import { GET as docsHandler } from "./registry-handlers/ui-docs";
+import { GET as versionsHandler } from "./registry-handlers/ui-versions";
+import { GET as aiInstructionHandler } from "./registry-handlers/ai-instruction";
+import { GET as rsHandler } from "./registry-handlers/rs";
 import { writeFileSync } from "node:fs";
 import { search, type SearchableItem } from "../src/search";
 import {

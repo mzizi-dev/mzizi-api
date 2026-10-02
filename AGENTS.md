@@ -48,15 +48,20 @@ restart forever.
 - **Reuse the registry's readers, don't reimplement them.** Data shapes come from
   `scripts/extract.ts`, which calls mzizi-registry's own `lib/*` functions.
   Route handlers in `src/routes/` do only the per-endpoint projection, mirroring
-  `app/api/v1/**/route.ts` in the registry. The one query-time computation,
-  `/v1/search`, lives in `src/search.ts`, and the projections for docs, AI
-  instructions, versions and discovery live in `src/projections.ts`.
-  `extract.ts` runs the registry's own route handlers (with `next/server`
-  stubbed) and fails the build if either disagrees with them. Change both sides
-  together, or neither.
-- **Port handlers; don't fix them here.** A registry handler's quirk (for example
-  `/v1/search` filtering on fields registry items don't carry) is fixed in the
-  registry first and reaches this Worker through a pin bump.
+  the registry's last `app/api/v1/**/route.ts` handlers (mzizi-registry
+  270af9f). The one query-time computation, `/v1/search`, lives in
+  `src/search.ts`, and the projections for docs, AI instructions, versions and
+  discovery live in `src/projections.ts`. `extract.ts` runs the registry
+  handlers ported into `scripts/registry-handlers/` (with `next/server`
+  stubbed, against the pinned registry's `lib/`) and fails the build if either
+  disagrees with them. Change both sides together, or neither.
+- **The registry has no route handlers any more.** mzizi-registry#389 removed
+  its Next.js app on 2026-10-02: the registry is the registry and nothing else,
+  and this Worker is the API. Nothing here may import the registry's `app/`
+  tree. `scripts/registry-handlers/` holds the six handlers the build checks
+  against, ported from 270af9f. Don't edit them to make a check pass: an
+  intentional change to one of those routes changes the copy and `src/` in the
+  same pull request, with a CHANGELOG entry and the parity difference recorded.
 - **The API is read-only.** Every `/v1/*` route is a `GET`. Other methods get
   `405` (`OPTIONS` gets `204` + `Allow`). There's no write path. Don't add one.
 - **No Supabase, ever.** The registry holds no database, and
@@ -68,9 +73,8 @@ restart forever.
 - **Rust first.** Mzizi Roots (Rust components) are the direction; React/TSX
   components are deprioritised but keep working. Present a Rust implementation
   first where one exists. Roots routes follow the registry's Roots RFC
-  (`docs/roots/RFC-roots.md` in mzizi-registry, proposed). They land in the
-  registry's handlers first; don't add Roots-specific routes here ahead of
-  them (README, "Mzizi Roots").
+  (`docs/roots/RFC-roots.md` in mzizi-registry, proposed); don't add
+  Roots-specific routes here ahead of it (README, "Mzizi Roots").
 
 ## Deployment: read this before touching `wrangler.jsonc`
 

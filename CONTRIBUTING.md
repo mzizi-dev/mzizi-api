@@ -23,15 +23,19 @@ npm run dev
 
 1. **Find the registry handler.** Each route here mirrors
    `app/api/v1/**/route.ts` in
-   [`mzizi-registry`](https://github.com/mzizi-dev/mzizi-registry). Read it, and
-   read which `lib/*` reader it calls.
+   [`mzizi-registry`](https://github.com/mzizi-dev/mzizi-registry) as it stood at
+   [`270af9f`](https://github.com/mzizi-dev/mzizi-registry/tree/270af9fbbded5dcca3fad4dcbc09ee3b7e307c7d/app/api/v1),
+   the registry's last commit with its Next.js app (mzizi-registry#389 removed
+   it). Read it there, or in `scripts/registry-handlers/` for the six the build
+   checks against, and read which `lib/*` reader it calls.
 2. **Get the data through the registry's reader.** If the route needs data not
    yet in `src/data/`, add it to `scripts/extract.ts` by calling that reader. Don't
    re-derive it from raw files: the registry's readers are the definition of the
    shape. Write a new file in `src/data/` rather than growing an existing one, so
    a pin bump's diff stays easy to read. If the route computes per request (as
    `/v1/search` does), put the computation in a pure module under `src/` and
-   check it against the registry's route handler in `extract.ts`, as
+   check it against the registry's route handler in `extract.ts` (ported into
+   `scripts/registry-handlers/`; never imported from the registry's `app/`), as
    `src/search.ts` is. A per-route projection goes in `src/projections.ts` and
    is checked the same way.
    - If the registry handler at the pin is a stub (the registry removed
@@ -51,7 +55,8 @@ npm run dev
 **The bot does this hourly** (README, "Registry pin bump"): it opens
 `bot/registry-pin`, and merges it when CI and a `--strict` parity run against
 production are green. You bump by hand when it stops for review, that is when
-the registry changed a handler that has to be ported here. Push the port to
+the registry changed data or a `lib/` reader that a route serves (it has had no
+route handlers since mzizi-registry#389). Push the port to
 `bot/registry-pin` (the bot then leaves the branch to you), or open your own
 pull request (the bot opens none while yours moves the pin to registry `main`,
 and closes its own once yours lands). Either way:
