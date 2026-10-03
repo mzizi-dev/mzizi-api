@@ -1,6 +1,6 @@
 {
   "repository": "https://github.com/mzizi-dev/mzizi-registry",
-  "ref": "2231abcdc5732c4ee2d9089dff07afa4190ffb9f",
-  "pinned": "2026-10-02",
-  "note": "mzizi-registry main at 2231abc on 2026-10-02, set by .github/workflows/registry-pin-bump.yml. The commits since the last pin are listed in its pull request."
+  "ref": "661be66d7abd3b435b9a5e3242bcc7b3b4a6fdfb",
+  "pinned": "2026-10-03",
+  "note": "mzizi-registry main at 661be66 on 2026-10-03, set by .github/workflows/registry-pin-bump.yml. The commits since the last pin are listed in its pull request."
 }
