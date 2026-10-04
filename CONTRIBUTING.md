@@ -125,8 +125,9 @@ The `pull_request` trigger covers `main` **and** `claude/**`, so stacked PRs get
 checks.
 
 The **Parity** workflow is manual (`workflow_dispatch`). It's the acceptance test
-against live, not a merge gate, because live changes whenever the registry
-deploys.
+against live, not a merge gate, because live changes whenever this Worker
+deploys. (The registry no longer deploys anything: its app was removed on
+2026-10-02.)
 
 ### Deployment
 

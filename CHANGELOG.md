@@ -23,6 +23,20 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — README's rollback no longer points at the registry Worker (2026-10-04)
+
+- **README, "Cutover", step 5 (roll back to the `mzizi-registry` Worker) is
+  marked no longer possible.** That Worker served the registry's Next.js app,
+  which mzizi-registry removed on 2026-10-02 (mzizi-registry#389), and it is
+  being deleted. A new "Rollback" section says what to do instead: revert the
+  change in a pull request (the merge redeploys), or, faster, roll this Worker
+  back to its previous deployment (`wrangler rollback`, or the Deployments tab
+  in the Cloudflare dashboard) and then revert on `main` so the next deploy
+  doesn't bring it back. "Status" links it.
+- **CONTRIBUTING: the Parity workflow note now says live changes whenever this
+  Worker deploys**, not whenever the registry deploys: the registry no longer
+  deploys anything. Docs only: no route, response or pin changes.
+
 ### Changed — the registry pin bot runs when registry `main` moves, and reads its gate with the workflow token (2026-10-04)
 
 - **Added: `registry-pin-bump.yml` runs on `repository_dispatch`

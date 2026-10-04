@@ -29,7 +29,8 @@ public `/v1` API itself, from files.
 The owner moved the custom domain from the `mzizi-registry` Worker (the
 registry's Next.js app on OpenNext) to this Worker on 2026-09-29, and
 `wrangler.jsonc` now declares it, so every production deploy keeps it. See
-[Cutover](#cutover) for how it was done and how to roll it back.
+[Cutover](#cutover) for how it was done, and [Rollback](#rollback) for undoing
+a bad deploy (the move itself can no longer be reversed).
 
 You can tell which Worker answered: every response from this one carries
 `X-Mzizi-Source: mzizi-api-gateway; registry=<commit>`.
@@ -376,7 +377,7 @@ ignores `EXPECTED`, so every difference counts as unexplained (see
 
 **Done 2026-09-29.** Parity before the move, against the deployed Worker on
 `workers.dev`: 1359 requests, 0 unexplained differences. The steps are kept
-here as the record, and because rollback reverses step 3.
+here as the record.
 
 1. **Deploy.** Merge to `main`. Workers Builds builds and deploys this Worker
    to `workers.dev` (see the Workers Builds settings in the pull request that
@@ -393,11 +394,18 @@ here as the record, and because rollback reverses step 3.
 4. **Re-run parity** with baseline `https://mzizi-registry.nyuchi.workers.dev`
    and candidate `https://api.mzizi.dev`, and check that `X-Mzizi-Source` is
    present on `https://api.mzizi.dev/v1/health`.
-5. **Roll back** if needed. Revert the `routes` entry in `wrangler.jsonc`
-   first, or the next deploy takes the domain back. Then remove `api.mzizi.dev`
-   from `mzizi-api-gateway` and re-add it to `mzizi-registry`, in the same
-   dashboard pages. The registry Worker is untouched by all of this and still
-   answers on `mzizi-registry.nyuchi.workers.dev`.
+5. **Roll back** to the registry Worker: no longer possible. It served the
+   registry's Next.js app, which mzizi-registry removed on 2026-10-02, and the
+   Worker is being deleted. See [Rollback](#rollback).
+
+### Rollback
+
+There is no older Worker to move `api.mzizi.dev` back to. To undo a bad
+change, revert it in a pull request; the merge redeploys. To undo a bad deploy
+faster than that, roll this Worker back to its previous deployment
+(`wrangler rollback`, or _Workers & Pages → `mzizi-api-gateway` → Deployments_
+in the Cloudflare dashboard), then revert on `main` so the next deploy does not
+bring the change back.
 
 ## Related repositories
 
