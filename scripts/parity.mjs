@@ -81,29 +81,26 @@ const HEADERS = [
  * the PRs that made them (mzizi-api-gateway#13 for the cutover, #18 for
  * skills 0.8.0, #20 for skills 0.8.1 and the mzizi brand row, #21 for
  * mzizi's hematite default `--primary`, #22 for skills 0.8.2, #25 for skills 0.8.4
- * and the `-text` colour tokens, #27 for skills 0.8.5).
+ * and the `-text` colour tokens, #27 for skills 0.8.5, #31 for the
+ * `mzizi-tokens` description that mzizi-registry#389 rewrote).
  */
-// mzizi-registry#389 (8415960), which removed the registry's Next.js app, also
-// rewrote one sentence of `mzizi-tokens`'s description in registry.json: the
-// tokens are generated from `styles/globals.css` (moved from `app/globals.css`)
-// in mzizi-dev/mzizi-registry, "so the theme and the stylesheet it is read from
-// cannot disagree" (was "so the registry and the site cannot disagree"). That
-// is the only difference this pin makes to any answer: every route that
-// carries the item's description differs in that string and nothing else.
-// #389's other changes (the deleted `app/` and `mzizi-api/` trees, a comment in
-// the design-tokens doctrine source that no route serves) change nothing the
-// API serves, and the handlers extract.ts checks against are now ported into
-// scripts/registry-handlers/ from 270af9f.
-const N1_DESCRIPTION =
-  "mzizi-registry#389 rewrote the `mzizi-tokens` description in registry.json: generated from `styles/globals.css` in mzizi-dev/mzizi-registry, so the theme and the stylesheet it is read from cannot disagree (was `app/globals.css`, so the registry and the site cannot disagree). No other field differs.";
+// mzizi-registry#407 (113a2b3): shamwari's mini-app accent is sodalite, not
+// tanzanite, matching canon (`/v1/brand` already lists shamwari -> sodalite).
+// In `components/registry/n1-tokens/mzizi-tokens-typescript.ts`,
+// `brandOverrides.shamwari` becomes `brandAccent("sodalite", "#6E83FE")` (was
+// `brandAccent("tanzanite", "#CE9FFF")`) and
+// `brandIndustryCategories.shamwari.ai.mineral` becomes "sodalite" (was
+// "tanzanite"), with three comment lines added. That file is the
+// `mzizi-tokens-typescript` item's one file, so that item's `files[0].content`
+// is the only difference this pin makes to any answer. #407's edit to
+// lib/tokens/index.ts reaches no route. The pin's other commits change nothing
+// the API serves: #406 adds `contracts/` and its tests, which no route reads;
+// e79a08f is the registry's audit config; #402 and e78341e are docs.
 const EXPECTED = {
-  "GET /v1/ui": { allow: ["body"], why: N1_DESCRIPTION },
-  "GET /v1/ui?limit=abc": { allow: ["body"], why: N1_DESCRIPTION },
-  "GET /v1/ui?node=-1": { allow: ["body"], why: N1_DESCRIPTION },
-  "GET /v1/ui?owner=mzizi": { allow: ["body"], why: N1_DESCRIPTION },
-  "GET /v1/ui?type=registry%3Atheme": { allow: ["body"], why: N1_DESCRIPTION },
-  "GET /v1/ui/mzizi-tokens": { allow: ["body"], why: N1_DESCRIPTION },
-  "GET /v1/ui/mzizi-tokens/docs": { allow: ["body"], why: N1_DESCRIPTION },
+  "GET /v1/ui/mzizi-tokens-typescript": {
+    allow: ["body"],
+    why: 'mzizi-registry#407: `files[0].content` (mzizi-tokens-typescript.ts) gives shamwari the sodalite mini-app accent, `brandOverrides.shamwari` = `brandAccent("sodalite", "#6E83FE")` (was tanzanite, `#CE9FFF`), and `brandIndustryCategories.shamwari.ai.mineral` = "sodalite" (was "tanzanite"), plus three comment lines. No other field differs.',
+  },
 };
 
 // ── Build the request list ─────────────────────────────────────────────────

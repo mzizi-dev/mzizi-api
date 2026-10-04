@@ -23,6 +23,20 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — shamwari's mini-app accent is sodalite in the TypeScript tokens (2026-10-04)
+
+- **The registry pin moves to mzizi-registry `e78341e`** (main, after
+  mzizi-registry#407). One answer changes: the source file served by
+  `/v1/ui/mzizi-tokens-typescript` (`files[0].content`,
+  `mzizi-tokens-typescript.ts`) gives shamwari the sodalite mini-app accent,
+  `brandAccent("sodalite", "#6E83FE")` (it was tanzanite, `#CE9FFF`), and
+  lists shamwari's AI industry category under `sodalite` (it was `tanzanite`).
+  This matches `/v1/brand`, which already names sodalite as shamwari's
+  mineral. No other field of any answer changes. The pin's other registry
+  commits (#406's `contracts/`, which no route reads, an audit setting and
+  documentation) change nothing the API serves. Strict parity against
+  production showed 1 difference over 1,368 requests.
+
 ### Security — security reports go to `security@nyuchi.com` (2026-10-03)
 
 - **`/.well-known/security.txt` now names `Contact: mailto:security@nyuchi.com`**, and `SECURITY.md`'s email fallback behind GitHub private advisories matches, in place of `security@bundu.org` (owner decision, 2026-10-03: one security contact for every repository). `Expires`, `Canonical`, `Policy` and `Preferred-Languages` are unchanged.
