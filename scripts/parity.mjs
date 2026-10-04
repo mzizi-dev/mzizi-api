@@ -82,24 +82,39 @@ const HEADERS = [
  * skills 0.8.0, #20 for skills 0.8.1 and the mzizi brand row, #21 for
  * mzizi's hematite default `--primary`, #22 for skills 0.8.2, #25 for skills 0.8.4
  * and the `-text` colour tokens, #27 for skills 0.8.5, #31 for the
- * `mzizi-tokens` description that mzizi-registry#389 rewrote).
+ * `mzizi-tokens` description that mzizi-registry#389 rewrote, #37 for
+ * shamwari's sodalite accent from mzizi-registry#407).
  */
-// mzizi-registry#407 (113a2b3): shamwari's mini-app accent is sodalite, not
-// tanzanite, matching canon (`/v1/brand` already lists shamwari -> sodalite).
-// In `components/registry/n1-tokens/mzizi-tokens-typescript.ts`,
-// `brandOverrides.shamwari` becomes `brandAccent("sodalite", "#6E83FE")` (was
-// `brandAccent("tanzanite", "#CE9FFF")`) and
-// `brandIndustryCategories.shamwari.ai.mineral` becomes "sodalite" (was
-// "tanzanite"), with three comment lines added. That file is the
-// `mzizi-tokens-typescript` item's one file, so that item's `files[0].content`
-// is the only difference this pin makes to any answer. #407's edit to
-// lib/tokens/index.ts reaches no route. The pin's other commits change nothing
-// the API serves: #406 adds `contracts/` and its tests, which no route reads;
-// e79a08f is the registry's audit config; #402 and e78341e are docs.
+// mzizi-registry#409 (50fc537), owner decisions of 2026-10-04 under
+// mzizi-registry#404: canon gains four ecosystem rows, kweli (malachite),
+// learning (gold: Nyuchi Learning, every Nyuchi brand is gold), news (cobalt)
+// and weather (cobalt). `lib/tokens/brand.source.ts` only adds the four rows
+// (sortOrder 18 to 21), so `/v1/brand` (and its `/api/v1/brand` alias) gains
+// `ecosystem[18..21]` and nothing else changes. Two served registry files
+// change: `mzizi-tokens-globals.css` gains `[data-brand]` blocks for weather,
+// kweli and learning and re-sources the news block's comment, and
+// `mzizi-tokens-typescript.ts` adds `kweli` and `learning` to `BrandId` and
+// `brandOverrides`, moves the `education` industry category from cobalt to
+// gold, adds `brandIndustryCategories.mukoko.trust` (Kweli, malachite) and rewrites the mineral
+// assignment comment. The commit's other files (CHANGELOG, a test,
+// lib/tokens/index.ts, scripts/render-globals-css.ts and the generated source
+// map's timestamps) reach no other route.
 const EXPECTED = {
+  "GET /v1/brand": {
+    allow: ["body"],
+    why: "mzizi-registry#409: `ecosystem` gains four canon rows, kweli (malachite), learning (gold), news (cobalt) and weather (cobalt), at indexes 18 to 21. No other field differs.",
+  },
+  "GET /api/v1/brand": {
+    allow: ["body"],
+    why: "mzizi-registry#409: the `/v1/brand` alias, the same four new `ecosystem` rows.",
+  },
+  "GET /v1/ui/mzizi-tokens-globals": {
+    allow: ["body"],
+    why: "mzizi-registry#409: `files[0].content` (mzizi-tokens-globals.css) gains `[data-brand]` blocks for weather (cobalt), kweli (malachite) and learning (gold), and the news block's source comment now names its canon row. No other field differs.",
+  },
   "GET /v1/ui/mzizi-tokens-typescript": {
     allow: ["body"],
-    why: 'mzizi-registry#407: `files[0].content` (mzizi-tokens-typescript.ts) gives shamwari the sodalite mini-app accent, `brandOverrides.shamwari` = `brandAccent("sodalite", "#6E83FE")` (was tanzanite, `#CE9FFF`), and `brandIndustryCategories.shamwari.ai.mineral` = "sodalite" (was "tanzanite"), plus three comment lines. No other field differs.',
+    why: 'mzizi-registry#409: `files[0].content` (mzizi-tokens-typescript.ts) adds "kweli" and "learning" to `BrandId` and `brandOverrides` (malachite and gold accents), moves `brandIndustryCategories.nyuchi.education.mineral` from "cobalt" to "gold", adds `brandIndustryCategories.mukoko.trust` (Kweli, malachite) and rewrites the mineral assignment comment. No other field differs.',
   },
 };
 

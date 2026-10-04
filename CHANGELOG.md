@@ -23,6 +23,20 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — kweli, learning, news and weather join `/v1/brand` (2026-10-04)
+
+- **The registry pin moves to mzizi-registry `50fc537`** (main, after
+  mzizi-registry#409; owner decisions under mzizi-registry#404). `/v1/brand`
+  (and `/api/v1/brand`) lists four more `ecosystem` rows: kweli (malachite),
+  learning (gold: Nyuchi Learning, because every Nyuchi brand is gold), news
+  (cobalt) and weather (cobalt). The source file served by
+  `/v1/ui/mzizi-tokens-globals` gains `[data-brand]` blocks for weather, kweli
+  and learning. The one served by `/v1/ui/mzizi-tokens-typescript` adds kweli
+  and learning to `BrandId` and `brandOverrides`, moves the Nyuchi `education`
+  industry category from cobalt to gold, and adds a Mukoko `trust` category
+  (Kweli, malachite). No other answer changes. Strict parity against
+  production showed 4 differences over 1,368 requests.
+
 ### Changed — shamwari's mini-app accent is sodalite in the TypeScript tokens (2026-10-04)
 
 - **The registry pin moves to mzizi-registry `e78341e`** (main, after
