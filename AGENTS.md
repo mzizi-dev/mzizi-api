@@ -156,6 +156,16 @@ GitHub API 2026-09-12, org-wide). Land changes with
 - **Canonical install form is `https://api.mzizi.dev/v1/ui/<name>`, never
   `mzizi.dev/api/v1/...`.** That host no longer serves the API at all.
 
+## The published design system
+
+The Mzizi design system is published on claude.ai as the Design System
+artifact, <https://claude.ai/artifact/G8CCtAbZ8w717uQ3R5itCc>: voice and
+content, visual foundations, the marks and component previews. Its source of
+truth is the `design-system/` folder in `mzizi-dev/mzizi-registry` (arriving
+with mzizi-registry#418), which the artifact is built from file for file. Edit
+the folder, never the artifact page; the artifact is republished from registry
+`main` after a merge that touches it.
+
 ## Track big work in GitHub issues
 
 Any substantial build, migration, investigation or multi-step task gets a GitHub
