@@ -23,6 +23,24 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — Mukoko Events replaces nhimbe in `/v1/brand`, and the brand rows carry `displayName` and `aliases` (2026-10-04)
+
+- **The registry pin moves to mzizi-registry `2af5e5e`** (main, after
+  mzizi-registry#411). This is the owner decision of 2026-10-04 under
+  mukoko-dev/nhimbe#155: the nhimbe brand is retired, and the events platform is
+  Mukoko Events, at events.mukoko.com, in malachite. On `/v1/brand` (and
+  `/api/v1/brand`), `ecosystem[4]` is now `events` instead of `nhimbe`. Item copy
+  across `/v1/ui`, `/v1/rs` and `/v1/search` follows: `useCases` say `events`,
+  and descriptions say Mukoko Events. The tokens, footer, app-switcher and
+  sidebar sources now carry the `events` brand, with `nhimbe` kept as a
+  deprecated alias. Two Ubuntu doctrine pages say "Mukoko Events gatherings".
+  Strict parity against production showed 94 body differences over 1,368
+  requests, every one from this rename. No status, header or redirect changed.
+- **`/v1/brand` `ecosystem` rows now project `displayName` and `aliases`**, but
+  only on rows that carry them, so every other row is unchanged. Today that is
+  only `events`, with `displayName: "Mukoko Events"` and `aliases: ["nhimbe"]`.
+  A consumer that keys on the retired name can resolve it through `aliases`.
+
 ### Changed — kweli, learning, news and weather join `/v1/brand` (2026-10-04)
 
 - **The registry pin moves to mzizi-registry `50fc537`** (main, after

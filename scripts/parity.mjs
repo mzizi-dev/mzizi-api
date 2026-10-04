@@ -85,36 +85,391 @@ const HEADERS = [
  * `mzizi-tokens` description that mzizi-registry#389 rewrote, #37 for
  * shamwari's sodalite accent from mzizi-registry#407).
  */
-// mzizi-registry#409 (50fc537), owner decisions of 2026-10-04 under
-// mzizi-registry#404: canon gains four ecosystem rows, kweli (malachite),
-// learning (gold: Nyuchi Learning, every Nyuchi brand is gold), news (cobalt)
-// and weather (cobalt). `lib/tokens/brand.source.ts` only adds the four rows
-// (sortOrder 18 to 21), so `/v1/brand` (and its `/api/v1/brand` alias) gains
-// `ecosystem[18..21]` and nothing else changes. Two served registry files
-// change: `mzizi-tokens-globals.css` gains `[data-brand]` blocks for weather,
-// kweli and learning and re-sources the news block's comment, and
-// `mzizi-tokens-typescript.ts` adds `kweli` and `learning` to `BrandId` and
-// `brandOverrides`, moves the `education` industry category from cobalt to
-// gold, adds `brandIndustryCategories.mukoko.trust` (Kweli, malachite) and rewrites the mineral
-// assignment comment. The commit's other files (CHANGELOG, a test,
-// lib/tokens/index.ts, scripts/render-globals-css.ts and the generated source
-// map's timestamps) reach no other route.
+// mzizi-registry#411 (2af5e5e), owner decision of 2026-10-04 under
+// mukoko-dev/nhimbe#155: the nhimbe brand is retired; the events platform is
+// Mukoko Events (events.mukoko.com), mineral malachite. Canon's `ecosystem[4]`
+// becomes `events`, with `displayName` "Mukoko Events" and `aliases: ["nhimbe"]`,
+// which this PR starts projecting on `/v1/brand` (only on rows that carry them).
+// The registry rewrote item copy (`useCases` nhimbe → events, descriptions),
+// the brand block and accent tables (with `nhimbe` kept as a deprecated alias),
+// the app switcher, footers and sidebars, and two doctrine pages. Every
+// difference is a body difference on a 200; no status, header or redirect moves.
 const EXPECTED = {
-  "GET /v1/brand": {
-    allow: ["body"],
-    why: "mzizi-registry#409: `ecosystem` gains four canon rows, kweli (malachite), learning (gold), news (cobalt) and weather (cobalt), at indexes 18 to 21. No other field differs.",
-  },
   "GET /api/v1/brand": {
     allow: ["body"],
-    why: "mzizi-registry#409: the `/v1/brand` alias, the same four new `ecosystem` rows.",
+    why: 'mzizi-registry#411: `ecosystem[4]` is now `events` (Mukoko Events, events.mukoko.com, malachite) instead of `nhimbe`, with the new optional `displayName` and `aliases: ["nhimbe"]` fields this PR projects. No other row changes.',
+  },
+  "GET /api/v1/search?layer=2": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /api/v1/search?q=x": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /api/v1/ui?node=3": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/brand": {
+    allow: ["body"],
+    why: 'mzizi-registry#411: `ecosystem[4]` is now `events` (Mukoko Events, events.mukoko.com, malachite) instead of `nhimbe`, with the new optional `displayName` and `aliases: ["nhimbe"]` fields this PR projects. No other row changes.',
+  },
+  "GET /v1/rs/mzizi-footer": {
+    allow: ["body"],
+    why: "mzizi-registry#411: `files[0].content` follows the nhimbe \u2192 Mukoko Events rename (the `events` brand block and accent, with `nhimbe` kept as a deprecated alias, or the copy that names the product).",
+  },
+  "GET /v1/search?category=primitives": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/search?layer=2": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/search?layer=3&node=2": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/search?node=2": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/search?q=button": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/search?q=button&node=2&category=primitives": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ubuntu/pillars": {
+    allow: ["body"],
+    why: 'mzizi-registry#411: doctrine copy says "Mukoko Events gatherings" where it said "Nhimbe gatherings".',
+  },
+  "GET /v1/ubuntu/principles": {
+    allow: ["body"],
+    why: 'mzizi-registry#411: doctrine copy says "Mukoko Events gatherings" where it said "Nhimbe gatherings".',
+  },
+  "GET /v1/ui": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui?collection=components": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui?collection=primitives": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui?limit=abc": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui?node=-1": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui?node=2": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui?owner=framework": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui?owner=mzizi": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui?owner=nyuchi": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui?type=registry%3Aui": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/admin-page": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/analytics-dashboard-page": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/app-switcher": {
+    allow: ["body"],
+    why: "mzizi-registry#411: `files[0].content` follows the nhimbe \u2192 Mukoko Events rename (the `events` brand block and accent, with `nhimbe` kept as a deprecated alias, or the copy that names the product).",
+  },
+  "GET /v1/ui/billing-page": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/booking-calendar": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/booking-confirmation": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/calendar-month-view": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/canvas-chart": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/checkout-page": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/event-block": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/event-rsvp-inline": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/info-row": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/invite-link": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/kpi-card": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/location-picker": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/map-card": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/map-cluster": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/map-view": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/marketplace-page": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/member-list": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/member-row": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/mobile-money-selector": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/mzizi-avatar-stack": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/mzizi-calendar": {
+    allow: ["body"],
+    why: "mzizi-registry#411: `files[0].content` follows the nhimbe \u2192 Mukoko Events rename (the `events` brand block and accent, with `nhimbe` kept as a deprecated alias, or the copy that names the product).",
+  },
+  "GET /v1/ui/mzizi-cover-wash-header": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/mzizi-create-listing": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/mzizi-create-page": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/mzizi-detail-layout": {
+    allow: ["body"],
+    why: "mzizi-registry#411: `files[0].content` follows the nhimbe \u2192 Mukoko Events rename (the `events` brand block and accent, with `nhimbe` kept as a deprecated alias, or the copy that names the product).",
+  },
+  "GET /v1/ui/mzizi-detail-page": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/mzizi-event-card": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/mzizi-feed-page": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/mzizi-footer": {
+    allow: ["body"],
+    why: "mzizi-registry#411: `files[0].content` follows the nhimbe \u2192 Mukoko Events rename (the `events` brand block and accent, with `nhimbe` kept as a deprecated alias, or the copy that names the product).",
+  },
+  "GET /v1/ui/mzizi-forecast-card": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/mzizi-group-card": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/mzizi-header": {
+    allow: ["body"],
+    why: "mzizi-registry#411: `files[0].content` follows the nhimbe \u2192 Mukoko Events rename (the `events` brand block and accent, with `nhimbe` kept as a deprecated alias, or the copy that names the product).",
+  },
+  "GET /v1/ui/mzizi-listing-card": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/mzizi-meta-tile": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/mzizi-motion": {
+    allow: ["body"],
+    why: "mzizi-registry#411: `files[0].content` follows the nhimbe \u2192 Mukoko Events rename (the `events` brand block and accent, with `nhimbe` kept as a deprecated alias, or the copy that names the product).",
+  },
+  "GET /v1/ui/mzizi-notification-item": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/mzizi-onboarding-step": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/mzizi-payment-summary": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/mzizi-registration-card": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/mzizi-review-card": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/mzizi-rsvp-button": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/mzizi-search-view": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/mzizi-settings-page": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/mzizi-share-card": {
+    allow: ["body"],
+    why: "mzizi-registry#411: `files[0].content` follows the nhimbe \u2192 Mukoko Events rename (the `events` brand block and accent, with `nhimbe` kept as a deprecated alias, or the copy that names the product).",
+  },
+  "GET /v1/ui/mzizi-sidebar-nav": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/mzizi-stats-row": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/mzizi-success-screen": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/mzizi-timeline": {
+    allow: ["body"],
+    why: "mzizi-registry#411: `files[0].content` follows the nhimbe \u2192 Mukoko Events rename (the `events` brand block and accent, with `nhimbe` kept as a deprecated alias, or the copy that names the product).",
   },
   "GET /v1/ui/mzizi-tokens-globals": {
     allow: ["body"],
-    why: "mzizi-registry#409: `files[0].content` (mzizi-tokens-globals.css) gains `[data-brand]` blocks for weather (cobalt), kweli (malachite) and learning (gold), and the news block's source comment now names its canon row. No other field differs.",
+    why: "mzizi-registry#411: `files[0].content` follows the nhimbe \u2192 Mukoko Events rename (the `events` brand block and accent, with `nhimbe` kept as a deprecated alias, or the copy that names the product).",
   },
   "GET /v1/ui/mzizi-tokens-typescript": {
     allow: ["body"],
-    why: 'mzizi-registry#409: `files[0].content` (mzizi-tokens-typescript.ts) adds "kweli" and "learning" to `BrandId` and `brandOverrides` (malachite and gold accents), moves `brandIndustryCategories.nyuchi.education.mineral` from "cobalt" to "gold", adds `brandIndustryCategories.mukoko.trust` (Kweli, malachite) and rewrites the mineral assignment comment. No other field differs.',
+    why: "mzizi-registry#411: `files[0].content` follows the nhimbe \u2192 Mukoko Events rename (the `events` brand block and accent, with `nhimbe` kept as a deprecated alias, or the copy that names the product).",
+  },
+  "GET /v1/ui/mzizi-transaction-row": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/mzizi-washed-theme": {
+    allow: ["body"],
+    why: "mzizi-registry#411: `files[0].content` follows the nhimbe \u2192 Mukoko Events rename (the `events` brand block and accent, with `nhimbe` kept as a deprecated alias, or the copy that names the product).",
+  },
+  "GET /v1/ui/nearby-list": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/nft-card": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/org-profile-page": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/payment-page": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/quick-action-grid": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/recurrence-picker": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/sidebar-15": {
+    allow: ["body"],
+    why: "mzizi-registry#411: `files[0].content` follows the nhimbe \u2192 Mukoko Events rename (the `events` brand block and accent, with `nhimbe` kept as a deprecated alias, or the copy that names the product).",
+  },
+  "GET /v1/ui/sidebar-16": {
+    allow: ["body"],
+    why: "mzizi-registry#411: `files[0].content` follows the nhimbe \u2192 Mukoko Events rename (the `events` brand block and accent, with `nhimbe` kept as a deprecated alias, or the copy that names the product).",
+  },
+  "GET /v1/ui/step-progress": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/team-management-page": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/token-row": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/transaction-history-page": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/transaction-receipt": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/verification-page": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+  },
+  "GET /v1/ui/wallet-page": {
+    allow: ["body"],
+    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
   },
 };
 

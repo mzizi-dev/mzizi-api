@@ -90,6 +90,15 @@ export function registerContent(v1: Hono) {
           voice: b.voice,
           mineral: b.mineral,
           url: b.url,
+          // Optional canon fields (mzizi-registry#411), projected only on the
+          // rows that carry them so every other row's shape is unchanged:
+          // `displayName` is the product name where it is not the wordmark
+          // (`events` → "Mukoko Events"); `aliases` lists deprecated names that
+          // still resolve to the row (`nhimbe`, retired 2026-10-04).
+          ...(b.displayName ? { displayName: b.displayName } : {}),
+          ...(Array.isArray(b.aliases) && b.aliases.length
+            ? { aliases: b.aliases }
+            : {}),
         })),
         typography: {
           fonts,
