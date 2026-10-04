@@ -8,13 +8,24 @@ name: Registry pin bump
 #
 # Every trigger runs the same idempotent reconcile:
 #
-# - schedule: hourly. Compares the pin with registry `main` (`git ls-remote`,
-#   public) and opens, rebuilds or closes the bump. No cross-repo dispatch, so
-#   the registry needs no token.
+# - repository_dispatch (registry-main-moved): mzizi-registry's
+#   notify-pin-bots.yml sends it on every push to registry `main`, with the
+#   org secret RELEASE_BUMP_TOKEN, so a bump opens within minutes.
+# - schedule: hourly, the backstop. Compares the pin with registry `main`
+#   (`git ls-remote`, public) and opens, rebuilds or closes the bump. GitHub
+#   delays and drops scheduled runs under load (they ran 2-3 hours apart on
+#   2026-10-04), so it can't be the only trigger.
 # - workflow_run / check_run: a check on the bump branch finished, so see
 #   whether everything is green and it can merge. check_run covers the
 #   Cloudflare Workers Builds check; GitHub never sends it for Actions' own.
 # - workflow_dispatch: run it now.
+#
+# GITHUB_TOKEN, given only checks: read and statuses: read on top of contents:
+# read, is what the gate reads the bump's check runs, commit status and branch
+# rules with. RELEASE_BUMP_TOKEN, a fine-grained token, has no Checks or
+# Commit statuses permission, so on a private repository (agent-tools) those
+# reads got 403, every gate run failed and no green bump merged (2026-10-04).
+# On the public gateway they worked without it.
 #
 # RELEASE_BUMP_TOKEN (not GITHUB_TOKEN) pushes, opens and merges: GitHub starts no
 # workflows for a push or pull request made with GITHUB_TOKEN, so CI would
@@ -25,6 +36,8 @@ on:
   schedule:
     - cron: "17 * * * *"
   workflow_dispatch:
+  repository_dispatch:
+    types: [registry-main-moved]
   workflow_run:
     workflows: [CI, Lint, Parity, Changelog]
     types: [completed]
@@ -33,6 +46,8 @@ on:
 
 permissions:
   contents: read
+  checks: read
+  statuses: read
 
 jobs:
   reconcile:
@@ -63,6 +78,7 @@ jobs:
         run: node scripts/registry-pin-bump.mjs
         env:
           RELEASE_BUMP_TOKEN: ${{ secrets.RELEASE_BUMP_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
           PIN_FILE: scripts/registry-ref.json
           PIN_BUMP_BRANCH: bot/registry-pin
           # Must be present and green on the bump's head commit before it

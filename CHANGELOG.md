@@ -23,6 +23,27 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — the registry pin bot runs when registry `main` moves, and reads its gate with the workflow token (2026-10-04)
+
+- **Added: `registry-pin-bump.yml` runs on `repository_dispatch`
+  (`registry-main-moved`)**, which mzizi-registry's new `notify-pin-bots.yml`
+  sends on every push to registry `main` with the existing `RELEASE_BUMP_TOKEN`
+  org secret, so a bump opens within minutes of a registry merge. The hourly
+  schedule stays as the backstop: on 2026-10-04 GitHub ran it 2–3 hours apart.
+- **Changed: the gate reads check runs, commit status and branch rules with the
+  workflow's `GITHUB_TOKEN`**, which `registry-pin-bump.yml` now grants
+  `checks: read` and `statuses: read`. `RELEASE_BUMP_TOKEN` still pushes, opens
+  and merges, and needs no Checks or Commit statuses permission. Those reads
+  already worked here because this repository is public; on the private
+  agent-tools repository they failed with `403`, so its bot never merged a green
+  bump (agent-tools#195).
+- **Fixed: a run no longer fails when a person merges the bump mid-run.** If
+  `bot/registry-pin` is deleted between the bot's two reads of it, the run says
+  so and stops cleanly.
+- `scripts/registry-pin-bump.mjs` stays byte-identical to the agent-tools copy.
+  README, "Registry pin bump", and CONTRIBUTING are updated to match. No route,
+  response or pin changes.
+
 ### Added — `AGENTS.md` links the published design system (2026-10-04)
 
 - **`AGENTS.md` links the Design System artifact**

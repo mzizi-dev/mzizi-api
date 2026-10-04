@@ -210,13 +210,17 @@ runs [`scripts/registry-pin-bump.mjs`](scripts/registry-pin-bump.mjs), which
 keeps one bot pull request, from the branch `bot/registry-pin`, that sets `ref`
 in `scripts/registry-ref.json` to registry `main`:
 
-1. **Every hour** it compares the pin on `main` with mzizi-registry `main`
-   (`git ls-remote`, public, no token). When they differ, `bot/registry-pin`
-   becomes one bot commit on top of the current `main` that moves the pin, and
-   the pull request is opened, or updated if one is open. There is only ever
-   one. Its body lists the registry commits between the old pin and the new
-   one. It's rebuilt whenever `main` or registry `main` moves, so it's never
-   behind `main`.
+1. **Whenever registry `main` moves**, and every hour as a backstop, it
+   compares the pin on `main` with mzizi-registry `main` (`git ls-remote`,
+   public, no token). mzizi-registry's `notify-pin-bots.yml` sends this
+   workflow a `repository_dispatch` (`registry-main-moved`) on every push to
+   registry `main`; the hourly schedule catches anything that misses, since
+   GitHub delays and drops scheduled runs under load. When they differ,
+   `bot/registry-pin` becomes one bot commit on top of the current `main` that
+   moves the pin, and the pull request is opened, or updated if one is open.
+   There is only ever one. Its body lists the registry commits between the old
+   pin and the new one. It's rebuilt whenever `main` or registry `main` moves,
+   so it's never behind `main`.
 2. **CI runs on it** like on any pull request: `worker` (build, typecheck,
    tests, format, wrangler bundle), `secret scan`, the five `lint / *` checks,
    Workers Builds, and **`parity`**: [`parity.yml`](.github/workflows/parity.yml)
@@ -228,8 +232,8 @@ in `scripts/registry-ref.json` to registry `main`:
    then holds only an earlier bump's reasons, which production already serves,
    so any difference at all fails it.
 3. **When a check finishes** on `bot/registry-pin` (`workflow_run` for CI, Lint
-   and Parity; `check_run` for Workers Builds), and on the hourly run, the bot
-   gates the pull request. It merges (rebase) only when the pull request is
+   and Parity; `check_run` for Workers Builds), and on every other run, the
+   bot gates the pull request. It merges (rebase) only when the pull request is
    the bot's single commit on the current `main`, changes nothing but
    `scripts/registry-ref.json`, moves the pin forward along registry `main`, and
    every check and status on its head commit has finished green, including
@@ -274,22 +278,30 @@ uses its own token:
      automatically). Workflows is there only because the bot moves its branch
      onto the current `main`: GitHub refuses a token push that carries a
      workflow file change, even one already on `main`, without it. The script
-     writes only the pin file. Add **Checks: Read-only** and **Commit statuses:
-     Read-only** too: the bot reads the bump's check runs and commit status
-     before it merges, and without them that read fails with `403 Resource not
-accessible by personal access token`.
+     writes only the pin file. It needs no Checks or Commit statuses
+     permission: the bot reads the bump's check runs, commit status and
+     branch rules with the workflow's own `GITHUB_TOKEN` (`checks: read`,
+     `statuses: read`). Until 2026-10-04 it read them with this token, which
+     has neither, and on the private agent-tools repository every read failed
+     with `403 Resource not accessible by personal access token`, so no green
+     bump merged itself there (agent-tools#195). This repository is public,
+     so the same reads worked here.
    - If the organisation requires approval for fine-grained tokens, approve it
      (organisation Settings, Personal access tokens, Pending requests).
 2. **Store it as the Actions secret `RELEASE_BUMP_TOKEN`** in both repositories
    (Settings, Secrets and variables, Actions), or once as an organisation
-   secret shared with those two repositories. Until it exists, every run logs
-   a warning and does nothing.
+   secret shared with those two repositories and mzizi-registry (step 4).
+   Until it exists, every run logs a warning and does nothing.
 3. **Allow auto-merge** (Settings, General, Pull Requests) must stay on, with
    rebase merging. Both are on in both repositories (read off the GitHub API on
    2026-09-30).
-4. Nothing is needed in mzizi-registry. To see it work, run **Registry pin
-   bump** from the Actions tab. When the token expires, the runs fail at
-   checkout, so renew it before then.
+4. **Keep the secret visible to mzizi-registry.** Its `notify-pin-bots.yml`
+   sends the `registry-main-moved` dispatch with the same `RELEASE_BUMP_TOKEN`
+   org secret, which needs Contents: Read and write here (it has it already).
+   If the registry can't see the secret, that workflow warns and the bot waits
+   for its hourly run. To see it work, run **Registry pin bump** from the
+   Actions tab. When the token expires, the runs fail at checkout, so renew it
+   before then.
 
 ## Mzizi Roots: Rust components first
 

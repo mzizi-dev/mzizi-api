@@ -52,7 +52,8 @@ npm run dev
 
 ## Bumping the registry pin
 
-**The bot does this hourly** (README, "Registry pin bump"): it opens
+**The bot does this when registry `main` moves**, and hourly as a backstop
+(README, "Registry pin bump"): it opens
 `bot/registry-pin`, and merges it when CI and a `--strict` parity run against
 production are green. You bump by hand when it stops for review, that is when
 the registry changed data or a `lib/` reader that a route serves (it has had no
