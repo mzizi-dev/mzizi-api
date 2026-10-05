@@ -23,6 +23,27 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — the registry pin moves to mzizi-registry `main` at `2902393` (v4.3.0) (2026-10-05)
+
+- **The registry pin moves from the hand pin `409a047` (registry staging) to
+  `2902393`**, registry `main` at v4.3.0 (mzizi-registry#438), which adds #431,
+  #432, #433, #436, #437 and #428. It is back on registry `main`, so the pin bot
+  owns it again.
+- **`/v1/changelog/4.2.0` answers only the v4.2.0 release.** The pre-1.0
+  Doctrine 4.2.0 record is at `/v1/changelog/4.2.0+doctrine`
+  (mzizi-registry#436, closing #435). The v4.3.0 and v4.2.0 records lead
+  `/v1/changelog`.
+- **Six components are added and none removed** (649 → 655): `app-alert`,
+  `app-button`, `app-card`, `app-input`, `app-label` and `app-skeleton`
+  (mzizi-registry#428).
+- **Changed content:** `status-badge` defaults `status` to `stable`. The Rust
+  builds of button, card, input, label and status-badge carry their `ui/`
+  contract as `CONTRACT` (#428). `discover-open-link` gains the `places`,
+  `lingo` and `profile` services (#432, Open in Mukoko 1.2.0).
+- `scripts/parity.mjs` `EXPECTED` lists these 50 differences with their
+  reasons. mzizi-registry#440 tracks the stable = malachite contract check
+  that #428 dropped. No status, header or redirect changes.
+
 ### Changed — what the registry pin `409a047` changes in production answers, reviewed for release v0.1.0 (2026-10-05)
 
 - **72 components are added and none removed** (577 → 649): mzizi-registry#398

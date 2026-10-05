@@ -84,207 +84,216 @@ const HEADERS = [
  * and the `-text` colour tokens, #27 for skills 0.8.5, #31 for the
  * `mzizi-tokens` description that mzizi-registry#389 rewrote, #37 for
  * shamwari's sodalite accent from mzizi-registry#407, 16742ab for
- * Mukoko Events replacing nhimbe from mzizi-registry#411).
+ * Mukoko Events replacing nhimbe from mzizi-registry#411, #51 for the
+ * 409a047 hand pin and the /v1/astro OpenAPI paths).
  */
-// mzizi-api-gateway#49 and the hand pin to mzizi-registry staging 409a047
-// (#430), released in mzizi-registry v4.2.0 (#434). The registry adds 72
-// components and removes none; list, search and count routes follow, and two
-// existing components take their colours from N1 (mzizi-registry#418, closing
-// #423). The OpenAPI spec gains the /v1/astro routes. Every difference is a
-// body difference on a 200; no status, header or redirect moves. The previous
-// bump's entries (mzizi-registry#411, nhimbe → Mukoko Events) are in 16742ab.
+// The registry pin moves from the hand-pinned staging 409a047 to registry main
+// 2902393 (v4.3.0, mzizi-registry#438), which adds #431, #432, #433, #436,
+// #437 and #428: six `app-*` components, the `ui/` contracts carried by the
+// Rust builds, status-badge defaulting to `stable`, Open in Mukoko 1.2.0, and
+// the v4.2.0/v4.3.0 release records with the pre-1.0 Doctrine 4.2.0 keyed
+// `4.2.0+doctrine`. Every difference is a body difference on a 200; no status,
+// header or redirect moves. The previous entries (409a047 and #49) are in #51.
 const EXPECTED = {
-  "GET /api/openapi": {
-    allow: ["body"],
-    why: "mzizi-api-gateway#49: the spec adds `/astro` and `/astro/{name}` (GET /v1/astro, the Astro target from mzizi-registry#430). Pure addition: no existing path or schema changes.",
-  },
   "GET /api/v1/architecture": {
     allow: ["body"],
-    why: "Per-node component counts follow the additions (N2 371 → 381, N3 68 → 74, N4 14 → 23, N6 52 → 90, N7 16 → 25). mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+    why: "Node 2's component count follows the additions (381 → 387). mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
+  },
+  "GET /api/v1/changelog": {
+    allow: ["body"],
+    why: "Release records: v4.3.0 (mzizi-registry#437) and v4.2.0 (#433) lead the list, and the pre-1.0 Doctrine 4.2.0 row reads `4.2.0+doctrine` (#436, closing #435). Nothing else in the 64 earlier rows changes.",
   },
   "GET /api/v1/search?layer=2": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
   },
   "GET /api/v1/search?q=x": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
   },
   "GET /api/v1/stats": {
     allow: ["body"],
-    why: "Per-node component counts follow the additions (N2 371 → 381, N3 68 → 74, N4 14 → 23, N6 52 → 90, N7 16 → 25). mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+    why: "Node 2's component count follows the additions (381 → 387). mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
   },
   "GET /api/v1/ui?node=3": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
   },
   "GET /api/v1": {
     allow: ["body"],
-    why: "`data.components` 577 → 649. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
-  },
-  "GET /openapi?format=json": {
-    allow: ["body"],
-    why: "mzizi-api-gateway#49: the spec adds `/astro` and `/astro/{name}` (GET /v1/astro, the Astro target from mzizi-registry#430). Pure addition: no existing path or schema changes.",
-  },
-  "GET /openapi": {
-    allow: ["body"],
-    why: "mzizi-api-gateway#49: the spec adds `/astro` and `/astro/{name}` (GET /v1/astro, the Astro target from mzizi-registry#430). Pure addition: no existing path or schema changes.",
+    why: "`data.components` 649 → 655. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
   },
   "GET /v1/architecture/nodes/2": {
     allow: ["body"],
-    why: "Per-node component counts follow the additions (N2 371 → 381, N3 68 → 74, N4 14 → 23, N6 52 → 90, N7 16 → 25). mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
-  },
-  "GET /v1/architecture/nodes/3": {
-    allow: ["body"],
-    why: "Per-node component counts follow the additions (N2 371 → 381, N3 68 → 74, N4 14 → 23, N6 52 → 90, N7 16 → 25). mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
-  },
-  "GET /v1/architecture/nodes/4": {
-    allow: ["body"],
-    why: "Per-node component counts follow the additions (N2 371 → 381, N3 68 → 74, N4 14 → 23, N6 52 → 90, N7 16 → 25). mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
-  },
-  "GET /v1/architecture/nodes/6": {
-    allow: ["body"],
-    why: "Per-node component counts follow the additions (N2 371 → 381, N3 68 → 74, N4 14 → 23, N6 52 → 90, N7 16 → 25). mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
-  },
-  "GET /v1/architecture/nodes/7": {
-    allow: ["body"],
-    why: "Per-node component counts follow the additions (N2 371 → 381, N3 68 → 74, N4 14 → 23, N6 52 → 90, N7 16 → 25). mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+    why: "Node 2's component count follows the additions (381 → 387). mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
   },
   "GET /v1/architecture": {
     allow: ["body"],
-    why: "Per-node component counts follow the additions (N2 371 → 381, N3 68 → 74, N4 14 → 23, N6 52 → 90, N7 16 → 25). mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+    why: "Node 2's component count follows the additions (381 → 387). mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
+  },
+  "GET /v1/changelog/4.2.0": {
+    allow: ["body"],
+    why: "mzizi-registry#436 (closes #435): `4.2.0` names only the v4.2.0 release; the pre-1.0 Doctrine 4.2.0 production answers here moved to `/v1/changelog/4.2.0+doctrine`. #433 added the release record, #437 the v4.3.0 one.",
+  },
+  "GET /v1/changelog": {
+    allow: ["body"],
+    why: "Release records: v4.3.0 (mzizi-registry#437) and v4.2.0 (#433) lead the list, and the pre-1.0 Doctrine 4.2.0 row reads `4.2.0+doctrine` (#436, closing #435). Nothing else in the 64 earlier rows changes.",
+  },
+  "GET /v1/rs/button": {
+    allow: ["body"],
+    why: "mzizi-registry#428: the Rust build carries its `ui/button` contract as `CONTRACT`, written by `pnpm contracts:sync` from `contracts/ui/button.contract.json` and evaluated by `tests/contracts_json.rs`. Doc comments and the constant only; the component's markup is unchanged.",
+  },
+  "GET /v1/rs/card": {
+    allow: ["body"],
+    why: "mzizi-registry#428: the Rust build carries its `ui/card` contract as `CONTRACT`, written by `pnpm contracts:sync` from `contracts/ui/card.contract.json` and evaluated by `tests/contracts_json.rs`. Doc comments and the constant only; the component's markup is unchanged.",
+  },
+  "GET /v1/rs/input": {
+    allow: ["body"],
+    why: "mzizi-registry#428: the Rust build carries its `ui/input` contract as `CONTRACT`, written by `pnpm contracts:sync` from `contracts/ui/input.contract.json` and evaluated by `tests/contracts_json.rs`. Doc comments and the constant only; the component's markup is unchanged.",
+  },
+  "GET /v1/rs/label": {
+    allow: ["body"],
+    why: "mzizi-registry#428: the Rust build carries its `ui/label` contract as `CONTRACT`, written by `pnpm contracts:sync` from `contracts/ui/label.contract.json` and evaluated by `tests/contracts_json.rs`. Doc comments and the constant only; the component's markup is unchanged.",
+  },
+  "GET /v1/rs/status-badge": {
+    allow: ["body"],
+    why: "mzizi-registry#428: `CONTRACT` is now generated from `contracts/ui/status-badge.contract.json` by `pnpm contracts:sync`, with state-based checks (default, beta, deprecated) in place of the hand-written enum clauses. The markup is unchanged; the stable = malachite check it dropped is mzizi-registry#440.",
   },
   "GET /v1/search?category=primitives": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
   },
   "GET /v1/search?layer=2": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
   },
   "GET /v1/search?layer=3&node=2": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
   },
   "GET /v1/search?node=2": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
   },
   "GET /v1/search?q=button&node=2&category=primitives": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
   },
   "GET /v1/search?q=button": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
   },
   "GET /v1/stats?days=500": {
     allow: ["body"],
-    why: "Per-node component counts follow the additions (N2 371 → 381, N3 68 → 74, N4 14 → 23, N6 52 → 90, N7 16 → 25). mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+    why: "Node 2's component count follows the additions (381 → 387). mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
   },
   "GET /v1/stats?days=7": {
     allow: ["body"],
-    why: "Per-node component counts follow the additions (N2 371 → 381, N3 68 → 74, N4 14 → 23, N6 52 → 90, N7 16 → 25). mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+    why: "Node 2's component count follows the additions (381 → 387). mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
   },
   "GET /v1/stats?days=abc": {
     allow: ["body"],
-    why: "Per-node component counts follow the additions (N2 371 → 381, N3 68 → 74, N4 14 → 23, N6 52 → 90, N7 16 → 25). mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+    why: "Node 2's component count follows the additions (381 → 387). mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
   },
   "GET /v1/stats": {
     allow: ["body"],
-    why: "Per-node component counts follow the additions (N2 371 → 381, N3 68 → 74, N4 14 → 23, N6 52 → 90, N7 16 → 25). mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+    why: "Node 2's component count follows the additions (381 → 387). mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
   },
   "GET /v1/ui?collection=components": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
   },
   "GET /v1/ui?collection=documentation": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
   },
   "GET /v1/ui?collection=primitives": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
   },
   "GET /v1/ui?limit=0": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
   },
   "GET /v1/ui?limit=abc": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
   },
   "GET /v1/ui?node=-1": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
   },
   "GET /v1/ui?node=2&limit=5&offset=3": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
   },
   "GET /v1/ui?node=2": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
   },
   "GET /v1/ui?node=999": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
   },
   "GET /v1/ui?offset=570": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
   },
   "GET /v1/ui?owner=framework": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
   },
   "GET /v1/ui?owner=mzizi": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
   },
   "GET /v1/ui?owner=nyuchi": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
   },
   "GET /v1/ui?type=registry%3Abase": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
   },
   "GET /v1/ui?type=registry%3Ablock": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
   },
   "GET /v1/ui?type=registry%3Ahook": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
+  },
+  "GET /v1/ui?type=registry%3Aitem": {
+    allow: ["body"],
+    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
   },
   "GET /v1/ui?type=registry%3Alib": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
   },
   "GET /v1/ui?type=registry%3Atheme": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
   },
   "GET /v1/ui?type=registry%3Aui": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
   },
-  "GET /v1/ui/mzizi-create-listing": {
+  "GET /v1/ui/discover-open-link": {
     allow: ["body"],
-    why: "mzizi-registry#418 (fixes mzizi-registry#423): the terracotta cover theme ends on `var(--color-terracotta)` instead of hex #A0522D, and the swapped gold/terracotta comments are corrected.",
+    why: "mzizi-registry#432: `MUKOKO_SERVICES` gains `places` (Mukoko Kweli), `lingo` and `profile`, matching the resolver's link table, and the doc comment says what the resolver does now (desktop and crawlers to the public page, phones get a choice). This is Open in Mukoko 1.2.0 / detail-actions 1.1.0.",
   },
-  "GET /v1/ui/wallet-card": {
+  "GET /v1/ui/status-badge": {
     allow: ["body"],
-    why: "mzizi-registry#418 (fixes mzizi-registry#423): wallet-card fills each token type from its N1 mineral (`--color-<mineral>` to `-on-container`, text in `-container`) instead of fixed hex gradients under white text, so it is theme-adaptive.",
+    why: "mzizi-registry#428: `status` is optional and defaults to `stable`, as `contracts/ui/status-badge.contract.json` declares, and the header names the contract.",
   },
   "GET /v1/ui": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
   },
   "GET /v1": {
     allow: ["body"],
-    why: "`data.components` 577 → 649. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+    why: "`data.components` 649 → 655. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
   },
 };
 
