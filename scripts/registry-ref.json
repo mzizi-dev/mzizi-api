@@ -1,6 +1,6 @@
 {
   "repository": "https://github.com/mzizi-dev/mzizi-registry",
-  "ref": "409a04781044c888518c691c1a9be691eb69b10f",
+  "ref": "2902393c2fed96166b708b9512d44c59d8f464ef",
   "pinned": "2026-10-05",
-  "note": "mzizi-registry staging at 409a047 (#430, the Astro target and lib/astro.ts) on 2026-10-05, set by hand for /v1/astro. The pin bot moves it to registry main when #430 is released there."
+  "note": "mzizi-registry main at 2902393 on 2026-10-05, set by .github/workflows/registry-pin-bump.yml. The commits since the last pin are listed in its pull request."
 }
