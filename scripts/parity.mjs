@@ -85,215 +85,137 @@ const HEADERS = [
  * `mzizi-tokens` description that mzizi-registry#389 rewrote, #37 for
  * shamwari's sodalite accent from mzizi-registry#407, 16742ab for
  * Mukoko Events replacing nhimbe from mzizi-registry#411, #51 for the
- * 409a047 hand pin and the /v1/astro OpenAPI paths).
+ * 409a047 hand pin and the /v1/astro OpenAPI paths, #53 for 2902393, registry
+ * v4.3.0).
  */
-// The registry pin moves from the hand-pinned staging 409a047 to registry main
-// 2902393 (v4.3.0, mzizi-registry#438), which adds #431, #432, #433, #436,
-// #437 and #428: six `app-*` components, the `ui/` contracts carried by the
-// Rust builds, status-badge defaulting to `stable`, Open in Mukoko 1.2.0, and
-// the v4.2.0/v4.3.0 release records with the pre-1.0 Doctrine 4.2.0 keyed
-// `4.2.0+doctrine`. Every difference is a body difference on a 200; no status,
-// header or redirect moves. The previous entries (409a047 and #49) are in #51.
+// The registry pin moves from registry main 2902393 (v4.3.0) to 5067b5e,
+// the v4.4.0 release (mzizi-registry#447), which adds #439, #441, #442, #443
+// and #446: Rust builds of alert and skeleton, full contracts for
+// safe-area-frame, native-select, segmented-control and toaster, the Nyuchi
+// console's form, chart and table deltas, and the v4.4.0 release record. No
+// component is added to or removed from the list (655). Two routes change
+// status: /v1/rs/alert and /v1/rs/skeleton, 404 → 200. Everything else is a
+// body difference on a 200. The previous entries (2902393) are in #53.
 const EXPECTED = {
-  "GET /api/v1/architecture": {
-    allow: ["body"],
-    why: "Node 2's component count follows the additions (381 → 387). mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
-  },
   "GET /api/v1/changelog": {
     allow: ["body"],
-    why: "Release records: v4.3.0 (mzizi-registry#437) and v4.2.0 (#433) lead the list, and the pre-1.0 Doctrine 4.2.0 row reads `4.2.0+doctrine` (#436, closing #435). Nothing else in the 64 earlier rows changes.",
-  },
-  "GET /api/v1/search?layer=2": {
-    allow: ["body"],
-    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
-  },
-  "GET /api/v1/search?q=x": {
-    allow: ["body"],
-    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
-  },
-  "GET /api/v1/stats": {
-    allow: ["body"],
-    why: "Node 2's component count follows the additions (381 → 387). mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
-  },
-  "GET /api/v1/ui?node=3": {
-    allow: ["body"],
-    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
-  },
-  "GET /api/v1": {
-    allow: ["body"],
-    why: "`data.components` 649 → 655. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
-  },
-  "GET /v1/architecture/nodes/2": {
-    allow: ["body"],
-    why: "Node 2's component count follows the additions (381 → 387). mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
-  },
-  "GET /v1/architecture": {
-    allow: ["body"],
-    why: "Node 2's component count follows the additions (381 → 387). mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
-  },
-  "GET /v1/changelog/4.2.0": {
-    allow: ["body"],
-    why: "mzizi-registry#436 (closes #435): `4.2.0` names only the v4.2.0 release; the pre-1.0 Doctrine 4.2.0 production answers here moved to `/v1/changelog/4.2.0+doctrine`. #433 added the release record, #437 the v4.3.0 one.",
+    why: "Release records: the v4.4.0 record (mzizi-registry#446, released in #447) leads the list. The earlier rows are unchanged.",
   },
   "GET /v1/changelog": {
     allow: ["body"],
-    why: "Release records: v4.3.0 (mzizi-registry#437) and v4.2.0 (#433) lead the list, and the pre-1.0 Doctrine 4.2.0 row reads `4.2.0+doctrine` (#436, closing #435). Nothing else in the 64 earlier rows changes.",
+    why: "Release records: the v4.4.0 record (mzizi-registry#446, released in #447) leads the list. The earlier rows are unchanged.",
   },
-  "GET /v1/rs/button": {
+  "GET /api/v1/search?layer=2": {
     allow: ["body"],
-    why: "mzizi-registry#428: the Rust build carries its `ui/button` contract as `CONTRACT`, written by `pnpm contracts:sync` from `contracts/ui/button.contract.json` and evaluated by `tests/contracts_json.rs`. Doc comments and the constant only; the component's markup is unchanged.",
-  },
-  "GET /v1/rs/card": {
-    allow: ["body"],
-    why: "mzizi-registry#428: the Rust build carries its `ui/card` contract as `CONTRACT`, written by `pnpm contracts:sync` from `contracts/ui/card.contract.json` and evaluated by `tests/contracts_json.rs`. Doc comments and the constant only; the component's markup is unchanged.",
-  },
-  "GET /v1/rs/input": {
-    allow: ["body"],
-    why: "mzizi-registry#428: the Rust build carries its `ui/input` contract as `CONTRACT`, written by `pnpm contracts:sync` from `contracts/ui/input.contract.json` and evaluated by `tests/contracts_json.rs`. Doc comments and the constant only; the component's markup is unchanged.",
-  },
-  "GET /v1/rs/label": {
-    allow: ["body"],
-    why: "mzizi-registry#428: the Rust build carries its `ui/label` contract as `CONTRACT`, written by `pnpm contracts:sync` from `contracts/ui/label.contract.json` and evaluated by `tests/contracts_json.rs`. Doc comments and the constant only; the component's markup is unchanged.",
-  },
-  "GET /v1/rs/status-badge": {
-    allow: ["body"],
-    why: "mzizi-registry#428: `CONTRACT` is now generated from `contracts/ui/status-badge.contract.json` by `pnpm contracts:sync`, with state-based checks (default, beta, deprecated) in place of the hand-written enum clauses. The markup is unchanged; the stable = malachite check it dropped is mzizi-registry#440.",
+    why: "List items carry the registry's new descriptions; the same names in the same order (655 components, none added or removed). mzizi-registry v4.4.0 (#447): segmented-control and native-select take their full contracts (#441), toaster its React build of ui/toaster (#442), and app-form-field's description says \"control\" for its new textarea and select (#443).",
   },
   "GET /v1/search?category=primitives": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
+    why: "List items carry the registry's new descriptions; the same names in the same order (655 components, none added or removed). mzizi-registry v4.4.0 (#447): segmented-control and native-select take their full contracts (#441), toaster its React build of ui/toaster (#442), and app-form-field's description says \"control\" for its new textarea and select (#443).",
   },
   "GET /v1/search?layer=2": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
+    why: "List items carry the registry's new descriptions; the same names in the same order (655 components, none added or removed). mzizi-registry v4.4.0 (#447): segmented-control and native-select take their full contracts (#441), toaster its React build of ui/toaster (#442), and app-form-field's description says \"control\" for its new textarea and select (#443).",
   },
   "GET /v1/search?layer=3&node=2": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
+    why: "List items carry the registry's new descriptions; the same names in the same order (655 components, none added or removed). mzizi-registry v4.4.0 (#447): segmented-control and native-select take their full contracts (#441), toaster its React build of ui/toaster (#442), and app-form-field's description says \"control\" for its new textarea and select (#443).",
   },
   "GET /v1/search?node=2": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
-  },
-  "GET /v1/search?q=button&node=2&category=primitives": {
-    allow: ["body"],
-    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
-  },
-  "GET /v1/search?q=button": {
-    allow: ["body"],
-    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
-  },
-  "GET /v1/stats?days=500": {
-    allow: ["body"],
-    why: "Node 2's component count follows the additions (381 → 387). mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
-  },
-  "GET /v1/stats?days=7": {
-    allow: ["body"],
-    why: "Node 2's component count follows the additions (381 → 387). mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
-  },
-  "GET /v1/stats?days=abc": {
-    allow: ["body"],
-    why: "Node 2's component count follows the additions (381 → 387). mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
-  },
-  "GET /v1/stats": {
-    allow: ["body"],
-    why: "Node 2's component count follows the additions (381 → 387). mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
+    why: "List items carry the registry's new descriptions; the same names in the same order (655 components, none added or removed). mzizi-registry v4.4.0 (#447): segmented-control and native-select take their full contracts (#441), toaster its React build of ui/toaster (#442), and app-form-field's description says \"control\" for its new textarea and select (#443).",
   },
   "GET /v1/ui?collection=components": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
-  },
-  "GET /v1/ui?collection=documentation": {
-    allow: ["body"],
-    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
+    why: "List items carry the registry's new descriptions; the same names in the same order (655 components, none added or removed). mzizi-registry v4.4.0 (#447): segmented-control and native-select take their full contracts (#441), toaster its React build of ui/toaster (#442), and app-form-field's description says \"control\" for its new textarea and select (#443).",
   },
   "GET /v1/ui?collection=primitives": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
-  },
-  "GET /v1/ui?limit=0": {
-    allow: ["body"],
-    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
+    why: "List items carry the registry's new descriptions; the same names in the same order (655 components, none added or removed). mzizi-registry v4.4.0 (#447): segmented-control and native-select take their full contracts (#441), toaster its React build of ui/toaster (#442), and app-form-field's description says \"control\" for its new textarea and select (#443).",
   },
   "GET /v1/ui?limit=abc": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
+    why: "List items carry the registry's new descriptions; the same names in the same order (655 components, none added or removed). mzizi-registry v4.4.0 (#447): segmented-control and native-select take their full contracts (#441), toaster its React build of ui/toaster (#442), and app-form-field's description says \"control\" for its new textarea and select (#443).",
   },
   "GET /v1/ui?node=-1": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
-  },
-  "GET /v1/ui?node=2&limit=5&offset=3": {
-    allow: ["body"],
-    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
+    why: "List items carry the registry's new descriptions; the same names in the same order (655 components, none added or removed). mzizi-registry v4.4.0 (#447): segmented-control and native-select take their full contracts (#441), toaster its React build of ui/toaster (#442), and app-form-field's description says \"control\" for its new textarea and select (#443).",
   },
   "GET /v1/ui?node=2": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
-  },
-  "GET /v1/ui?node=999": {
-    allow: ["body"],
-    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
+    why: "List items carry the registry's new descriptions; the same names in the same order (655 components, none added or removed). mzizi-registry v4.4.0 (#447): segmented-control and native-select take their full contracts (#441), toaster its React build of ui/toaster (#442), and app-form-field's description says \"control\" for its new textarea and select (#443).",
   },
   "GET /v1/ui?offset=570": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
+    why: "List items carry the registry's new descriptions; the same names in the same order (655 components, none added or removed). mzizi-registry v4.4.0 (#447): segmented-control and native-select take their full contracts (#441), toaster its React build of ui/toaster (#442), and app-form-field's description says \"control\" for its new textarea and select (#443).",
   },
   "GET /v1/ui?owner=framework": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
+    why: "List items carry the registry's new descriptions; the same names in the same order (655 components, none added or removed). mzizi-registry v4.4.0 (#447): segmented-control and native-select take their full contracts (#441), toaster its React build of ui/toaster (#442), and app-form-field's description says \"control\" for its new textarea and select (#443).",
   },
   "GET /v1/ui?owner=mzizi": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
-  },
-  "GET /v1/ui?owner=nyuchi": {
-    allow: ["body"],
-    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
-  },
-  "GET /v1/ui?type=registry%3Abase": {
-    allow: ["body"],
-    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
-  },
-  "GET /v1/ui?type=registry%3Ablock": {
-    allow: ["body"],
-    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
-  },
-  "GET /v1/ui?type=registry%3Ahook": {
-    allow: ["body"],
-    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
-  },
-  "GET /v1/ui?type=registry%3Aitem": {
-    allow: ["body"],
-    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
-  },
-  "GET /v1/ui?type=registry%3Alib": {
-    allow: ["body"],
-    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
-  },
-  "GET /v1/ui?type=registry%3Atheme": {
-    allow: ["body"],
-    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
+    why: "List items carry the registry's new descriptions; the same names in the same order (655 components, none added or removed). mzizi-registry v4.4.0 (#447): segmented-control and native-select take their full contracts (#441), toaster its React build of ui/toaster (#442), and app-form-field's description says \"control\" for its new textarea and select (#443).",
   },
   "GET /v1/ui?type=registry%3Aui": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
-  },
-  "GET /v1/ui/discover-open-link": {
-    allow: ["body"],
-    why: "mzizi-registry#432: `MUKOKO_SERVICES` gains `places` (Mukoko Kweli), `lingo` and `profile`, matching the resolver's link table, and the doc comment says what the resolver does now (desktop and crawlers to the public page, phones get a choice). This is Open in Mukoko 1.2.0 / detail-actions 1.1.0.",
-  },
-  "GET /v1/ui/status-badge": {
-    allow: ["body"],
-    why: "mzizi-registry#428: `status` is optional and defaults to `stable`, as `contracts/ui/status-badge.contract.json` declares, and the header names the contract.",
+    why: "List items carry the registry's new descriptions; the same names in the same order (655 components, none added or removed). mzizi-registry v4.4.0 (#447): segmented-control and native-select take their full contracts (#441), toaster its React build of ui/toaster (#442), and app-form-field's description says \"control\" for its new textarea and select (#443).",
   },
   "GET /v1/ui": {
     allow: ["body"],
-    why: "List and search results gain the new components, so later items shift; restricted to the baseline's names the order is unchanged and nothing is dropped. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
+    why: "List items carry the registry's new descriptions; the same names in the same order (655 components, none added or removed). mzizi-registry v4.4.0 (#447): segmented-control and native-select take their full contracts (#441), toaster its React build of ui/toaster (#442), and app-form-field's description says \"control\" for its new textarea and select (#443).",
   },
-  "GET /v1": {
+  "GET /api/v1/search?q=x": {
     allow: ["body"],
-    why: "`data.components` 649 → 655. mzizi-registry#428 adds six components (649 → 655) and removes none: app-alert, app-button, app-card, app-input, app-label and app-skeleton, the Dashboard Standard React builds of the new `ui/` contracts.",
+    why: "One more hit (192 → 193), none dropped: app-form-field's new description (mzizi-registry#443, textarea and select) now matches `x`, so it ranks in at 9 and later names shift by one.",
+  },
+  "GET /v1/rs/alert": {
+    allow: ["status", "header:cache-control", "body"],
+    why: 'mzizi-registry#439 adds the Rust build of the `ui/alert` contract (`n2-primitives/alert.rs`, `mzizi-ui` `generated/alert.rs`), held to the whole contract. The route was a 404 ("has no Rust implementation"); it now answers 200 with the same public cache headers as every other `/v1/rs/{name}`.',
+  },
+  "GET /v1/rs/skeleton": {
+    allow: ["status", "header:cache-control", "body"],
+    why: 'mzizi-registry#439 adds the Rust build of the `ui/skeleton` contract (`n2-primitives/skeleton.rs`, `mzizi-ui` `generated/skeleton.rs`), held to the whole contract. The route was a 404 ("has no Rust implementation"); it now answers 200 with the same public cache headers as every other `/v1/rs/{name}`.',
+  },
+  "GET /v1/rs/safe-area-frame": {
+    allow: ["body"],
+    why: "mzizi-registry#439: the Rust safe-area-frame is held to the full `ui/safe-area-frame` contract; its doc comments and markup follow (**Breaking** in the registry's 4.4.0 CHANGELOG).",
+  },
+  "GET /v1/ui/safe-area-frame": {
+    allow: ["body"],
+    why: "mzizi-registry#439: the React safe-area-frame is held to the full `ui/safe-area-frame` contract, so its source changes (markup **Breaking** in the registry's 4.4.0 CHANGELOG).",
+  },
+  "GET /v1/ui/native-select": {
+    allow: ["body"],
+    why: "mzizi-registry#441: native-select takes the full `ui/native-select` contract in every build; the React source changes.",
+  },
+  "GET /v1/ui/segmented-control": {
+    allow: ["body"],
+    why: "mzizi-registry#441: segmented-control takes the full `ui/segmented-control` contract (native radios, 2-4 options); description and React source change (API **Breaking** in the registry's 4.4.0 CHANGELOG).",
+  },
+  "GET /v1/ui/toaster": {
+    allow: ["body"],
+    why: "mzizi-registry#442: the React toaster is the same component as the Astro one (`toast(message, kind?)` in a polite live region), held to `ui/toaster`; description and source change (API **Breaking** in the registry's 4.4.0 CHANGELOG).",
+  },
+  "GET /v1/ui/ui-variants": {
+    allow: ["body"],
+    why: "mzizi-registry#443: the class recipes gain the Nyuchi console's form and status additions (textarea, file input, status tones).",
+  },
+  "GET /v1/ui/app-bar-chart": {
+    allow: ["body"],
+    why: "mzizi-registry#443, from the Nyuchi console: column-layout axis labels never crowd (contract app/bar-chart 1.1.0). Its docs and source follow.",
+  },
+  "GET /v1/ui/app-data-table": {
+    allow: ["body"],
+    why: "mzizi-registry#443, from the Nyuchi console: a cell's `tone` is a status pill (contract app/data-table 1.1.0). Its docs and source follow.",
+  },
+  "GET /v1/ui/app-form-field": {
+    allow: ["body"],
+    why: "mzizi-registry#443, from the Nyuchi console: textarea and select, number/date/file inputs, `wide` (contract app/form-field 1.1.0). Its docs and source follow.",
+  },
+  "GET /v1/ui/app-form-layout": {
+    allow: ["body"],
+    why: "mzizi-registry#443, from the Nyuchi console: `enctype` for a form with a file field (contract app/form-layout 1.1.0). Its docs and source follow.",
   },
 };
 

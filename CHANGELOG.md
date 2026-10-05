@@ -23,6 +23,26 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — the registry pin moves to mzizi-registry `main` at `5067b5e` (v4.4.0) (2026-10-06)
+
+- **The registry pin moves from `2902393` (v4.3.0) to `5067b5e`**, registry
+  `main` at v4.4.0 (mzizi-registry#447), which adds #439, #441, #442, #443 and
+  #446. It goes through `staging`, as #53 did, in place of the bot's #55.
+- **`/v1/rs/alert` and `/v1/rs/skeleton` answer 200**, the new Rust builds of
+  the `ui/alert` and `ui/skeleton` contracts (mzizi-registry#439). Both were
+  404 ("has no Rust implementation").
+- **No component is added or removed** (655). The v4.4.0 record leads
+  `/v1/changelog`.
+- **Changed content:** safe-area-frame (React and Rust) is held to its full
+  contract (#439); native-select and segmented-control take their full
+  contracts (#441); the React toaster is the same component as the Astro one
+  (#442); app-bar-chart, app-data-table, app-form-field, app-form-layout and
+  ui-variants take the Nyuchi console's deltas (#443). The registry marks the
+  safe-area-frame markup and the segmented-control and toaster React APIs
+  **Breaking** in its 4.4.0 CHANGELOG.
+- **`scripts/parity.mjs` `EXPECTED`** lists the 30 differences from production
+  with their reasons; the 2902393 entries are in #53.
+
 ### Changed — the registry pin moves to mzizi-registry `main` at `2902393` (v4.3.0) (2026-10-05)
 
 - **The registry pin moves from the hand pin `409a047` (registry staging) to
