@@ -83,393 +83,208 @@ const HEADERS = [
  * mzizi's hematite default `--primary`, #22 for skills 0.8.2, #25 for skills 0.8.4
  * and the `-text` colour tokens, #27 for skills 0.8.5, #31 for the
  * `mzizi-tokens` description that mzizi-registry#389 rewrote, #37 for
- * shamwari's sodalite accent from mzizi-registry#407).
+ * shamwari's sodalite accent from mzizi-registry#407, 16742ab for
+ * Mukoko Events replacing nhimbe from mzizi-registry#411).
  */
-// mzizi-registry#411 (2af5e5e), owner decision of 2026-10-04 under
-// mukoko-dev/nhimbe#155: the nhimbe brand is retired; the events platform is
-// Mukoko Events (events.mukoko.com), mineral malachite. Canon's `ecosystem[4]`
-// becomes `events`, with `displayName` "Mukoko Events" and `aliases: ["nhimbe"]`,
-// which this PR starts projecting on `/v1/brand` (only on rows that carry them).
-// The registry rewrote item copy (`useCases` nhimbe → events, descriptions),
-// the brand block and accent tables (with `nhimbe` kept as a deprecated alias),
-// the app switcher, footers and sidebars, and two doctrine pages. Every
-// difference is a body difference on a 200; no status, header or redirect moves.
+// mzizi-api-gateway#49 and the hand pin to mzizi-registry staging 409a047
+// (#430), released in mzizi-registry v4.2.0 (#434). The registry adds 72
+// components and removes none; list, search and count routes follow, and two
+// existing components take their colours from N1 (mzizi-registry#418, closing
+// #423). The OpenAPI spec gains the /v1/astro routes. Every difference is a
+// body difference on a 200; no status, header or redirect moves. The previous
+// bump's entries (mzizi-registry#411, nhimbe → Mukoko Events) are in 16742ab.
 const EXPECTED = {
-  "GET /api/v1/brand": {
+  "GET /api/openapi": {
     allow: ["body"],
-    why: 'mzizi-registry#411: `ecosystem[4]` is now `events` (Mukoko Events, events.mukoko.com, malachite) instead of `nhimbe`, with the new optional `displayName` and `aliases: ["nhimbe"]` fields this PR projects. No other row changes.',
+    why: "mzizi-api-gateway#49: the spec adds `/astro` and `/astro/{name}` (GET /v1/astro, the Astro target from mzizi-registry#430). Pure addition: no existing path or schema changes.",
+  },
+  "GET /api/v1/architecture": {
+    allow: ["body"],
+    why: "Per-node component counts follow the additions (N2 371 → 381, N3 68 → 74, N4 14 → 23, N6 52 → 90, N7 16 → 25). mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
   },
   "GET /api/v1/search?layer=2": {
     allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
   },
   "GET /api/v1/search?q=x": {
     allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+  },
+  "GET /api/v1/stats": {
+    allow: ["body"],
+    why: "Per-node component counts follow the additions (N2 371 → 381, N3 68 → 74, N4 14 → 23, N6 52 → 90, N7 16 → 25). mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
   },
   "GET /api/v1/ui?node=3": {
     allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
   },
-  "GET /v1/brand": {
+  "GET /api/v1": {
     allow: ["body"],
-    why: 'mzizi-registry#411: `ecosystem[4]` is now `events` (Mukoko Events, events.mukoko.com, malachite) instead of `nhimbe`, with the new optional `displayName` and `aliases: ["nhimbe"]` fields this PR projects. No other row changes.',
+    why: "`data.components` 577 → 649. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
   },
-  "GET /v1/rs/mzizi-footer": {
+  "GET /openapi?format=json": {
     allow: ["body"],
-    why: "mzizi-registry#411: `files[0].content` follows the nhimbe \u2192 Mukoko Events rename (the `events` brand block and accent, with `nhimbe` kept as a deprecated alias, or the copy that names the product).",
+    why: "mzizi-api-gateway#49: the spec adds `/astro` and `/astro/{name}` (GET /v1/astro, the Astro target from mzizi-registry#430). Pure addition: no existing path or schema changes.",
+  },
+  "GET /openapi": {
+    allow: ["body"],
+    why: "mzizi-api-gateway#49: the spec adds `/astro` and `/astro/{name}` (GET /v1/astro, the Astro target from mzizi-registry#430). Pure addition: no existing path or schema changes.",
+  },
+  "GET /v1/architecture/nodes/2": {
+    allow: ["body"],
+    why: "Per-node component counts follow the additions (N2 371 → 381, N3 68 → 74, N4 14 → 23, N6 52 → 90, N7 16 → 25). mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+  },
+  "GET /v1/architecture/nodes/3": {
+    allow: ["body"],
+    why: "Per-node component counts follow the additions (N2 371 → 381, N3 68 → 74, N4 14 → 23, N6 52 → 90, N7 16 → 25). mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+  },
+  "GET /v1/architecture/nodes/4": {
+    allow: ["body"],
+    why: "Per-node component counts follow the additions (N2 371 → 381, N3 68 → 74, N4 14 → 23, N6 52 → 90, N7 16 → 25). mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+  },
+  "GET /v1/architecture/nodes/6": {
+    allow: ["body"],
+    why: "Per-node component counts follow the additions (N2 371 → 381, N3 68 → 74, N4 14 → 23, N6 52 → 90, N7 16 → 25). mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+  },
+  "GET /v1/architecture/nodes/7": {
+    allow: ["body"],
+    why: "Per-node component counts follow the additions (N2 371 → 381, N3 68 → 74, N4 14 → 23, N6 52 → 90, N7 16 → 25). mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+  },
+  "GET /v1/architecture": {
+    allow: ["body"],
+    why: "Per-node component counts follow the additions (N2 371 → 381, N3 68 → 74, N4 14 → 23, N6 52 → 90, N7 16 → 25). mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
   },
   "GET /v1/search?category=primitives": {
     allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
   },
   "GET /v1/search?layer=2": {
     allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
   },
   "GET /v1/search?layer=3&node=2": {
     allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
   },
   "GET /v1/search?node=2": {
     allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/search?q=button": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
   },
   "GET /v1/search?q=button&node=2&category=primitives": {
     allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
   },
-  "GET /v1/ubuntu/pillars": {
+  "GET /v1/search?q=button": {
     allow: ["body"],
-    why: 'mzizi-registry#411: doctrine copy says "Mukoko Events gatherings" where it said "Nhimbe gatherings".',
+    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
   },
-  "GET /v1/ubuntu/principles": {
+  "GET /v1/stats?days=500": {
     allow: ["body"],
-    why: 'mzizi-registry#411: doctrine copy says "Mukoko Events gatherings" where it said "Nhimbe gatherings".',
+    why: "Per-node component counts follow the additions (N2 371 → 381, N3 68 → 74, N4 14 → 23, N6 52 → 90, N7 16 → 25). mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
   },
-  "GET /v1/ui": {
+  "GET /v1/stats?days=7": {
     allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+    why: "Per-node component counts follow the additions (N2 371 → 381, N3 68 → 74, N4 14 → 23, N6 52 → 90, N7 16 → 25). mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+  },
+  "GET /v1/stats?days=abc": {
+    allow: ["body"],
+    why: "Per-node component counts follow the additions (N2 371 → 381, N3 68 → 74, N4 14 → 23, N6 52 → 90, N7 16 → 25). mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+  },
+  "GET /v1/stats": {
+    allow: ["body"],
+    why: "Per-node component counts follow the additions (N2 371 → 381, N3 68 → 74, N4 14 → 23, N6 52 → 90, N7 16 → 25). mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
   },
   "GET /v1/ui?collection=components": {
     allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+  },
+  "GET /v1/ui?collection=documentation": {
+    allow: ["body"],
+    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
   },
   "GET /v1/ui?collection=primitives": {
     allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+  },
+  "GET /v1/ui?limit=0": {
+    allow: ["body"],
+    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
   },
   "GET /v1/ui?limit=abc": {
     allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
   },
   "GET /v1/ui?node=-1": {
     allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+  },
+  "GET /v1/ui?node=2&limit=5&offset=3": {
+    allow: ["body"],
+    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
   },
   "GET /v1/ui?node=2": {
     allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+  },
+  "GET /v1/ui?node=999": {
+    allow: ["body"],
+    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+  },
+  "GET /v1/ui?offset=570": {
+    allow: ["body"],
+    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
   },
   "GET /v1/ui?owner=framework": {
     allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
   },
   "GET /v1/ui?owner=mzizi": {
     allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
   },
   "GET /v1/ui?owner=nyuchi": {
     allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+  },
+  "GET /v1/ui?type=registry%3Abase": {
+    allow: ["body"],
+    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+  },
+  "GET /v1/ui?type=registry%3Ablock": {
+    allow: ["body"],
+    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+  },
+  "GET /v1/ui?type=registry%3Ahook": {
+    allow: ["body"],
+    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+  },
+  "GET /v1/ui?type=registry%3Alib": {
+    allow: ["body"],
+    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
+  },
+  "GET /v1/ui?type=registry%3Atheme": {
+    allow: ["body"],
+    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
   },
   "GET /v1/ui?type=registry%3Aui": {
     allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/admin-page": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/analytics-dashboard-page": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/app-switcher": {
-    allow: ["body"],
-    why: "mzizi-registry#411: `files[0].content` follows the nhimbe \u2192 Mukoko Events rename (the `events` brand block and accent, with `nhimbe` kept as a deprecated alias, or the copy that names the product).",
-  },
-  "GET /v1/ui/billing-page": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/booking-calendar": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/booking-confirmation": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/calendar-month-view": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/canvas-chart": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/checkout-page": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/event-block": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/event-rsvp-inline": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/info-row": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/invite-link": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/kpi-card": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/location-picker": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/map-card": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/map-cluster": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/map-view": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/marketplace-page": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/member-list": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/member-row": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/mobile-money-selector": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/mzizi-avatar-stack": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/mzizi-calendar": {
-    allow: ["body"],
-    why: "mzizi-registry#411: `files[0].content` follows the nhimbe \u2192 Mukoko Events rename (the `events` brand block and accent, with `nhimbe` kept as a deprecated alias, or the copy that names the product).",
-  },
-  "GET /v1/ui/mzizi-cover-wash-header": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
   },
   "GET /v1/ui/mzizi-create-listing": {
     allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+    why: "mzizi-registry#418 (fixes mzizi-registry#423): the terracotta cover theme ends on `var(--color-terracotta)` instead of hex #A0522D, and the swapped gold/terracotta comments are corrected.",
   },
-  "GET /v1/ui/mzizi-create-page": {
+  "GET /v1/ui/wallet-card": {
     allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+    why: "mzizi-registry#418 (fixes mzizi-registry#423): wallet-card fills each token type from its N1 mineral (`--color-<mineral>` to `-on-container`, text in `-container`) instead of fixed hex gradients under white text, so it is theme-adaptive.",
   },
-  "GET /v1/ui/mzizi-detail-layout": {
+  "GET /v1/ui": {
     allow: ["body"],
-    why: "mzizi-registry#411: `files[0].content` follows the nhimbe \u2192 Mukoko Events rename (the `events` brand block and accent, with `nhimbe` kept as a deprecated alias, or the copy that names the product).",
+    why: "List and search results gain the new components, so later items shift position; restricted to the baseline's names, the order is unchanged and nothing is dropped. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
   },
-  "GET /v1/ui/mzizi-detail-page": {
+  "GET /v1": {
     allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/mzizi-event-card": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/mzizi-feed-page": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/mzizi-footer": {
-    allow: ["body"],
-    why: "mzizi-registry#411: `files[0].content` follows the nhimbe \u2192 Mukoko Events rename (the `events` brand block and accent, with `nhimbe` kept as a deprecated alias, or the copy that names the product).",
-  },
-  "GET /v1/ui/mzizi-forecast-card": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/mzizi-group-card": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/mzizi-header": {
-    allow: ["body"],
-    why: "mzizi-registry#411: `files[0].content` follows the nhimbe \u2192 Mukoko Events rename (the `events` brand block and accent, with `nhimbe` kept as a deprecated alias, or the copy that names the product).",
-  },
-  "GET /v1/ui/mzizi-listing-card": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/mzizi-meta-tile": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/mzizi-motion": {
-    allow: ["body"],
-    why: "mzizi-registry#411: `files[0].content` follows the nhimbe \u2192 Mukoko Events rename (the `events` brand block and accent, with `nhimbe` kept as a deprecated alias, or the copy that names the product).",
-  },
-  "GET /v1/ui/mzizi-notification-item": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/mzizi-onboarding-step": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/mzizi-payment-summary": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/mzizi-registration-card": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/mzizi-review-card": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/mzizi-rsvp-button": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/mzizi-search-view": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/mzizi-settings-page": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/mzizi-share-card": {
-    allow: ["body"],
-    why: "mzizi-registry#411: `files[0].content` follows the nhimbe \u2192 Mukoko Events rename (the `events` brand block and accent, with `nhimbe` kept as a deprecated alias, or the copy that names the product).",
-  },
-  "GET /v1/ui/mzizi-sidebar-nav": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/mzizi-stats-row": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/mzizi-success-screen": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/mzizi-timeline": {
-    allow: ["body"],
-    why: "mzizi-registry#411: `files[0].content` follows the nhimbe \u2192 Mukoko Events rename (the `events` brand block and accent, with `nhimbe` kept as a deprecated alias, or the copy that names the product).",
-  },
-  "GET /v1/ui/mzizi-tokens-globals": {
-    allow: ["body"],
-    why: "mzizi-registry#411: `files[0].content` follows the nhimbe \u2192 Mukoko Events rename (the `events` brand block and accent, with `nhimbe` kept as a deprecated alias, or the copy that names the product).",
-  },
-  "GET /v1/ui/mzizi-tokens-typescript": {
-    allow: ["body"],
-    why: "mzizi-registry#411: `files[0].content` follows the nhimbe \u2192 Mukoko Events rename (the `events` brand block and accent, with `nhimbe` kept as a deprecated alias, or the copy that names the product).",
-  },
-  "GET /v1/ui/mzizi-transaction-row": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/mzizi-washed-theme": {
-    allow: ["body"],
-    why: "mzizi-registry#411: `files[0].content` follows the nhimbe \u2192 Mukoko Events rename (the `events` brand block and accent, with `nhimbe` kept as a deprecated alias, or the copy that names the product).",
-  },
-  "GET /v1/ui/nearby-list": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/nft-card": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/org-profile-page": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/payment-page": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/quick-action-grid": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/recurrence-picker": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/sidebar-15": {
-    allow: ["body"],
-    why: "mzizi-registry#411: `files[0].content` follows the nhimbe \u2192 Mukoko Events rename (the `events` brand block and accent, with `nhimbe` kept as a deprecated alias, or the copy that names the product).",
-  },
-  "GET /v1/ui/sidebar-16": {
-    allow: ["body"],
-    why: "mzizi-registry#411: `files[0].content` follows the nhimbe \u2192 Mukoko Events rename (the `events` brand block and accent, with `nhimbe` kept as a deprecated alias, or the copy that names the product).",
-  },
-  "GET /v1/ui/step-progress": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/team-management-page": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/token-row": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/transaction-history-page": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/transaction-receipt": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/verification-page": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
-  },
-  "GET /v1/ui/wallet-page": {
-    allow: ["body"],
-    why: "mzizi-registry#411: item copy follows the nhimbe \u2192 Mukoko Events rename: `useCases` say `events` where they said `nhimbe`, and descriptions say Mukoko Events.",
+    why: "`data.components` 577 → 649. mzizi-registry#398, #418 and #430 add 72 components (577 → 649) and remove none: #398 safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview; #418 status-badge, mzizi-mark-dark, mzizi-mark-light; #430 the 25 `app-*` contract builds, the 17 `discover-*` components of the Discover Standard (#415) and detail pattern with Open in Mukoko, the `site-*`, `server-*` and `ui-*` modules and safe-area.",
   },
 };
 

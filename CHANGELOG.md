@@ -23,6 +23,25 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — what the registry pin `409a047` changes in production answers, reviewed for release v0.1.0 (2026-10-05)
+
+- **72 components are added and none removed** (577 → 649): mzizi-registry#398
+  (safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview), #418
+  (status-badge, mzizi-mark-dark, mzizi-mark-light) and #430 (25 `app-*`
+  contract builds, 17 `discover-*` components of the Discover Standard and
+  detail pattern, 11 `site-*`, 9 `server-*`, `ui-utils`, `ui-variants`,
+  `safe-area`). Counts on `/v1`, `/v1/stats` and `/v1/architecture` follow, and
+  list and search answers gain the new names in place; the baseline's own names
+  keep their order.
+- **`wallet-card` and `mzizi-create-listing` take their colours from N1**
+  (mzizi-registry#418, closing #423): mineral gradients with paired container
+  text instead of fixed hex under white, and the terracotta cover theme ends on
+  `var(--color-terracotta)`.
+- `scripts/parity.mjs` `EXPECTED` now lists these 48 differences (and the
+  OpenAPI `/astro` paths from #49) with their reasons, replacing the
+  mzizi-registry#411 entries production already serves. No status, header or
+  redirect changes.
+
 ### Added — `GET /v1/astro` and `/v1/astro/{name}`, the Astro target (2026-10-05)
 
 mzizi-registry is now the single source of every component in every format, and a component's pure `.astro` sits beside its `.tsx` and `.rs` there (mzizi-registry#397, #430).
