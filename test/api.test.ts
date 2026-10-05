@@ -146,6 +146,76 @@ describe("registry", () => {
   });
 });
 
+describe("/v1/astro (mzizi-registry#397)", () => {
+  type AstroItem = {
+    name: string;
+    type: string;
+    target: string;
+    dependencies: string[];
+    registryDependencies: string[];
+    files: Array<{
+      path: string;
+      type: string;
+      target: string;
+      content: string;
+      encoding?: string;
+    }>;
+  };
+
+  it("serves a component's pure .astro, with its flat imports as /v1/astro dependencies", async () => {
+    const res = await get("/v1/astro/app-data-table");
+    expect(res.status).toBe(200);
+    expect(res.headers.get("access-control-allow-origin")).toBe("*");
+    const body = (await res.json()) as AstroItem;
+    expect(body.target).toBe("astro");
+    expect(body.type).toBe("registry:astro");
+    expect(body.files[0].path).toBe(
+      "components/registry/n6-pages/app-data-table.astro",
+    );
+    expect(body.files[0].target).toBe(
+      "src/components/mzizi/app-data-table.astro",
+    );
+    expect(body.dependencies).not.toContain("react");
+    for (const url of body.registryDependencies) {
+      expect(url).toMatch(/^https:\/\/api\.mzizi\.dev\/v1\/astro\/[a-z0-9-]+$/);
+    }
+  });
+
+  it("resolves every dependency of every Astro document", async () => {
+    const list = (await (await get("/v1/astro")).json()) as {
+      components: { name: string }[];
+    };
+    expect(list.components.length).toBeGreaterThan(40);
+    const names = new Set(list.components.map((c) => c.name));
+    for (const { name } of list.components) {
+      const body = (await (await get(`/v1/astro/${name}`)).json()) as AstroItem;
+      for (const url of body.registryDependencies) {
+        expect(names.has(url.split("/").at(-1)!), `${name} -> ${url}`).toBe(
+          true,
+        );
+      }
+    }
+  });
+
+  it("ships a brand mark's images beside it, base64", async () => {
+    const body = (await (
+      await get("/v1/astro/app-brand-mark")
+    ).json()) as AstroItem;
+    const assets = body.files.filter((f) => f.type === "registry:asset");
+    expect(assets.length).toBe(2);
+    for (const a of assets) expect(a.encoding).toBe("base64");
+  });
+
+  it("404s a component with no Astro implementation, and an unknown name", async () => {
+    const tsxOnly = await get("/v1/astro/accordion");
+    expect(tsxOnly.status).toBe(404);
+    expect(((await tsxOnly.json()) as { error: string }).error).toBe(
+      '"accordion" has no Astro implementation',
+    );
+    expect((await get("/v1/astro/does-not-exist")).status).toBe(404);
+  });
+});
+
 describe("file-backed routes", () => {
   it("serves component docs from the registry's meta block", async () => {
     const res = await get("/v1/ui/button/docs");

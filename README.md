@@ -41,25 +41,27 @@ The same contract `api.mzizi.dev` serves today: the same paths, methods, query
 parameters, status codes, response bodies, CORS headers and cache headers. Both
 base paths answer: `/v1/...` (canonical) and `/api/v1/...`.
 
-| Route                                                                                                         | Data                                              |
-| ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| `GET /v1` · `/api/v1`                                                                                         | Discovery document                                |
-| `GET /v1/health`                                                                                              | This Worker's liveness                            |
-| `GET /v1/ui` (`node`, `owner`, `collection`, `type`, `limit`, `offset`)                                       | `registry.json` joined to the files on disk       |
-| `GET /v1/ui/{name}`: the shadcn install endpoint                                                              | Item plus its source file                         |
-| `GET /v1/ui/{name}/docs`                                                                                      | The item's `meta` block in `registry.json`        |
-| `GET /v1/rs/{name}`                                                                                           | The Dioxus (`.rs`) source, where one exists       |
-| `GET /v1/search` (`q`, `node`, `category`; `layer` is a deprecated alias of `node`)                           | `registry.json`                                   |
-| `GET /v1/brand`                                                                                               | `lib/tokens`: 21 colour families, and the rest    |
-| `GET /v1/architecture` · `/v1/architecture/nodes/{n}`                                                         | The DNA double helix: 8 nodes, 4 rungs, 6 strands |
-| `GET /v1/data-layer` · `/ecosystem` · `/pipeline` · `/sovereignty` · `/ubuntu/pillars` · `/ubuntu/principles` | `content/doctrine/**`                             |
-| `GET /v1/ai/instructions` · `/v1/ai/instructions/{name}`                                                      | `content/doctrine/**`                             |
-| `GET /v1/changelog` · `/v1/changelog/{version}`                                                               | `lib/changelog.generated.ts`                      |
-| `GET /v1/skills` · `/v1/skills/summary` · `/v1/skills/{name}`                                                 | `lib/skills.generated.ts`                         |
-| `GET /v1/samples` · `/v1/samples/{type}`                                                                      | `lib/samples/data.ts`                             |
-| `GET /v1/stats`                                                                                               | Zeroed usage figures plus real per-node counts    |
-| `GET /openapi` · `/api/openapi`                                                                               | `lib/openapi.generated.ts`                        |
-| `GET /.well-known/security.txt`                                                                               | Contact `security@nyuchi.com`                     |
+| Route                                                                                                         | Data                                                                                     |
+| ------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `GET /v1` · `/api/v1`                                                                                         | Discovery document                                                                       |
+| `GET /v1/health`                                                                                              | This Worker's liveness                                                                   |
+| `GET /v1/ui` (`node`, `owner`, `collection`, `type`, `limit`, `offset`)                                       | `registry.json` joined to the files on disk                                              |
+| `GET /v1/ui/{name}`: the shadcn install endpoint                                                              | Item plus its source file                                                                |
+| `GET /v1/ui/{name}/docs`                                                                                      | The item's `meta` block in `registry.json`                                               |
+| `GET /v1/rs/{name}`                                                                                           | The Dioxus (`.rs`) source, where one exists                                              |
+| `GET /v1/astro`                                                                                               | Every name with an Astro implementation                                                  |
+| `GET /v1/astro/{name}`                                                                                        | The pure `.astro` (or framework-free `.ts`) document `mzizi add --target astro` installs |
+| `GET /v1/search` (`q`, `node`, `category`; `layer` is a deprecated alias of `node`)                           | `registry.json`                                                                          |
+| `GET /v1/brand`                                                                                               | `lib/tokens`: 21 colour families, and the rest                                           |
+| `GET /v1/architecture` · `/v1/architecture/nodes/{n}`                                                         | The DNA double helix: 8 nodes, 4 rungs, 6 strands                                        |
+| `GET /v1/data-layer` · `/ecosystem` · `/pipeline` · `/sovereignty` · `/ubuntu/pillars` · `/ubuntu/principles` | `content/doctrine/**`                                                                    |
+| `GET /v1/ai/instructions` · `/v1/ai/instructions/{name}`                                                      | `content/doctrine/**`                                                                    |
+| `GET /v1/changelog` · `/v1/changelog/{version}`                                                               | `lib/changelog.generated.ts`                                                             |
+| `GET /v1/skills` · `/v1/skills/summary` · `/v1/skills/{name}`                                                 | `lib/skills.generated.ts`                                                                |
+| `GET /v1/samples` · `/v1/samples/{type}`                                                                      | `lib/samples/data.ts`                                                                    |
+| `GET /v1/stats`                                                                                               | Zeroed usage figures plus real per-node counts                                           |
+| `GET /openapi` · `/api/openapi`                                                                               | `lib/openapi.generated.ts`                                                               |
+| `GET /.well-known/security.txt`                                                                               | Contact `security@nyuchi.com`                                                            |
 
 Also answered, as they are today:
 

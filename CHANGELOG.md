@@ -23,6 +23,14 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Added — `GET /v1/astro` and `/v1/astro/{name}`, the Astro target (2026-10-05)
+
+mzizi-registry is now the single source of every component in every format, and a component's pure `.astro` sits beside its `.tsx` and `.rs` there (mzizi-registry#397, #430).
+
+- **`GET /v1/astro/{name}`** serves the Astro implementation as a registry document for `mzizi add --target astro` (agent-tools). It has the `.astro`, or a framework-free `.ts` module the `.astro` files import (`ui-utils`, `server-table`, …), with a `target` under `src/components/mzizi/`. Its flat imports become absolute `/v1/astro/` `registryDependencies`, and its bare imports become npm `dependencies`. Brand assets it imports come as `registry:asset` files with `encoding: "base64"`. An unknown name, or a component with no Astro implementation, is a `404` that says which.
+- **`GET /v1/astro`** lists every name it serves.
+- The documents are built at build time by the registry's own reader, `lib/astro.ts`, at the pinned commit, so the Worker and the MCP serve the same thing. `scripts/registry-ref.json` moves to the registry commit that adds it.
+
 ### Changed — README's rollback no longer points at the registry Worker (2026-10-04)
 
 - **README, "Cutover", step 5 (roll back to the `mzizi-registry` Worker) is

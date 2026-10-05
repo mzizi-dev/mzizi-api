@@ -139,6 +139,7 @@ mkdirSync(outDir, { recursive: true });
 const files = {
   "components.json": data.components,
   "sources.json": data.sources,
+  "astro.json": data.astro,
   "helix.json": { model: data.helix, nodeCounts: data.nodeCounts },
   "changelog.json": {
     entries: data.changelog,

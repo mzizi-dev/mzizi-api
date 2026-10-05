@@ -5,6 +5,7 @@
  */
 import componentsJson from "./data/components.json";
 import sourcesJson from "./data/sources.json";
+import astroJson from "./data/astro.json";
 import helixJson from "./data/helix.json";
 import changelogJson from "./data/changelog.json";
 import doctrineJson from "./data/doctrine.json";
@@ -74,6 +75,30 @@ export const readSource = (
   name: string,
   kind: "primary" | "rs",
 ): string | null => sources[name]?.[kind] ?? null;
+
+/** A `/v1/astro/{name}` document: mzizi-registry lib/astro.ts `AstroDocument`. */
+export interface AstroDocument {
+  name: string;
+  type: string;
+  target: "astro";
+  dependencies: string[];
+  registryDependencies: string[];
+  files: Array<{
+    path: string;
+    type: string;
+    target: string;
+    content: string;
+    encoding?: "base64";
+  }>;
+}
+const astroDocs = astroJson as unknown as Record<string, AstroDocument>;
+/** mzizi-registry lib/astro.ts `astroDocument(name)`, resolved at build time. */
+export const readAstro = (name: string): AstroDocument | null =>
+  Object.prototype.hasOwnProperty.call(astroDocs, name)
+    ? (astroDocs[name] ?? null)
+    : null;
+/** Every name `/v1/astro/{name}` serves, sorted. */
+export const astroNames = Object.keys(astroDocs).sort();
 
 export const helix = helixJson.model as Loose as {
   nodes: Array<{ node_number: number } & Record<string, unknown>>;
