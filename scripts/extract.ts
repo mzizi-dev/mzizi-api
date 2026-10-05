@@ -73,6 +73,7 @@ import {
 import { OPENAPI_YAML } from "@/lib/openapi.generated";
 import { COMPONENT_RENAMES } from "@/lib/component-renames";
 import { CRATE_GIT, crateFor } from "@/lib/rust-crates";
+import { astroDocument } from "@/lib/astro";
 import { GET as discoveryHandler } from "./registry-handlers/discovery";
 import { GET as searchHandler } from "./registry-handlers/search";
 import { GET as docsHandler } from "./registry-handlers/ui-docs";
@@ -313,6 +314,16 @@ async function main() {
     };
   }
 
+  // /v1/astro/{name} (mzizi-registry#397): the Astro implementation document for
+  // every name that has one (a `.astro`, or a framework-free `.ts` it imports),
+  // built by the registry's own reader, lib/astro.ts. It throws on a broken flat
+  // import, which fails this build rather than shipping an uninstallable closure.
+  const astro: Record<string, unknown> = {};
+  for (const c of components) {
+    const doc = astroDocument(c.name);
+    if (doc) astro[c.name] = doc;
+  }
+
   const changelog = await getChangelogEntries();
   const changelogByVersion: Record<string, unknown[]> = {};
   for (const v of new Set(changelog.map((e) => e.version))) {
@@ -369,6 +380,7 @@ async function main() {
   const out = {
     components,
     sources,
+    astro,
     nodeCounts: readNodeCounts(),
     helix: await getHelixModel(),
     changelog,

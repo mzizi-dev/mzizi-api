@@ -1,19 +1,24 @@
 /**
  * The component registry: /v1/ui, /v1/ui/{name}[/docs|/versions], /v1/rs/{name},
+ * /v1/astro, /v1/astro/{name},
  * /v1/search, /v1/stats. Ported from mzizi-registry app/api/v1/{ui,rs,search,stats}.
  */
 import type { Hono } from "hono";
 import {
+  astroNames,
   components,
   crateGit,
   nodeCounts,
   readComponent,
+  readAstro,
   readComponentDocs,
   readSource,
 } from "../data";
 import { CORS, CORS_CACHE, cache, json } from "../http";
 import {
   VERSIONS_NOT_SERVED,
+  astroNoAstro,
+  astroNotFound,
   docsBody,
   docsNotFound,
   rsBody,
@@ -227,6 +232,44 @@ export function registerRegistry(v1: Hono) {
     if (crate === null) return json(rsNoCrate(name), 500, CORS);
     return json(
       rsBody(component, name, source, crate, crateGit),
+      200,
+      CORS_CACHE,
+    );
+  });
+
+  // The Astro target (mzizi-registry#397): a component's pure `.astro`, or a
+  // framework-free `.ts` module the `.astro` files import, as a registry
+  // document `mzizi add --target astro` installs into src/components/mzizi/.
+  // Its registryDependencies are absolute /v1/astro/ URLs, derived from the
+  // source's flat imports by the registry's own reader (lib/astro.ts).
+  v1.get("/astro", (c) =>
+    json(
+      {
+        target: "astro",
+        install: "npx @nyuchi/mzizi-cli add <name> --target astro",
+        count: astroNames.length,
+        components: astroNames.map((name) => ({
+          name,
+          url: `https://api.mzizi.dev/v1/astro/${name}`,
+        })),
+      },
+      200,
+      CORS_CACHE,
+    ),
+  );
+  v1.get("/astro/:name", (c) => {
+    const name = c.req.param("name");
+    const component = readComponent(name);
+    if (!component) return json(astroNotFound(name), 404, CORS);
+    const doc = readAstro(component.name);
+    if (!doc) return json(astroNoAstro(component.name), 404, CORS);
+    return json(
+      {
+        $schema: "https://ui.shadcn.com/schema/registry-item.json",
+        ...doc,
+        title: component.title,
+        description: component.description,
+      },
       200,
       CORS_CACHE,
     );

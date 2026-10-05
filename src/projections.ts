@@ -225,3 +225,18 @@ export const rsBody = (
     },
   ],
 });
+
+/** /v1/astro/{name}: the 404 body for an unknown name. */
+export const astroNotFound = (name: string) => ({
+  error: `Component "${name}" not found in registry`,
+});
+
+/** /v1/astro/{name}: the 404 body for a component with no Astro implementation. */
+export const astroNoAstro = (name: string) => ({
+  error: `"${name}" has no Astro implementation`,
+  message:
+    "This component ships for React (and maybe Rust) only. The contract, tokens and " +
+    `variants are on https://api.mzizi.dev/v1/ui/${encodeURIComponent(name)}. ` +
+    "Astro implementations are pure .astro files beside the component's .tsx in " +
+    "mzizi-dev/mzizi-registry; add one there (mzizi-registry#397).",
+});

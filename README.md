@@ -29,7 +29,8 @@ public `/v1` API itself, from files.
 The owner moved the custom domain from the `mzizi-registry` Worker (the
 registry's Next.js app on OpenNext) to this Worker on 2026-09-29, and
 `wrangler.jsonc` now declares it, so every production deploy keeps it. See
-[Cutover](#cutover) for how it was done and how to roll it back.
+[Cutover](#cutover) for how it was done, and [Rollback](#rollback) for undoing
+a bad deploy (the move itself can no longer be reversed).
 
 You can tell which Worker answered: every response from this one carries
 `X-Mzizi-Source: mzizi-api-gateway; registry=<commit>`.
@@ -40,25 +41,27 @@ The same contract `api.mzizi.dev` serves today: the same paths, methods, query
 parameters, status codes, response bodies, CORS headers and cache headers. Both
 base paths answer: `/v1/...` (canonical) and `/api/v1/...`.
 
-| Route                                                                                                         | Data                                              |
-| ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| `GET /v1` · `/api/v1`                                                                                         | Discovery document                                |
-| `GET /v1/health`                                                                                              | This Worker's liveness                            |
-| `GET /v1/ui` (`node`, `owner`, `collection`, `type`, `limit`, `offset`)                                       | `registry.json` joined to the files on disk       |
-| `GET /v1/ui/{name}`: the shadcn install endpoint                                                              | Item plus its source file                         |
-| `GET /v1/ui/{name}/docs`                                                                                      | The item's `meta` block in `registry.json`        |
-| `GET /v1/rs/{name}`                                                                                           | The Dioxus (`.rs`) source, where one exists       |
-| `GET /v1/search` (`q`, `node`, `category`; `layer` is a deprecated alias of `node`)                           | `registry.json`                                   |
-| `GET /v1/brand`                                                                                               | `lib/tokens`: 21 colour families, and the rest    |
-| `GET /v1/architecture` · `/v1/architecture/nodes/{n}`                                                         | The DNA double helix: 8 nodes, 4 rungs, 6 strands |
-| `GET /v1/data-layer` · `/ecosystem` · `/pipeline` · `/sovereignty` · `/ubuntu/pillars` · `/ubuntu/principles` | `content/doctrine/**`                             |
-| `GET /v1/ai/instructions` · `/v1/ai/instructions/{name}`                                                      | `content/doctrine/**`                             |
-| `GET /v1/changelog` · `/v1/changelog/{version}`                                                               | `lib/changelog.generated.ts`                      |
-| `GET /v1/skills` · `/v1/skills/summary` · `/v1/skills/{name}`                                                 | `lib/skills.generated.ts`                         |
-| `GET /v1/samples` · `/v1/samples/{type}`                                                                      | `lib/samples/data.ts`                             |
-| `GET /v1/stats`                                                                                               | Zeroed usage figures plus real per-node counts    |
-| `GET /openapi` · `/api/openapi`                                                                               | `lib/openapi.generated.ts`                        |
-| `GET /.well-known/security.txt`                                                                               | Contact `security@nyuchi.com`                     |
+| Route                                                                                                         | Data                                                                                     |
+| ------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `GET /v1` · `/api/v1`                                                                                         | Discovery document                                                                       |
+| `GET /v1/health`                                                                                              | This Worker's liveness                                                                   |
+| `GET /v1/ui` (`node`, `owner`, `collection`, `type`, `limit`, `offset`)                                       | `registry.json` joined to the files on disk                                              |
+| `GET /v1/ui/{name}`: the shadcn install endpoint                                                              | Item plus its source file                                                                |
+| `GET /v1/ui/{name}/docs`                                                                                      | The item's `meta` block in `registry.json`                                               |
+| `GET /v1/rs/{name}`                                                                                           | The Dioxus (`.rs`) source, where one exists                                              |
+| `GET /v1/astro`                                                                                               | Every name with an Astro implementation                                                  |
+| `GET /v1/astro/{name}`                                                                                        | The pure `.astro` (or framework-free `.ts`) document `mzizi add --target astro` installs |
+| `GET /v1/search` (`q`, `node`, `category`; `layer` is a deprecated alias of `node`)                           | `registry.json`                                                                          |
+| `GET /v1/brand`                                                                                               | `lib/tokens`: 21 colour families, and the rest                                           |
+| `GET /v1/architecture` · `/v1/architecture/nodes/{n}`                                                         | The DNA double helix: 8 nodes, 4 rungs, 6 strands                                        |
+| `GET /v1/data-layer` · `/ecosystem` · `/pipeline` · `/sovereignty` · `/ubuntu/pillars` · `/ubuntu/principles` | `content/doctrine/**`                                                                    |
+| `GET /v1/ai/instructions` · `/v1/ai/instructions/{name}`                                                      | `content/doctrine/**`                                                                    |
+| `GET /v1/changelog` · `/v1/changelog/{version}`                                                               | `lib/changelog.generated.ts`                                                             |
+| `GET /v1/skills` · `/v1/skills/summary` · `/v1/skills/{name}`                                                 | `lib/skills.generated.ts`                                                                |
+| `GET /v1/samples` · `/v1/samples/{type}`                                                                      | `lib/samples/data.ts`                                                                    |
+| `GET /v1/stats`                                                                                               | Zeroed usage figures plus real per-node counts                                           |
+| `GET /openapi` · `/api/openapi`                                                                               | `lib/openapi.generated.ts`                                                               |
+| `GET /.well-known/security.txt`                                                                               | Contact `security@nyuchi.com`                                                            |
 
 Also answered, as they are today:
 
@@ -210,13 +213,17 @@ runs [`scripts/registry-pin-bump.mjs`](scripts/registry-pin-bump.mjs), which
 keeps one bot pull request, from the branch `bot/registry-pin`, that sets `ref`
 in `scripts/registry-ref.json` to registry `main`:
 
-1. **Every hour** it compares the pin on `main` with mzizi-registry `main`
-   (`git ls-remote`, public, no token). When they differ, `bot/registry-pin`
-   becomes one bot commit on top of the current `main` that moves the pin, and
-   the pull request is opened, or updated if one is open. There is only ever
-   one. Its body lists the registry commits between the old pin and the new
-   one. It's rebuilt whenever `main` or registry `main` moves, so it's never
-   behind `main`.
+1. **Whenever registry `main` moves**, and every hour as a backstop, it
+   compares the pin on `main` with mzizi-registry `main` (`git ls-remote`,
+   public, no token). mzizi-registry's `notify-pin-bots.yml` sends this
+   workflow a `repository_dispatch` (`registry-main-moved`) on every push to
+   registry `main`; the hourly schedule catches anything that misses, since
+   GitHub delays and drops scheduled runs under load. When they differ,
+   `bot/registry-pin` becomes one bot commit on top of the current `main` that
+   moves the pin, and the pull request is opened, or updated if one is open.
+   There is only ever one. Its body lists the registry commits between the old
+   pin and the new one. It's rebuilt whenever `main` or registry `main` moves,
+   so it's never behind `main`.
 2. **CI runs on it** like on any pull request: `worker` (build, typecheck,
    tests, format, wrangler bundle), `secret scan`, the five `lint / *` checks,
    Workers Builds, and **`parity`**: [`parity.yml`](.github/workflows/parity.yml)
@@ -228,8 +235,8 @@ in `scripts/registry-ref.json` to registry `main`:
    then holds only an earlier bump's reasons, which production already serves,
    so any difference at all fails it.
 3. **When a check finishes** on `bot/registry-pin` (`workflow_run` for CI, Lint
-   and Parity; `check_run` for Workers Builds), and on the hourly run, the bot
-   gates the pull request. It merges (rebase) only when the pull request is
+   and Parity; `check_run` for Workers Builds), and on every other run, the
+   bot gates the pull request. It merges (rebase) only when the pull request is
    the bot's single commit on the current `main`, changes nothing but
    `scripts/registry-ref.json`, moves the pin forward along registry `main`, and
    every check and status on its head commit has finished green, including
@@ -274,22 +281,30 @@ uses its own token:
      automatically). Workflows is there only because the bot moves its branch
      onto the current `main`: GitHub refuses a token push that carries a
      workflow file change, even one already on `main`, without it. The script
-     writes only the pin file. Add **Checks: Read-only** and **Commit statuses:
-     Read-only** too: the bot reads the bump's check runs and commit status
-     before it merges, and without them that read fails with `403 Resource not
-accessible by personal access token`.
+     writes only the pin file. It needs no Checks or Commit statuses
+     permission: the bot reads the bump's check runs, commit status and
+     branch rules with the workflow's own `GITHUB_TOKEN` (`checks: read`,
+     `statuses: read`). Until 2026-10-04 it read them with this token, which
+     has neither, and on the private agent-tools repository every read failed
+     with `403 Resource not accessible by personal access token`, so no green
+     bump merged itself there (agent-tools#195). This repository is public,
+     so the same reads worked here.
    - If the organisation requires approval for fine-grained tokens, approve it
      (organisation Settings, Personal access tokens, Pending requests).
 2. **Store it as the Actions secret `RELEASE_BUMP_TOKEN`** in both repositories
    (Settings, Secrets and variables, Actions), or once as an organisation
-   secret shared with those two repositories. Until it exists, every run logs
-   a warning and does nothing.
+   secret shared with those two repositories and mzizi-registry (step 4).
+   Until it exists, every run logs a warning and does nothing.
 3. **Allow auto-merge** (Settings, General, Pull Requests) must stay on, with
    rebase merging. Both are on in both repositories (read off the GitHub API on
    2026-09-30).
-4. Nothing is needed in mzizi-registry. To see it work, run **Registry pin
-   bump** from the Actions tab. When the token expires, the runs fail at
-   checkout, so renew it before then.
+4. **Keep the secret visible to mzizi-registry.** Its `notify-pin-bots.yml`
+   sends the `registry-main-moved` dispatch with the same `RELEASE_BUMP_TOKEN`
+   org secret, which needs Contents: Read and write here (it has it already).
+   If the registry can't see the secret, that workflow warns and the bot waits
+   for its hourly run. To see it work, run **Registry pin bump** from the
+   Actions tab. When the token expires, the runs fail at checkout, so renew it
+   before then.
 
 ## Mzizi Roots: Rust components first
 
@@ -364,7 +379,7 @@ ignores `EXPECTED`, so every difference counts as unexplained (see
 
 **Done 2026-09-29.** Parity before the move, against the deployed Worker on
 `workers.dev`: 1359 requests, 0 unexplained differences. The steps are kept
-here as the record, and because rollback reverses step 3.
+here as the record.
 
 1. **Deploy.** Merge to `main`. Workers Builds builds and deploys this Worker
    to `workers.dev` (see the Workers Builds settings in the pull request that
@@ -381,11 +396,18 @@ here as the record, and because rollback reverses step 3.
 4. **Re-run parity** with baseline `https://mzizi-registry.nyuchi.workers.dev`
    and candidate `https://api.mzizi.dev`, and check that `X-Mzizi-Source` is
    present on `https://api.mzizi.dev/v1/health`.
-5. **Roll back** if needed. Revert the `routes` entry in `wrangler.jsonc`
-   first, or the next deploy takes the domain back. Then remove `api.mzizi.dev`
-   from `mzizi-api-gateway` and re-add it to `mzizi-registry`, in the same
-   dashboard pages. The registry Worker is untouched by all of this and still
-   answers on `mzizi-registry.nyuchi.workers.dev`.
+5. **Roll back** to the registry Worker: no longer possible. It served the
+   registry's Next.js app, which mzizi-registry removed on 2026-10-02, and the
+   Worker is being deleted. See [Rollback](#rollback).
+
+### Rollback
+
+There is no older Worker to move `api.mzizi.dev` back to. To undo a bad
+change, revert it in a pull request; the merge redeploys. To undo a bad deploy
+faster than that, roll this Worker back to its previous deployment
+(`wrangler rollback`, or _Workers & Pages → `mzizi-api-gateway` → Deployments_
+in the Cloudflare dashboard), then revert on `main` so the next deploy does not
+bring the change back.
 
 ## Related repositories
 

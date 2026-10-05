@@ -23,6 +23,68 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — what the registry pin `409a047` changes in production answers, reviewed for release v0.1.0 (2026-10-05)
+
+- **72 components are added and none removed** (577 → 649): mzizi-registry#398
+  (safe-area-frame, preview-canvas, preset-picker, mzizi-email-preview), #418
+  (status-badge, mzizi-mark-dark, mzizi-mark-light) and #430 (25 `app-*`
+  contract builds, 17 `discover-*` components of the Discover Standard and
+  detail pattern, 11 `site-*`, 9 `server-*`, `ui-utils`, `ui-variants`,
+  `safe-area`). Counts on `/v1`, `/v1/stats` and `/v1/architecture` follow, and
+  list and search answers gain the new names in place; the baseline's own names
+  keep their order.
+- **`wallet-card` and `mzizi-create-listing` take their colours from N1**
+  (mzizi-registry#418, closing #423): mineral gradients with paired container
+  text instead of fixed hex under white, and the terracotta cover theme ends on
+  `var(--color-terracotta)`.
+- `scripts/parity.mjs` `EXPECTED` now lists these 48 differences (and the
+  OpenAPI `/astro` paths from #49) with their reasons, replacing the
+  mzizi-registry#411 entries production already serves. No status, header or
+  redirect changes.
+
+### Added — `GET /v1/astro` and `/v1/astro/{name}`, the Astro target (2026-10-05)
+
+mzizi-registry is now the single source of every component in every format, and a component's pure `.astro` sits beside its `.tsx` and `.rs` there (mzizi-registry#397, #430).
+
+- **`GET /v1/astro/{name}`** serves the Astro implementation as a registry document for `mzizi add --target astro` (agent-tools). It has the `.astro`, or a framework-free `.ts` module the `.astro` files import (`ui-utils`, `server-table`, …), with a `target` under `src/components/mzizi/`. Its flat imports become absolute `/v1/astro/` `registryDependencies`, and its bare imports become npm `dependencies`. Brand assets it imports come as `registry:asset` files with `encoding: "base64"`. An unknown name, or a component with no Astro implementation, is a `404` that says which.
+- **`GET /v1/astro`** lists every name it serves.
+- The documents are built at build time by the registry's own reader, `lib/astro.ts`, at the pinned commit, so the Worker and the MCP serve the same thing. `scripts/registry-ref.json` moves to the registry commit that adds it.
+
+### Changed — README's rollback no longer points at the registry Worker (2026-10-04)
+
+- **README, "Cutover", step 5 (roll back to the `mzizi-registry` Worker) is
+  marked no longer possible.** That Worker served the registry's Next.js app,
+  which mzizi-registry removed on 2026-10-02 (mzizi-registry#389), and it is
+  being deleted. A new "Rollback" section says what to do instead: revert the
+  change in a pull request (the merge redeploys), or, faster, roll this Worker
+  back to its previous deployment (`wrangler rollback`, or the Deployments tab
+  in the Cloudflare dashboard) and then revert on `main` so the next deploy
+  doesn't bring it back. "Status" links it.
+- **CONTRIBUTING: the Parity workflow note now says live changes whenever this
+  Worker deploys**, not whenever the registry deploys: the registry no longer
+  deploys anything. Docs only: no route, response or pin changes.
+
+### Changed — the registry pin bot runs when registry `main` moves, and reads its gate with the workflow token (2026-10-04)
+
+- **Added: `registry-pin-bump.yml` runs on `repository_dispatch`
+  (`registry-main-moved`)**, which mzizi-registry's new `notify-pin-bots.yml`
+  sends on every push to registry `main` with the existing `RELEASE_BUMP_TOKEN`
+  org secret, so a bump opens within minutes of a registry merge. The hourly
+  schedule stays as the backstop: on 2026-10-04 GitHub ran it 2–3 hours apart.
+- **Changed: the gate reads check runs, commit status and branch rules with the
+  workflow's `GITHUB_TOKEN`**, which `registry-pin-bump.yml` now grants
+  `checks: read` and `statuses: read`. `RELEASE_BUMP_TOKEN` still pushes, opens
+  and merges, and needs no Checks or Commit statuses permission. Those reads
+  already worked here because this repository is public; on the private
+  agent-tools repository they failed with `403`, so its bot never merged a green
+  bump (agent-tools#195).
+- **Fixed: a run no longer fails when a person merges the bump mid-run.** If
+  `bot/registry-pin` is deleted between the bot's two reads of it, the run says
+  so and stops cleanly.
+- `scripts/registry-pin-bump.mjs` stays byte-identical to the agent-tools copy.
+  README, "Registry pin bump", and CONTRIBUTING are updated to match. No route,
+  response or pin changes.
+
 ### Added — `AGENTS.md` links the published design system (2026-10-04)
 
 - **`AGENTS.md` links the Design System artifact**

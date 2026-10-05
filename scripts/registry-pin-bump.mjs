@@ -7,9 +7,10 @@
  *   node scripts/registry-pin-bump.mjs            # reconcile (CI)
  *   node scripts/registry-pin-bump.mjs --dry-run  # print the plan, write nothing
  *
- * Run by .github/workflows/registry-pin-bump.yml (hourly, by hand, and whenever
- * a check on the bump branch finishes). Every run does the same idempotent
- * reconcile, so a missed or cancelled run is caught by the next one:
+ * Run by .github/workflows/registry-pin-bump.yml (hourly, by hand, when
+ * mzizi-registry `main` moves, and whenever a check on the bump branch
+ * finishes). Every run does the same idempotent reconcile, so a missed or
+ * cancelled run is caught by the next one:
  *
  *   1. Read the pin on `main` (PIN_FILE) and registry `main` (`git ls-remote`,
  *      public, no token). Registry history comes from a treeless clone.
@@ -35,6 +36,13 @@
  * Environment:
  *   RELEASE_BUMP_TOKEN token that pushes, opens and merges (see README). Unset:
  *                      the run warns and exits 0 without writing anything.
+ *   GITHUB_TOKEN       the workflow's own token, given `checks: read` and
+ *                      `statuses: read`. The gate reads the head commit's check
+ *                      runs and status, and main's branch rules, with it, so
+ *                      RELEASE_BUMP_TOKEN needs no Checks or Commit statuses
+ *                      permission. (A fine-grained token without them gets a
+ *                      403 on a private repository, though not on a public
+ *                      one.) Unset: RELEASE_BUMP_TOKEN does the reads too.
  *   PIN_FILE           the pin, relative to the repository root.
  *   PIN_BUMP_BRANCH    the bot's branch (default bot/registry-pin).
  *   EXPECTED_CHECKS    newline-separated check names that must be present and
@@ -52,6 +60,8 @@ import { join } from "node:path";
 const env = process.env;
 const DRY_RUN = env.DRY_RUN === "1" || process.argv.includes("--dry-run");
 const TOKEN = env.RELEASE_BUMP_TOKEN ?? "";
+/** Reads the gate's checks, status and rules: see GITHUB_TOKEN above. */
+const READ_TOKEN = env.GITHUB_TOKEN || TOKEN;
 const REPO = env.GITHUB_REPOSITORY ?? "";
 const PIN_FILE = env.PIN_FILE ?? "";
 const BRANCH = env.PIN_BUMP_BRANCH || "bot/registry-pin";
@@ -117,13 +127,13 @@ function lsRemote(remote, ref) {
   return line.split("\t")[0] || null;
 }
 
-async function gh(method, path, body) {
+async function gh(method, path, body, token = TOKEN) {
   const res = await fetch(path.startsWith("http") ? path : API + path, {
     method,
     headers: {
       accept: "application/vnd.github+json",
       "x-github-api-version": "2022-11-28",
-      ...(TOKEN ? { authorization: `Bearer ${TOKEN}` } : {}),
+      ...(token ? { authorization: `Bearer ${token}` } : {}),
       ...(body ? { "content-type": "application/json" } : {}),
     },
     body: body ? JSON.stringify(body) : undefined,
@@ -140,11 +150,16 @@ async function gh(method, path, body) {
   return data;
 }
 /** Every page of a list endpoint (or of `key` inside each page). */
-async function ghAll(path, key) {
+async function ghAll(path, key, token = TOKEN) {
   const out = [];
   for (let page = 1; page < 20; page++) {
     const sep = path.includes("?") ? "&" : "?";
-    const data = await gh("GET", `${path}${sep}per_page=100&page=${page}`);
+    const data = await gh(
+      "GET",
+      `${path}${sep}per_page=100&page=${page}`,
+      undefined,
+      token,
+    );
     const items = key ? data[key] : data;
     out.push(...items);
     if (items.length < 100) break;
@@ -209,14 +224,21 @@ const isAncestor = (a, b) =>
   gitOk(["merge-base", "--is-ancestor", a, b], regDir);
 
 const branchSha = lsRemote("origin", `refs/heads/${BRANCH}`);
-if (branchSha)
-  git([
+if (
+  branchSha &&
+  !gitOk([
     "fetch",
     "-q",
     "--no-tags",
     "origin",
     `+refs/heads/${BRANCH}:refs/remotes/origin/${BRANCH}`,
-  ]);
+  ])
+) {
+  // Deleted between the two reads: a person merged or closed the bump just
+  // now. Nothing to gate; the next run starts from the new state.
+  note(`${BRANCH} was deleted during this run; the next run reconciles`);
+  finish();
+}
 const branchRef = `refs/remotes/origin/${BRANCH}`;
 /** The bot's branch holds only bot commits (each carries the trailer). */
 const branchCommits = branchSha
@@ -464,8 +486,14 @@ async function gate(p) {
   const runs = await ghAll(
     `/repos/${REPO}/commits/${headSha}/check-runs?filter=latest`,
     "check_runs",
+    READ_TOKEN,
   );
-  const status = await gh("GET", `/repos/${REPO}/commits/${headSha}/status`);
+  const status = await gh(
+    "GET",
+    `/repos/${REPO}/commits/${headSha}/status`,
+    undefined,
+    READ_TOKEN,
+  );
   const checks = [
     ...runs.map((r) => ({
       name: r.name,
@@ -487,7 +515,14 @@ async function gate(p) {
   // whose owner could bypass them. Unreadable: leave the merge to auto-merge.
   let required = null;
   try {
-    required = (await gh("GET", `/repos/${REPO}/rules/branches/main`))
+    required = (
+      await gh(
+        "GET",
+        `/repos/${REPO}/rules/branches/main`,
+        undefined,
+        READ_TOKEN,
+      )
+    )
       .filter((r) => r.type === "required_status_checks")
       .flatMap((r) =>
         r.parameters.required_status_checks.map((c) => c.context),
