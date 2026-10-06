@@ -23,6 +23,16 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Added — `AGENTS.md` loads the Mzizi dev skills (2026-10-06)
+
+- **`AGENTS.md` gains "Dev skills, progress reports and the merge gate"**, the
+  canonical rule block from nyuchi/.github#87, after "Track big work in GitHub
+  issues": load the Mzizi dev skills (`digital-hygiene` and `progress-report`),
+  clone only into a directory unique to the agent, run dev work on a 10-minute
+  progress-report loop whose ticks never publish, release, merge or deploy
+  without the owner's approval, and merge only through the merge gate. Docs
+  only: no behaviour changes, and CI is unchanged.
+
 ### Fixed — `/v1/brand` serves a brand's `accent` family (2026-10-06)
 
 - **`ecosystem[].accent`** is projected on the rows that carry one, as
