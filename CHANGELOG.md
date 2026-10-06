@@ -23,6 +23,17 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Fixed — `/v1/brand` serves a brand's `accent` family (2026-10-06)
+
+- **`ecosystem[].accent`** is projected on the rows that carry one, as
+  `displayName` and `aliases` are. mzizi-registry#449 gave `circles` (Mukoko
+  Circles) `accent: "terracotta"` beside its tanzanite primary and said
+  `/v1/brand` serves it, but the projection dropped the field, so
+  mzizi-dev/packages-npm's canon snapshot lost the terracotta
+  `--brand-accent`. Every other row is unchanged.
+- **`scripts/parity.mjs` `EXPECTED`** lists the two routes (`/v1/brand`,
+  `/api/v1/brand`); the 9f3631c entries are in #60.
+
 ### Changed — the registry pin moves to mzizi-registry `main` at `9f3631c` (v4.5.0) (2026-10-06)
 
 - **The registry pin moves from `5067b5e` (v4.4.0) to `9f3631c`**, registry

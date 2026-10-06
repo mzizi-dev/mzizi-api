@@ -479,6 +479,20 @@ describe("architecture and content", () => {
     ).toBe(21);
   });
 
+  it("projects a brand's accent family only on the rows that carry one", async () => {
+    const body = (await (await get("/v1/brand")).json()) as {
+      ecosystem: { name: string; mineral: string; accent?: string }[];
+    };
+    const circles = body.ecosystem.find((b) => b.name === "circles");
+    expect(circles).toMatchObject({
+      mineral: "tanzanite",
+      accent: "terracotta",
+    });
+    expect(body.ecosystem.find((b) => b.name === "news")).not.toHaveProperty(
+      "accent",
+    );
+  });
+
   it("keeps retired routes at 410", async () => {
     for (const path of [
       "/v1/architecture/axes",
