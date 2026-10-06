@@ -23,6 +23,22 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — the registry pin moves to mzizi-registry `main` at `9f3631c` (v4.5.0) (2026-10-06)
+
+- **The registry pin moves from `5067b5e` (v4.4.0) to `9f3631c`**, registry
+  `main` at v4.5.0 (mzizi-registry#454), which adds #448, #449, #450, #451,
+  #452 and #453. It goes through `staging`, as #56 did, in place of the bot's
+  #59.
+- **No component is added or removed**, and no status, header or redirect
+  moves. The v4.5.0 record leads `/v1/changelog`.
+- **Changed content:** `/v1/brand` serves Mukoko Circles as tanzanite with a
+  terracotta accent (#449); `discover-meta-list` 1.1.0 is a valid description
+  list that hides an empty row (#450); `discover-result-grid` 1.1.0 has an
+  error state (#451); `mzizi-tokens-globals` defines `--text-body-sm` and the
+  `circles` brand block (#448, #449).
+- **`scripts/parity.mjs` `EXPECTED`** lists the 7 differences from production
+  with their reasons; the 5067b5e entries are in #56.
+
 ### Added — each release to `main` is tagged as the next minor (2026-10-06)
 
 - **`.github/workflows/main-release.yml` tags each release to `main`** as the
