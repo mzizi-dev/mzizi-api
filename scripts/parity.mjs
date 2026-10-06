@@ -86,136 +86,44 @@ const HEADERS = [
  * shamwari's sodalite accent from mzizi-registry#407, 16742ab for
  * Mukoko Events replacing nhimbe from mzizi-registry#411, #51 for the
  * 409a047 hand pin and the /v1/astro OpenAPI paths, #53 for 2902393, registry
- * v4.3.0).
+ * v4.3.0, #56 for 5067b5e, registry v4.4.0).
  */
-// The registry pin moves from registry main 2902393 (v4.3.0) to 5067b5e,
-// the v4.4.0 release (mzizi-registry#447), which adds #439, #441, #442, #443
-// and #446: Rust builds of alert and skeleton, full contracts for
-// safe-area-frame, native-select, segmented-control and toaster, the Nyuchi
-// console's form, chart and table deltas, and the v4.4.0 release record. No
-// component is added to or removed from the list (655). Two routes change
-// status: /v1/rs/alert and /v1/rs/skeleton, 404 → 200. Everything else is a
-// body difference on a 200. The previous entries (2902393) are in #53.
+// The registry pin moves from registry main 5067b5e (v4.4.0) to 9f3631c,
+// the v4.5.0 release (mzizi-registry#454), which adds #448, #449, #450, #451,
+// #452 and #453: text-body-sm in mzizi-tokens-globals.css, Mukoko Circles
+// tanzanite with a terracotta accent, MetaList 1.1.0 (a valid description
+// list), ResultGrid 1.1.0 (an error state), dependency overrides and the
+// v4.5.0 release record. No component is added or removed and no status,
+// header or redirect moves: every difference is a body difference on a 200.
+// The previous entries (5067b5e) are in #56.
 const EXPECTED = {
+  "GET /api/v1/brand": {
+    allow: ["body"],
+    why: 'mzizi-registry#449: Mukoko Circles (`circles`, ecosystem row 16) is tanzanite with a terracotta accent (owner decision, 2026-10-06); it was terracotta primary. The row also gains `accent: "terracotta"` and the display name "Mukoko Circles".',
+  },
+  "GET /v1/brand": {
+    allow: ["body"],
+    why: 'mzizi-registry#449: Mukoko Circles (`circles`, ecosystem row 16) is tanzanite with a terracotta accent (owner decision, 2026-10-06); it was terracotta primary. The row also gains `accent: "terracotta"` and the display name "Mukoko Circles".',
+  },
   "GET /api/v1/changelog": {
     allow: ["body"],
-    why: "Release records: the v4.4.0 record (mzizi-registry#446, released in #447) leads the list. The earlier rows are unchanged.",
+    why: "Release records: the v4.5.0 record (mzizi-registry#453, released in #454) leads the list. The earlier rows are unchanged.",
   },
   "GET /v1/changelog": {
     allow: ["body"],
-    why: "Release records: the v4.4.0 record (mzizi-registry#446, released in #447) leads the list. The earlier rows are unchanged.",
+    why: "Release records: the v4.5.0 record (mzizi-registry#453, released in #454) leads the list. The earlier rows are unchanged.",
   },
-  "GET /api/v1/search?layer=2": {
+  "GET /v1/ui/discover-meta-list": {
     allow: ["body"],
-    why: "List items carry the registry's new descriptions; the same names in the same order (655 components, none added or removed). mzizi-registry v4.4.0 (#447): segmented-control and native-select take their full contracts (#441), toaster its React build of ui/toaster (#442), and app-form-field's description says \"control\" for its new textarea and select (#443).",
+    why: "mzizi-registry#450: `discover/meta-list` 1.1.0 is a valid description list (each row `<div><dt><dd></div>`, the icon inside the `<dt>`) and a row whose value is empty hides itself.",
   },
-  "GET /v1/search?category=primitives": {
+  "GET /v1/ui/discover-result-grid": {
     allow: ["body"],
-    why: "List items carry the registry's new descriptions; the same names in the same order (655 components, none added or removed). mzizi-registry v4.4.0 (#447): segmented-control and native-select take their full contracts (#441), toaster its React build of ui/toaster (#442), and app-form-field's description says \"control\" for its new textarea and select (#443).",
+    why: "mzizi-registry#451: `discover/result-grid` 1.1.0 has an error state beside `ok` and `empty`, for a server-filled shell whose request failed.",
   },
-  "GET /v1/search?layer=2": {
+  "GET /v1/ui/mzizi-tokens-globals": {
     allow: ["body"],
-    why: "List items carry the registry's new descriptions; the same names in the same order (655 components, none added or removed). mzizi-registry v4.4.0 (#447): segmented-control and native-select take their full contracts (#441), toaster its React build of ui/toaster (#442), and app-form-field's description says \"control\" for its new textarea and select (#443).",
-  },
-  "GET /v1/search?layer=3&node=2": {
-    allow: ["body"],
-    why: "List items carry the registry's new descriptions; the same names in the same order (655 components, none added or removed). mzizi-registry v4.4.0 (#447): segmented-control and native-select take their full contracts (#441), toaster its React build of ui/toaster (#442), and app-form-field's description says \"control\" for its new textarea and select (#443).",
-  },
-  "GET /v1/search?node=2": {
-    allow: ["body"],
-    why: "List items carry the registry's new descriptions; the same names in the same order (655 components, none added or removed). mzizi-registry v4.4.0 (#447): segmented-control and native-select take their full contracts (#441), toaster its React build of ui/toaster (#442), and app-form-field's description says \"control\" for its new textarea and select (#443).",
-  },
-  "GET /v1/ui?collection=components": {
-    allow: ["body"],
-    why: "List items carry the registry's new descriptions; the same names in the same order (655 components, none added or removed). mzizi-registry v4.4.0 (#447): segmented-control and native-select take their full contracts (#441), toaster its React build of ui/toaster (#442), and app-form-field's description says \"control\" for its new textarea and select (#443).",
-  },
-  "GET /v1/ui?collection=primitives": {
-    allow: ["body"],
-    why: "List items carry the registry's new descriptions; the same names in the same order (655 components, none added or removed). mzizi-registry v4.4.0 (#447): segmented-control and native-select take their full contracts (#441), toaster its React build of ui/toaster (#442), and app-form-field's description says \"control\" for its new textarea and select (#443).",
-  },
-  "GET /v1/ui?limit=abc": {
-    allow: ["body"],
-    why: "List items carry the registry's new descriptions; the same names in the same order (655 components, none added or removed). mzizi-registry v4.4.0 (#447): segmented-control and native-select take their full contracts (#441), toaster its React build of ui/toaster (#442), and app-form-field's description says \"control\" for its new textarea and select (#443).",
-  },
-  "GET /v1/ui?node=-1": {
-    allow: ["body"],
-    why: "List items carry the registry's new descriptions; the same names in the same order (655 components, none added or removed). mzizi-registry v4.4.0 (#447): segmented-control and native-select take their full contracts (#441), toaster its React build of ui/toaster (#442), and app-form-field's description says \"control\" for its new textarea and select (#443).",
-  },
-  "GET /v1/ui?node=2": {
-    allow: ["body"],
-    why: "List items carry the registry's new descriptions; the same names in the same order (655 components, none added or removed). mzizi-registry v4.4.0 (#447): segmented-control and native-select take their full contracts (#441), toaster its React build of ui/toaster (#442), and app-form-field's description says \"control\" for its new textarea and select (#443).",
-  },
-  "GET /v1/ui?offset=570": {
-    allow: ["body"],
-    why: "List items carry the registry's new descriptions; the same names in the same order (655 components, none added or removed). mzizi-registry v4.4.0 (#447): segmented-control and native-select take their full contracts (#441), toaster its React build of ui/toaster (#442), and app-form-field's description says \"control\" for its new textarea and select (#443).",
-  },
-  "GET /v1/ui?owner=framework": {
-    allow: ["body"],
-    why: "List items carry the registry's new descriptions; the same names in the same order (655 components, none added or removed). mzizi-registry v4.4.0 (#447): segmented-control and native-select take their full contracts (#441), toaster its React build of ui/toaster (#442), and app-form-field's description says \"control\" for its new textarea and select (#443).",
-  },
-  "GET /v1/ui?owner=mzizi": {
-    allow: ["body"],
-    why: "List items carry the registry's new descriptions; the same names in the same order (655 components, none added or removed). mzizi-registry v4.4.0 (#447): segmented-control and native-select take their full contracts (#441), toaster its React build of ui/toaster (#442), and app-form-field's description says \"control\" for its new textarea and select (#443).",
-  },
-  "GET /v1/ui?type=registry%3Aui": {
-    allow: ["body"],
-    why: "List items carry the registry's new descriptions; the same names in the same order (655 components, none added or removed). mzizi-registry v4.4.0 (#447): segmented-control and native-select take their full contracts (#441), toaster its React build of ui/toaster (#442), and app-form-field's description says \"control\" for its new textarea and select (#443).",
-  },
-  "GET /v1/ui": {
-    allow: ["body"],
-    why: "List items carry the registry's new descriptions; the same names in the same order (655 components, none added or removed). mzizi-registry v4.4.0 (#447): segmented-control and native-select take their full contracts (#441), toaster its React build of ui/toaster (#442), and app-form-field's description says \"control\" for its new textarea and select (#443).",
-  },
-  "GET /api/v1/search?q=x": {
-    allow: ["body"],
-    why: "One more hit (192 → 193), none dropped: app-form-field's new description (mzizi-registry#443, textarea and select) now matches `x`, so it ranks in at 9 and later names shift by one.",
-  },
-  "GET /v1/rs/alert": {
-    allow: ["status", "header:cache-control", "body"],
-    why: 'mzizi-registry#439 adds the Rust build of the `ui/alert` contract (`n2-primitives/alert.rs`, `mzizi-ui` `generated/alert.rs`), held to the whole contract. The route was a 404 ("has no Rust implementation"); it now answers 200 with the same public cache headers as every other `/v1/rs/{name}`.',
-  },
-  "GET /v1/rs/skeleton": {
-    allow: ["status", "header:cache-control", "body"],
-    why: 'mzizi-registry#439 adds the Rust build of the `ui/skeleton` contract (`n2-primitives/skeleton.rs`, `mzizi-ui` `generated/skeleton.rs`), held to the whole contract. The route was a 404 ("has no Rust implementation"); it now answers 200 with the same public cache headers as every other `/v1/rs/{name}`.',
-  },
-  "GET /v1/rs/safe-area-frame": {
-    allow: ["body"],
-    why: "mzizi-registry#439: the Rust safe-area-frame is held to the full `ui/safe-area-frame` contract; its doc comments and markup follow (**Breaking** in the registry's 4.4.0 CHANGELOG).",
-  },
-  "GET /v1/ui/safe-area-frame": {
-    allow: ["body"],
-    why: "mzizi-registry#439: the React safe-area-frame is held to the full `ui/safe-area-frame` contract, so its source changes (markup **Breaking** in the registry's 4.4.0 CHANGELOG).",
-  },
-  "GET /v1/ui/native-select": {
-    allow: ["body"],
-    why: "mzizi-registry#441: native-select takes the full `ui/native-select` contract in every build; the React source changes.",
-  },
-  "GET /v1/ui/segmented-control": {
-    allow: ["body"],
-    why: "mzizi-registry#441: segmented-control takes the full `ui/segmented-control` contract (native radios, 2-4 options); description and React source change (API **Breaking** in the registry's 4.4.0 CHANGELOG).",
-  },
-  "GET /v1/ui/toaster": {
-    allow: ["body"],
-    why: "mzizi-registry#442: the React toaster is the same component as the Astro one (`toast(message, kind?)` in a polite live region), held to `ui/toaster`; description and source change (API **Breaking** in the registry's 4.4.0 CHANGELOG).",
-  },
-  "GET /v1/ui/ui-variants": {
-    allow: ["body"],
-    why: "mzizi-registry#443: the class recipes gain the Nyuchi console's form and status additions (textarea, file input, status tones).",
-  },
-  "GET /v1/ui/app-bar-chart": {
-    allow: ["body"],
-    why: "mzizi-registry#443, from the Nyuchi console: column-layout axis labels never crowd (contract app/bar-chart 1.1.0). Its docs and source follow.",
-  },
-  "GET /v1/ui/app-data-table": {
-    allow: ["body"],
-    why: "mzizi-registry#443, from the Nyuchi console: a cell's `tone` is a status pill (contract app/data-table 1.1.0). Its docs and source follow.",
-  },
-  "GET /v1/ui/app-form-field": {
-    allow: ["body"],
-    why: "mzizi-registry#443, from the Nyuchi console: textarea and select, number/date/file inputs, `wide` (contract app/form-field 1.1.0). Its docs and source follow.",
-  },
-  "GET /v1/ui/app-form-layout": {
-    allow: ["body"],
-    why: "mzizi-registry#443, from the Nyuchi console: `enctype` for a form with a file field (contract app/form-layout 1.1.0). Its docs and source follow.",
+    why: 'mzizi-registry#448: the `@theme` block defines `--text-body-sm: var(--fs-small)` (an alias of the 14px size the registry\'s components use); #449 adds the `[data-brand="circles"]` block (tanzanite `--primary`, terracotta `--brand-accent`).',
   },
 };
 
