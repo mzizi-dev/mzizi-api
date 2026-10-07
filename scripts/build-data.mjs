@@ -126,7 +126,9 @@ const dataFile = join(
   ".registry",
   `extract-${pin.ref.slice(0, 12)}.json`,
 );
-execFileSync(process.execPath, [outfile, dataFile], {
+// The checkout's path is the second argument: extract.ts reads the registry's
+// generated mzizi-tokens-globals.css from it to check the `-text` values.
+execFileSync(process.execPath, [outfile, dataFile, registryDir], {
   // The extractor's stdout is the registry handlers' log lines: onto stderr.
   stdio: ["ignore", 2, "inherit"],
   // Unset, so any registry code that checks for Supabase sees "not configured".

@@ -69,14 +69,30 @@ export function registerContent(v1: Hono) {
         name: meta.name,
         lastUpdated: meta.lastUpdated,
         homepage: meta.homepage,
+        // Each colour family carries its `-text` pair (mzizi-registry#316):
+        // `textLight` / `textDark`, the family as text on `--base`
+        // (`--color-<name>-text`), merged into brand.json by extract.ts from
+        // the registry's textOnBaseTier() and checked there against
+        // mzizi-tokens-globals.css. Minerals also serve the rest of the
+        // `MineralToken` in lib/tokens/palette.generated.ts: `role`,
+        // `family`, `onContainerLight` / `onContainerDark` (text on the
+        // mineral's container) and `sortOrder`. All additions: every field
+        // served before keeps its value and its relative order.
         minerals: (brand.minerals as Row[]).map((m) => ({
           name: m.name,
+          role: m.role,
+          family: m.family,
           hex: apiHex[m.name as string] ?? m.darkHex,
           lightHex: m.lightHex,
           darkHex: m.darkHex,
           containerLight: m.containerLight,
           containerDark: m.containerDark,
+          onContainerLight: m.onContainerLight,
+          onContainerDark: m.onContainerDark,
+          textLight: m.textLight,
+          textDark: m.textDark,
           cssVar: m.cssVar,
+          sortOrder: m.sortOrder,
           origin: m.origin,
           symbolism: m.symbolism,
           usage: m.usage,
@@ -141,6 +157,8 @@ export function registerContent(v1: Hono) {
           hex: h.darkHex,
           lightHex: h.lightHex,
           darkHex: h.darkHex,
+          textLight: h.textLight,
+          textDark: h.textDark,
           cssVar: h.cssVar,
           origin: h.origin,
           symbolism: h.symbolism,
@@ -155,6 +173,8 @@ export function registerContent(v1: Hono) {
           containerDark: e.containerDark,
           onContainerLight: e.onContainerLight,
           onContainerDark: e.onContainerDark,
+          textLight: e.textLight,
+          textDark: e.textDark,
           uiLight: e.uiLight,
           uiDark: e.uiDark,
           cssVar: `--color-${e.name}`,
