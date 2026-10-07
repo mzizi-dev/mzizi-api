@@ -94,8 +94,11 @@ export function registerContent(v1: Hono) {
           // rows that carry them so every other row's shape is unchanged:
           // `displayName` is the product name where it is not the wordmark
           // (`events` → "Mukoko Events"); `aliases` lists deprecated names that
-          // still resolve to the row (`nhimbe`, retired 2026-10-04).
+          // still resolve to the row (`nhimbe`, retired 2026-10-04);
+          // `accent` is a second palette family for `--brand-accent`
+          // (mzizi-registry#449: `circles` is tanzanite + terracotta).
           ...(b.displayName ? { displayName: b.displayName } : {}),
+          ...(b.accent ? { accent: b.accent } : {}),
           ...(Array.isArray(b.aliases) && b.aliases.length
             ? { aliases: b.aliases }
             : {}),

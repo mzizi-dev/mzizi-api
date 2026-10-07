@@ -23,6 +23,45 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — the registry pin moves to mzizi-registry `main` at `0caf9dc` (v4.6.0) (2026-10-07)
+
+- **The registry pin moves from `9f3631c` (v4.5.0) to `0caf9dc`**, registry
+  `main` at v4.6.0 (mzizi-registry#464), which adds #455, #459, #461, #462 and
+  #463. It goes through `staging`, as #60 did, in place of the bot's #64.
+- **One component is added**: `markdown-parse` (registry:lib, node 2), the
+  parser `markdown-renderer` now depends on (656 components, 388 on node 2).
+- **One status moves**: `/v1/rs/markdown-renderer` 404 → 200, its new Rust
+  build (`mzizi_ui::MarkdownRenderer`). `/v1/ui/markdown-renderer` serves the
+  safe-by-construction React build (no `dangerouslySetInnerHTML`), and
+  `/v1/astro/markdown-renderer` its new Astro build.
+- **Changed content:** `app-brand-mark` renders the Mukoko mark (#459, so its
+  `/v1/astro` document carries four images; `test/api.test.ts` expects four);
+  `mzizi-tokens-globals` carries the container utilities (#455); the v4.6.0
+  record leads `/v1/changelog`.
+- **`scripts/parity.mjs` `EXPECTED`** lists the 44 differences from production
+  with their reasons, beside #62's two `/v1/brand` entries.
+
+### Added — `AGENTS.md` loads the Mzizi dev skills (2026-10-06)
+
+- **`AGENTS.md` gains "Dev skills, progress reports and the merge gate"**, the
+  canonical rule block from nyuchi/.github#87, after "Track big work in GitHub
+  issues": load the Mzizi dev skills (`digital-hygiene` and `progress-report`),
+  clone only into a directory unique to the agent, run dev work on a 10-minute
+  progress-report loop whose ticks never publish, release, merge or deploy
+  without the owner's approval, and merge only through the merge gate. Docs
+  only: no behaviour changes, and CI is unchanged.
+
+### Fixed — `/v1/brand` serves a brand's `accent` family (2026-10-06)
+
+- **`ecosystem[].accent`** is projected on the rows that carry one, as
+  `displayName` and `aliases` are. mzizi-registry#449 gave `circles` (Mukoko
+  Circles) `accent: "terracotta"` beside its tanzanite primary and said
+  `/v1/brand` serves it, but the projection dropped the field, so
+  mzizi-dev/packages-npm's canon snapshot lost the terracotta
+  `--brand-accent`. Every other row is unchanged.
+- **`scripts/parity.mjs` `EXPECTED`** lists the two routes (`/v1/brand`,
+  `/api/v1/brand`); the 9f3631c entries are in #60.
+
 ### Changed — the registry pin moves to mzizi-registry `main` at `9f3631c` (v4.5.0) (2026-10-06)
 
 - **The registry pin moves from `5067b5e` (v4.4.0) to `9f3631c`**, registry

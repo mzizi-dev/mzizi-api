@@ -202,7 +202,8 @@ describe("/v1/astro (mzizi-registry#397)", () => {
       await get("/v1/astro/app-brand-mark")
     ).json()) as AstroItem;
     const assets = body.files.filter((f) => f.type === "registry:asset");
-    expect(assets.length).toBe(2);
+    // Nyuchi's pair, and since mzizi-registry#459 Mukoko's (light and dark each).
+    expect(assets.length).toBe(4);
     for (const a of assets) expect(a.encoding).toBe("base64");
   });
 
@@ -477,6 +478,20 @@ describe("architecture and content", () => {
     expect(
       body.minerals.length + body.heritage.length + body.experimental.length,
     ).toBe(21);
+  });
+
+  it("projects a brand's accent family only on the rows that carry one", async () => {
+    const body = (await (await get("/v1/brand")).json()) as {
+      ecosystem: { name: string; mineral: string; accent?: string }[];
+    };
+    const circles = body.ecosystem.find((b) => b.name === "circles");
+    expect(circles).toMatchObject({
+      mineral: "tanzanite",
+      accent: "terracotta",
+    });
+    expect(body.ecosystem.find((b) => b.name === "news")).not.toHaveProperty(
+      "accent",
+    );
   });
 
   it("keeps retired routes at 410", async () => {
