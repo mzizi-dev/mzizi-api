@@ -86,29 +86,25 @@ const HEADERS = [
  * shamwari's sodalite accent from mzizi-registry#407, 16742ab for
  * Mukoko Events replacing nhimbe from mzizi-registry#411, #51 for the
  * 409a047 hand pin and the /v1/astro OpenAPI paths, #53 for 2902393, registry
- * v4.3.0, #56 for 5067b5e, registry v4.4.0, #60 for 9f3631c, registry v4.5.0, #65 for 0caf9dc, registry v4.6.0).
+ * v4.3.0, #56 for 5067b5e, registry v4.4.0, #60 for 9f3631c, registry v4.5.0, #65 for 0caf9dc, registry v4.6.0, #68 for 81a37ed,
+ * registry v4.7.0).
  */
-// The registry pin moves from registry main 0caf9dc (v4.6.0) to 81a37ed, the
-// v4.7.0 release (mzizi-registry#467), which adds #465 (markdown-renderer 1.1.0:
-// stricter link addresses, nested rich-text lists) and #466 (crates 0.3.0). No
-// component is added or removed and no status moves. The previous entries
-// (0caf9dc) are in #65.
+// The registry pin moves from registry main 81a37ed (v4.7.0) to f70703d, the
+// v4.8.0 release (mzizi-registry#469), which adds #468: markdown-parse compiles
+// under noUncheckedIndexedAccess. No component is added or removed and no
+// status moves. The previous entries (81a37ed) are in #68.
 const EXPECTED = {
   "GET /api/v1/changelog": {
     allow: ["body"],
-    why: "Release records: the v4.7.0 record (mzizi-registry#467) leads the list. The earlier rows are unchanged.",
+    why: "Release records: the v4.8.0 record (mzizi-registry#469) leads the list. The earlier rows are unchanged.",
   },
   "GET /v1/changelog": {
     allow: ["body"],
-    why: "Release records: the v4.7.0 record (mzizi-registry#467) leads the list. The earlier rows are unchanged.",
-  },
-  "GET /v1/rs/markdown-renderer": {
-    allow: ["body"],
-    why: "mzizi-registry#465: markdown-renderer 1.1.0 refuses link addresses with a control character, whitespace or credentials, treats \\\\host and /\\host as scheme-relative, and keeps rich-text lists nested with <ol start>; the Rust source served here carries it.",
+    why: "Release records: the v4.8.0 record (mzizi-registry#469) leads the list. The earlier rows are unchanged.",
   },
   "GET /v1/ui/markdown-parse": {
     allow: ["body"],
-    why: "mzizi-registry#465: markdown-parse carries markdown-renderer 1.1.0's stricter safeHref and nested rich-text lists.",
+    why: "mzizi-registry#468: markdown-parse compiles under noUncheckedIndexedAccess (every index checked), with no behaviour change.",
   },
 };
 

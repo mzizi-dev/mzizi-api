@@ -23,6 +23,15 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — the registry pin moves to mzizi-registry `main` at `f70703d` (v4.8.0) (2026-10-07)
+
+- **The registry pin moves from `81a37ed` (v4.7.0) to `f70703d`**, registry
+  `main` at v4.8.0 (mzizi-registry#469), which adds #468: `markdown-parse`
+  compiles under `noUncheckedIndexedAccess`, with no behaviour change. It goes
+  through `staging` in place of the bot's #67.
+- No component is added or removed and no status moves; `EXPECTED` lists the
+  3 differences (the v4.8.0 record and the `markdown-parse` source).
+
 ### Changed — the registry pin moves to mzizi-registry `main` at `81a37ed` (v4.7.0) (2026-10-07)
 
 - **The registry pin moves from `0caf9dc` (v4.6.0) to `81a37ed`**, registry
