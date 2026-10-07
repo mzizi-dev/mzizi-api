@@ -1,6 +1,6 @@
 {
   "repository": "https://github.com/mzizi-dev/mzizi-registry",
-  "ref": "81a37edcd8e3327500a0f364d68bb89b8b530ec4",
+  "ref": "f70703dafce2cf03a89ca995b5b18b5c747d0432",
   "pinned": "2026-10-07",
-  "note": "mzizi-registry main at 81a37ed (v4.7.0) on 2026-10-07, pinned by hand through staging in place of the bot's #67, with its parity differences in EXPECTED."
+  "note": "mzizi-registry main at f70703d (v4.8.0) on 2026-10-07, pinned by hand through staging in place of the bot's #67, with its parity differences in EXPECTED."
 }
