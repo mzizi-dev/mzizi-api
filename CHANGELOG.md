@@ -23,6 +23,24 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — the registry pin moves to mzizi-registry `main` at `0caf9dc` (v4.6.0) (2026-10-07)
+
+- **The registry pin moves from `9f3631c` (v4.5.0) to `0caf9dc`**, registry
+  `main` at v4.6.0 (mzizi-registry#464), which adds #455, #459, #461, #462 and
+  #463. It goes through `staging`, as #60 did, in place of the bot's #64.
+- **One component is added**: `markdown-parse` (registry:lib, node 2), the
+  parser `markdown-renderer` now depends on (656 components, 388 on node 2).
+- **One status moves**: `/v1/rs/markdown-renderer` 404 → 200, its new Rust
+  build (`mzizi_ui::MarkdownRenderer`). `/v1/ui/markdown-renderer` serves the
+  safe-by-construction React build (no `dangerouslySetInnerHTML`), and
+  `/v1/astro/markdown-renderer` its new Astro build.
+- **Changed content:** `app-brand-mark` renders the Mukoko mark (#459, so its
+  `/v1/astro` document carries four images; `test/api.test.ts` expects four);
+  `mzizi-tokens-globals` carries the container utilities (#455); the v4.6.0
+  record leads `/v1/changelog`.
+- **`scripts/parity.mjs` `EXPECTED`** lists the 44 differences from production
+  with their reasons, beside #62's two `/v1/brand` entries.
+
 ### Added — `AGENTS.md` loads the Mzizi dev skills (2026-10-06)
 
 - **`AGENTS.md` gains "Dev skills, progress reports and the merge gate"**, the

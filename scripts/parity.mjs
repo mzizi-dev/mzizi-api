@@ -88,9 +88,14 @@ const HEADERS = [
  * 409a047 hand pin and the /v1/astro OpenAPI paths, #53 for 2902393, registry
  * v4.3.0, #56 for 5067b5e, registry v4.4.0, #60 for 9f3631c, registry v4.5.0).
  */
-// /v1/brand projects the canon `accent` field (registry pin unchanged at
-// 9f3631c, v4.5.0). One row gains it: circles. The previous entries (9f3631c)
-// are in #60.
+// The registry pin moves from registry main 9f3631c (v4.5.0) to 0caf9dc, the
+// v4.6.0 release (mzizi-registry#464), which adds #455, #459, #461, #462 and
+// #463: the container utilities in globals.css, BrandMark's Mukoko mark,
+// dependency overrides, markdown-renderer safe by construction (a new
+// `markdown-parse` lib and a Rust build), the crates at 0.2.0 and the v4.6.0
+// record. One component is added (656); one route changes status:
+// /v1/rs/markdown-renderer, 404 → 200. The /v1/brand entries are #62's accent
+// projection, not yet in production. The previous entries (9f3631c) are in #60.
 const EXPECTED = {
   "GET /api/v1/brand": {
     allow: ["body"],
@@ -99,6 +104,182 @@ const EXPECTED = {
   "GET /v1/brand": {
     allow: ["body"],
     why: 'This Worker now projects the optional canon `accent` field on `/v1/brand` `ecosystem[]`, on the rows that carry one, as it does `displayName` and `aliases`. Only `circles` carries one (mzizi-registry#449: tanzanite with a terracotta accent), so row 16 gains `accent: "terracotta"`; every other row is unchanged. The registry\'s 4.5.0 CHANGELOG said `/v1/brand` serves it; the projection dropped it.',
+  },
+  "GET /api/v1": {
+    allow: ["body"],
+    why: "mzizi-registry v4.6.0 (#464): `markdown-parse` (#462) is the one component added, so the component count is 656 and node 2 holds 388.",
+  },
+  "GET /api/v1/architecture": {
+    allow: ["body"],
+    why: "mzizi-registry v4.6.0 (#464): `markdown-parse` (#462) is the one component added, so the component count is 656 and node 2 holds 388.",
+  },
+  "GET /api/v1/changelog": {
+    allow: ["body"],
+    why: "Release records: the v4.6.0 record (mzizi-registry#464) leads the list. The earlier rows are unchanged.",
+  },
+  "GET /api/v1/search?layer=2": {
+    allow: ["body"],
+    why: "mzizi-registry v4.6.0 (#464): one component is added, `markdown-parse` (registry:lib, node 2, owner mzizi, from #462), so lists carry it in name order (656 components, 388 on node 2) and their counts move by one; `markdown-renderer` carries its safe-by-construction description (#462). Nothing is removed.",
+  },
+  "GET /api/v1/search?q=x": {
+    allow: ["body"],
+    why: "mzizi-registry v4.6.0 (#464): one component is added, `markdown-parse` (registry:lib, node 2, owner mzizi, from #462), so lists carry it in name order (656 components, 388 on node 2) and their counts move by one; `markdown-renderer` carries its safe-by-construction description (#462). Nothing is removed.",
+  },
+  "GET /api/v1/stats": {
+    allow: ["body"],
+    why: "mzizi-registry v4.6.0 (#464): `markdown-parse` (#462) is the one component added, so the component count is 656 and node 2 holds 388.",
+  },
+  "GET /api/v1/ui?node=3": {
+    allow: ["body"],
+    why: "mzizi-registry v4.6.0 (#464): one component is added, `markdown-parse` (registry:lib, node 2, owner mzizi, from #462), so lists carry it in name order (656 components, 388 on node 2) and their counts move by one; `markdown-renderer` carries its safe-by-construction description (#462). Nothing is removed.",
+  },
+  "GET /v1": {
+    allow: ["body"],
+    why: "mzizi-registry v4.6.0 (#464): `markdown-parse` (#462) is the one component added, so the component count is 656 and node 2 holds 388.",
+  },
+  "GET /v1/architecture": {
+    allow: ["body"],
+    why: "mzizi-registry v4.6.0 (#464): `markdown-parse` (#462) is the one component added, so the component count is 656 and node 2 holds 388.",
+  },
+  "GET /v1/architecture/nodes/2": {
+    allow: ["body"],
+    why: "mzizi-registry v4.6.0 (#464): `markdown-parse` (#462) is the one component added, so the component count is 656 and node 2 holds 388.",
+  },
+  "GET /v1/changelog": {
+    allow: ["body"],
+    why: "Release records: the v4.6.0 record (mzizi-registry#464) leads the list. The earlier rows are unchanged.",
+  },
+  "GET /v1/rs/markdown-renderer": {
+    allow: ["status", "header:cache-control", "body"],
+    why: "mzizi-registry#462: `markdown-renderer` gains its Rust build (`mzizi_ui::MarkdownRenderer`, mzizi-ui 0.2.0), so /v1/rs/markdown-renderer answers 200 with the source and the public cache headers every served Rust component carries, where it was a 404.",
+  },
+  "GET /v1/search?category=primitives": {
+    allow: ["body"],
+    why: "mzizi-registry v4.6.0 (#464): one component is added, `markdown-parse` (registry:lib, node 2, owner mzizi, from #462), so lists carry it in name order (656 components, 388 on node 2) and their counts move by one; `markdown-renderer` carries its safe-by-construction description (#462). Nothing is removed.",
+  },
+  "GET /v1/search?layer=2": {
+    allow: ["body"],
+    why: "mzizi-registry v4.6.0 (#464): one component is added, `markdown-parse` (registry:lib, node 2, owner mzizi, from #462), so lists carry it in name order (656 components, 388 on node 2) and their counts move by one; `markdown-renderer` carries its safe-by-construction description (#462). Nothing is removed.",
+  },
+  "GET /v1/search?layer=3&node=2": {
+    allow: ["body"],
+    why: "mzizi-registry v4.6.0 (#464): one component is added, `markdown-parse` (registry:lib, node 2, owner mzizi, from #462), so lists carry it in name order (656 components, 388 on node 2) and their counts move by one; `markdown-renderer` carries its safe-by-construction description (#462). Nothing is removed.",
+  },
+  "GET /v1/search?node=2": {
+    allow: ["body"],
+    why: "mzizi-registry v4.6.0 (#464): one component is added, `markdown-parse` (registry:lib, node 2, owner mzizi, from #462), so lists carry it in name order (656 components, 388 on node 2) and their counts move by one; `markdown-renderer` carries its safe-by-construction description (#462). Nothing is removed.",
+  },
+  "GET /v1/stats": {
+    allow: ["body"],
+    why: "mzizi-registry v4.6.0 (#464): `markdown-parse` (#462) is the one component added, so the component count is 656 and node 2 holds 388.",
+  },
+  "GET /v1/stats?days=500": {
+    allow: ["body"],
+    why: "mzizi-registry v4.6.0 (#464): `markdown-parse` (#462) is the one component added, so the component count is 656 and node 2 holds 388.",
+  },
+  "GET /v1/stats?days=7": {
+    allow: ["body"],
+    why: "mzizi-registry v4.6.0 (#464): `markdown-parse` (#462) is the one component added, so the component count is 656 and node 2 holds 388.",
+  },
+  "GET /v1/stats?days=abc": {
+    allow: ["body"],
+    why: "mzizi-registry v4.6.0 (#464): `markdown-parse` (#462) is the one component added, so the component count is 656 and node 2 holds 388.",
+  },
+  "GET /v1/ui": {
+    allow: ["body"],
+    why: "mzizi-registry v4.6.0 (#464): one component is added, `markdown-parse` (registry:lib, node 2, owner mzizi, from #462), so lists carry it in name order (656 components, 388 on node 2) and their counts move by one; `markdown-renderer` carries its safe-by-construction description (#462). Nothing is removed.",
+  },
+  "GET /v1/ui/app-brand-mark": {
+    allow: ["body"],
+    why: 'mzizi-registry#459: `app/brand-mark` 1.1.0 renders the Mukoko mark (`brand="mukoko"`).',
+  },
+  "GET /v1/ui/markdown-renderer": {
+    allow: ["body"],
+    why: "mzizi-registry#462: the React build renders a typed tree as elements (no dangerouslySetInnerHTML) and depends on the new `markdown-parse` lib; its description, docs and meta are the new ones.",
+  },
+  "GET /v1/ui/mzizi-tokens-globals": {
+    allow: ["body"],
+    why: "mzizi-registry#455: the shipped globals.css carries the container utilities (`--container-narrow`, `--container-prose`, `--container-wide`; `container-custom`, `container-narrow`, `container-prose`).",
+  },
+  "GET /v1/ui?collection=components": {
+    allow: ["body"],
+    why: "mzizi-registry v4.6.0 (#464): one component is added, `markdown-parse` (registry:lib, node 2, owner mzizi, from #462), so lists carry it in name order (656 components, 388 on node 2) and their counts move by one; `markdown-renderer` carries its safe-by-construction description (#462). Nothing is removed.",
+  },
+  "GET /v1/ui?collection=documentation": {
+    allow: ["body"],
+    why: "mzizi-registry v4.6.0 (#464): one component is added, `markdown-parse` (registry:lib, node 2, owner mzizi, from #462), so lists carry it in name order (656 components, 388 on node 2) and their counts move by one; `markdown-renderer` carries its safe-by-construction description (#462). Nothing is removed.",
+  },
+  "GET /v1/ui?collection=primitives": {
+    allow: ["body"],
+    why: "mzizi-registry v4.6.0 (#464): one component is added, `markdown-parse` (registry:lib, node 2, owner mzizi, from #462), so lists carry it in name order (656 components, 388 on node 2) and their counts move by one; `markdown-renderer` carries its safe-by-construction description (#462). Nothing is removed.",
+  },
+  "GET /v1/ui?limit=0": {
+    allow: ["body"],
+    why: "mzizi-registry v4.6.0 (#464): one component is added, `markdown-parse` (registry:lib, node 2, owner mzizi, from #462), so lists carry it in name order (656 components, 388 on node 2) and their counts move by one; `markdown-renderer` carries its safe-by-construction description (#462). Nothing is removed.",
+  },
+  "GET /v1/ui?limit=abc": {
+    allow: ["body"],
+    why: "mzizi-registry v4.6.0 (#464): one component is added, `markdown-parse` (registry:lib, node 2, owner mzizi, from #462), so lists carry it in name order (656 components, 388 on node 2) and their counts move by one; `markdown-renderer` carries its safe-by-construction description (#462). Nothing is removed.",
+  },
+  "GET /v1/ui?node=-1": {
+    allow: ["body"],
+    why: "mzizi-registry v4.6.0 (#464): one component is added, `markdown-parse` (registry:lib, node 2, owner mzizi, from #462), so lists carry it in name order (656 components, 388 on node 2) and their counts move by one; `markdown-renderer` carries its safe-by-construction description (#462). Nothing is removed.",
+  },
+  "GET /v1/ui?node=2": {
+    allow: ["body"],
+    why: "mzizi-registry v4.6.0 (#464): one component is added, `markdown-parse` (registry:lib, node 2, owner mzizi, from #462), so lists carry it in name order (656 components, 388 on node 2) and their counts move by one; `markdown-renderer` carries its safe-by-construction description (#462). Nothing is removed.",
+  },
+  "GET /v1/ui?node=2&limit=5&offset=3": {
+    allow: ["body"],
+    why: "mzizi-registry v4.6.0 (#464): one component is added, `markdown-parse` (registry:lib, node 2, owner mzizi, from #462), so lists carry it in name order (656 components, 388 on node 2) and their counts move by one; `markdown-renderer` carries its safe-by-construction description (#462). Nothing is removed.",
+  },
+  "GET /v1/ui?node=999": {
+    allow: ["body"],
+    why: "mzizi-registry v4.6.0 (#464): one component is added, `markdown-parse` (registry:lib, node 2, owner mzizi, from #462), so lists carry it in name order (656 components, 388 on node 2) and their counts move by one; `markdown-renderer` carries its safe-by-construction description (#462). Nothing is removed.",
+  },
+  "GET /v1/ui?offset=570": {
+    allow: ["body"],
+    why: "mzizi-registry v4.6.0 (#464): one component is added, `markdown-parse` (registry:lib, node 2, owner mzizi, from #462), so lists carry it in name order (656 components, 388 on node 2) and their counts move by one; `markdown-renderer` carries its safe-by-construction description (#462). Nothing is removed.",
+  },
+  "GET /v1/ui?owner=framework": {
+    allow: ["body"],
+    why: "mzizi-registry v4.6.0 (#464): one component is added, `markdown-parse` (registry:lib, node 2, owner mzizi, from #462), so lists carry it in name order (656 components, 388 on node 2) and their counts move by one; `markdown-renderer` carries its safe-by-construction description (#462). Nothing is removed.",
+  },
+  "GET /v1/ui?owner=mzizi": {
+    allow: ["body"],
+    why: "mzizi-registry v4.6.0 (#464): one component is added, `markdown-parse` (registry:lib, node 2, owner mzizi, from #462), so lists carry it in name order (656 components, 388 on node 2) and their counts move by one; `markdown-renderer` carries its safe-by-construction description (#462). Nothing is removed.",
+  },
+  "GET /v1/ui?owner=nyuchi": {
+    allow: ["body"],
+    why: "mzizi-registry v4.6.0 (#464): one component is added, `markdown-parse` (registry:lib, node 2, owner mzizi, from #462), so lists carry it in name order (656 components, 388 on node 2) and their counts move by one; `markdown-renderer` carries its safe-by-construction description (#462). Nothing is removed.",
+  },
+  "GET /v1/ui?type=registry%3Abase": {
+    allow: ["body"],
+    why: "mzizi-registry v4.6.0 (#464): one component is added, `markdown-parse` (registry:lib, node 2, owner mzizi, from #462), so lists carry it in name order (656 components, 388 on node 2) and their counts move by one; `markdown-renderer` carries its safe-by-construction description (#462). Nothing is removed.",
+  },
+  "GET /v1/ui?type=registry%3Ablock": {
+    allow: ["body"],
+    why: "mzizi-registry v4.6.0 (#464): one component is added, `markdown-parse` (registry:lib, node 2, owner mzizi, from #462), so lists carry it in name order (656 components, 388 on node 2) and their counts move by one; `markdown-renderer` carries its safe-by-construction description (#462). Nothing is removed.",
+  },
+  "GET /v1/ui?type=registry%3Ahook": {
+    allow: ["body"],
+    why: "mzizi-registry v4.6.0 (#464): one component is added, `markdown-parse` (registry:lib, node 2, owner mzizi, from #462), so lists carry it in name order (656 components, 388 on node 2) and their counts move by one; `markdown-renderer` carries its safe-by-construction description (#462). Nothing is removed.",
+  },
+  "GET /v1/ui?type=registry%3Aitem": {
+    allow: ["body"],
+    why: "mzizi-registry v4.6.0 (#464): one component is added, `markdown-parse` (registry:lib, node 2, owner mzizi, from #462), so lists carry it in name order (656 components, 388 on node 2) and their counts move by one; `markdown-renderer` carries its safe-by-construction description (#462). Nothing is removed.",
+  },
+  "GET /v1/ui?type=registry%3Alib": {
+    allow: ["body"],
+    why: "mzizi-registry v4.6.0 (#464): one component is added, `markdown-parse` (registry:lib, node 2, owner mzizi, from #462), so lists carry it in name order (656 components, 388 on node 2) and their counts move by one; `markdown-renderer` carries its safe-by-construction description (#462). Nothing is removed.",
+  },
+  "GET /v1/ui?type=registry%3Atheme": {
+    allow: ["body"],
+    why: "mzizi-registry v4.6.0 (#464): one component is added, `markdown-parse` (registry:lib, node 2, owner mzizi, from #462), so lists carry it in name order (656 components, 388 on node 2) and their counts move by one; `markdown-renderer` carries its safe-by-construction description (#462). Nothing is removed.",
+  },
+  "GET /v1/ui?type=registry%3Aui": {
+    allow: ["body"],
+    why: "mzizi-registry v4.6.0 (#464): one component is added, `markdown-parse` (registry:lib, node 2, owner mzizi, from #462), so lists carry it in name order (656 components, 388 on node 2) and their counts move by one; `markdown-renderer` carries its safe-by-construction description (#462). Nothing is removed.",
   },
 };
 
