@@ -23,6 +23,24 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Added — `/v1/py/{name}`: a component's Python build and the PyPI package that ships it (2026-10-07)
+
+- **New route `GET /v1/py/{name}`** (and `/api/v1/py/{name}`), the Python twin of
+  `/v1/rs/{name}` (mzizi-registry#472). It serves the component's `.py` and a
+  `package` block naming the PyPI distribution (`mzizi-resilience`), the
+  `pip install` line, the import package, the module (for example
+  `mzizi_resilience.circuit_breaker`), the PyPI URL and the pip-from-git
+  install. `package` is `null` for Python that is not packaged (N1's
+  single-file `mzizi-tokens-python`). A component with no `.py` is a `404`
+  naming the missing Python build; an unknown name is the usual `404`.
+- The package and module come from mzizi-registry's `lib/python-packages.ts`
+  (`mzizi-py/package-for-node.json`, the map the registry's `pnpm py:generate`
+  packages from), resolved at build time. `scripts/extract.ts` checks every
+  component's `/v1/py/{name}` answer against `scripts/registry-handlers/py.ts`,
+  a reference handler written in the shape of `rs.ts` on the pinned registry's
+  own readers, and fails the build on any difference.
+- Needs a registry pin that has `lib/python-packages.ts` (mzizi-registry#473).
+
 ### Changed — the registry pin moves to mzizi-registry `main` at `f70703d` (v4.8.0) (2026-10-07)
 
 - **The registry pin moves from `81a37ed` (v4.7.0) to `f70703d`**, registry

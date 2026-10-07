@@ -226,6 +226,79 @@ export const rsBody = (
   ],
 });
 
+/**
+ * mzizi-registry `pythonPackageFor(pyPath)` (lib/python-packages.ts): the PyPI
+ * package that ships a Python component and the module to import, or `null`
+ * for Python that is not packaged (a single-file module, such as N1's
+ * `mzizi-tokens-python.py`).
+ */
+export interface PythonPackage {
+  name: string;
+  importName: string;
+  module: string;
+  pip: string;
+  pypi: string;
+  git: string;
+}
+
+/** The fields of a registry item `/v1/py/{name}` reads. */
+export interface PyItem {
+  name: string;
+  type?: string;
+  description?: string;
+  /** `sources.py` from the registry's on-disk index. */
+  pyPath?: string;
+  /** mzizi-registry `pythonPackageFor(pyPath)`; `null` when not packaged. */
+  pyPackage?: PythonPackage | null;
+}
+
+/** /v1/py/{name}: the 404 body for an unknown name. */
+export const pyNotFound = (name: string) => ({
+  error: `Component "${name}" not found in registry`,
+});
+
+/** /v1/py/{name}: the 404 body for an item with no `.py`. */
+export const pyNoPython = (name: string) => ({
+  error: `"${name}" has no Python implementation`,
+  message:
+    "This component has no Python build. The contract, tokens and variants are on " +
+    `https://api.mzizi.dev/v1/ui/${encodeURIComponent(name)}. Python builds are ` +
+    "`.py` files beside the component's other builds in mzizi-dev/mzizi-registry " +
+    "(mzizi-registry#472).",
+});
+
+/**
+ * /v1/py/{name}: the 200 body (mzizi-registry#472). `package` names the PyPI
+ * distribution that ships the component, the `pip install` line and the
+ * module to import; it is `null` for a single-file module that is not
+ * packaged, which a consumer copies.
+ */
+export const pyBody = (component: PyItem, name: string, source: string) => ({
+  $schema: "https://ui.shadcn.com/schema/registry-item.json",
+  name: component.name,
+  type: component.type,
+  target: "python",
+  description: component.description,
+  package: component.pyPackage
+    ? {
+        name: component.pyPackage.name,
+        registry: "pypi",
+        pip: component.pyPackage.pip,
+        import: component.pyPackage.importName,
+        module: component.pyPackage.module,
+        url: component.pyPackage.pypi,
+        git: component.pyPackage.git,
+      }
+    : null,
+  files: [
+    {
+      path: component.pyPath ?? `${name}.py`,
+      type: "registry:python",
+      content: source,
+    },
+  ],
+});
+
 /** /v1/astro/{name}: the 404 body for an unknown name. */
 export const astroNotFound = (name: string) => ({
   error: `Component "${name}" not found in registry`,

@@ -22,8 +22,9 @@
  * readers. Nothing here imports the registry's deleted `app/` tree. The
  * checks cover search on about 1,300 queries (status, body and the
  * `Deprecation` header), docs for every component, every AI instruction key,
- * and `/v1/rs/{name}` (source, file path and the crate that compiles it) for
- * every component. Any disagreement fails the build.
+ * `/v1/rs/{name}` (source, file path and the crate that compiles it) and
+ * `/v1/py/{name}` (source, file path, the PyPI package and module) for every
+ * component. Any disagreement fails the build.
  */
 import { readComponents, readNodeCounts } from "@/lib/registry";
 import {
@@ -73,6 +74,7 @@ import {
 import { OPENAPI_YAML } from "@/lib/openapi.generated";
 import { COMPONENT_RENAMES } from "@/lib/component-renames";
 import { CRATE_GIT, crateFor } from "@/lib/rust-crates";
+import { pythonPackageFor } from "@/lib/python-packages";
 import { astroDocument } from "@/lib/astro";
 import { GET as discoveryHandler } from "./registry-handlers/discovery";
 import { GET as searchHandler } from "./registry-handlers/search";
@@ -80,6 +82,7 @@ import { GET as docsHandler } from "./registry-handlers/ui-docs";
 import { GET as versionsHandler } from "./registry-handlers/ui-versions";
 import { GET as aiInstructionHandler } from "./registry-handlers/ai-instruction";
 import { GET as rsHandler } from "./registry-handlers/rs";
+import { GET as pyHandler } from "./registry-handlers/py";
 import { writeFileSync } from "node:fs";
 import { search, type SearchableItem } from "../src/search";
 import {
@@ -88,11 +91,15 @@ import {
   discoveryDocument,
   docsBody,
   docsNotFound,
+  pyBody,
+  pyNoPython,
+  pyNotFound,
   rsBody,
   rsNoCrate,
   rsNoRust,
   rsNotFound,
   type DocsItem,
+  type PyItem,
   type RsItem,
 } from "../src/projections";
 
@@ -187,11 +194,14 @@ async function checkSearch(items: SearchableItem[]): Promise<number> {
  * versions and AI-instruction handlers ever disagree.
  */
 async function checkHandlers(
-  components: (DocsItem & RsItem)[],
+  components: (DocsItem & RsItem & PyItem)[],
   componentDocs: Record<string, { docs: unknown; demo: unknown }>,
   aiInstructions: unknown[],
   aiInstructionIndex: Record<string, number>,
-  sources: Record<string, { primary: string | null; rs: string | null }>,
+  sources: Record<
+    string,
+    { primary: string | null; rs: string | null; py: string | null }
+  >,
 ): Promise<number> {
   let checks = 0;
   const check = (
@@ -272,6 +282,29 @@ async function checkHandlers(
     );
   }
 
+  // /v1/py/{name} (mzizi-registry#472): every component (200 with its
+  // package, or the no-Python 404), plus an unknown name.
+  for (const c of components) {
+    const path = `/py/${c.name}`;
+    const py = sources[c.name]?.py ?? null;
+    check(
+      path,
+      await answer(await pyHandler(req(path), segment(c.name))),
+      py === null ? 404 : 200,
+      py === null ? pyNoPython(c.name) : pyBody(c, c.name, py),
+    );
+  }
+  for (const name of ["does-not-exist", "Button"]) {
+    if (components.some((c) => c.name === name)) continue;
+    const path = `/py/${name}`;
+    check(
+      path,
+      await answer(await pyHandler(req(path), segment(name))),
+      404,
+      pyNotFound(name),
+    );
+  }
+
   for (const key of [...Object.keys(aiInstructionIndex), "nope", "claude"]) {
     const path = `/ai/instructions/${key}`;
     const at = aiInstructionIndex[key];
@@ -288,7 +321,8 @@ async function checkHandlers(
 async function main() {
   const components = readComponents().map((c) => {
     // `sources`/`sourcePath` are the on-disk index; no route serves them except
-    // `sources.rs` (the Rust file path on /v1/rs/{name}), kept below.
+    // `sources.rs` (the Rust file path on /v1/rs/{name}) and `sources.py` (the
+    // Python file path on /v1/py/{name}), kept below.
     const {
       sources,
       sourcePath: _sourcePath,
@@ -302,15 +336,21 @@ async function main() {
       ...(sources?.rs
         ? { rsPath: sources.rs, rsCrate: crateFor(sources.rs) }
         : {}),
+      ...(sources?.py
+        ? { pyPath: sources.py, pyPackage: pythonPackageFor(sources.py) }
+        : {}),
     };
   });
 
-  const sources: Record<string, { primary: string | null; rs: string | null }> =
-    {};
+  const sources: Record<
+    string,
+    { primary: string | null; rs: string | null; py: string | null }
+  > = {};
   for (const c of components) {
     sources[c.name] = {
       primary: readComponentSource(c.name),
       rs: readComponentSourceFor(c.name, "rs"),
+      py: readComponentSourceFor(c.name, "py"),
     };
   }
 
@@ -366,7 +406,7 @@ async function main() {
 
   const searchProbes = await checkSearch(components as SearchableItem[]);
   const handlerChecks = await checkHandlers(
-    components as (DocsItem & RsItem)[],
+    components as (DocsItem & RsItem & PyItem)[],
     componentDocs,
     aiInstructions,
     aiInstructionIndex,

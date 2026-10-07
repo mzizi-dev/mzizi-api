@@ -93,7 +93,20 @@ const HEADERS = [
 // v4.8.0 release (mzizi-registry#469), which adds #468: markdown-parse compiles
 // under noUncheckedIndexedAccess. No component is added or removed and no
 // status moves. The previous entries (81a37ed) are in #68.
+const PY_NEW = {
+  allow: ["status", "body", "header:cache-control"],
+  why: "New route /v1/py/{name} (mzizi-registry#472): production answers the route-not-found 404 until this deploys.",
+};
+const PY_NEW_404 = {
+  allow: ["body"],
+  why: "New route /v1/py/{name} (mzizi-registry#472): a 404 that names the missing Python build (or the unknown component) in place of production's route-not-found 404.",
+};
 const EXPECTED = {
+  "GET /v1/py/circuit-breaker": PY_NEW,
+  "GET /v1/py/chaos": PY_NEW,
+  "GET /v1/py/mzizi-tokens-python": PY_NEW,
+  "GET /v1/py/button": PY_NEW_404,
+  "GET /v1/py/does-not-exist": PY_NEW_404,
   "GET /api/v1/changelog": {
     allow: ["body"],
     why: "Release records: the v4.8.0 record (mzizi-registry#469) leads the list. The earlier rows are unchanged.",
@@ -162,6 +175,12 @@ const paths = [
   ...slugSet.map((n) => `/v1/rs/${n}`),
   "/v1/ui/does-not-exist",
   "/v1/rs/does-not-exist",
+  // /v1/py/{name} (mzizi-registry#472): packaged, unpackaged, no Python, unknown.
+  "/v1/py/circuit-breaker",
+  "/v1/py/chaos",
+  "/v1/py/mzizi-tokens-python",
+  "/v1/py/button",
+  "/v1/py/does-not-exist",
   "/v1/ui/button/docs",
   "/v1/ui/mzizi-tokens/docs",
   "/v1/ui/does-not-exist/docs",

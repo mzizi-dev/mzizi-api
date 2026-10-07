@@ -15,6 +15,7 @@ import brandJson from "./data/brand.json";
 import metaJson from "./data/meta.json";
 import componentDocsJson from "./data/component-docs.json";
 import aiInstructionIndexJson from "./data/ai-instruction-index.json";
+import type { PythonPackage } from "./projections";
 
 // The generated JSON is typed loosely on purpose: its shape is mzizi-registry's
 // (lib/registry.ts `RegistryItem`, lib/db/types.ts rows), and the parity script
@@ -46,6 +47,10 @@ export interface RegistryItem {
   rsPath?: string;
   /** mzizi-registry `crateFor(rsPath)`: the crate that compiles the `.rs`, when there is one. */
   rsCrate?: string | null;
+  /** `sources.py` from the registry's on-disk index, when the item has a Python file. */
+  pyPath?: string;
+  /** mzizi-registry `pythonPackageFor(pyPath)`: the PyPI package and module, or null. */
+  pyPackage?: PythonPackage | null;
 }
 
 export const components = componentsJson as unknown as RegistryItem[];
@@ -68,12 +73,12 @@ export function readComponent(name: string): RegistryItem | null {
 
 const sources = sourcesJson as Record<
   string,
-  { primary: string | null; rs: string | null }
+  { primary: string | null; rs: string | null; py?: string | null }
 >;
-/** lib/registry-source.ts `readComponentSource` / `readComponentSourceFor(name, "rs")`. */
+/** lib/registry-source.ts `readComponentSource` / `readComponentSourceFor(name, "rs" | "py")`. */
 export const readSource = (
   name: string,
-  kind: "primary" | "rs",
+  kind: "primary" | "rs" | "py",
 ): string | null => sources[name]?.[kind] ?? null;
 
 /** A `/v1/astro/{name}` document: mzizi-registry lib/astro.ts `AstroDocument`. */

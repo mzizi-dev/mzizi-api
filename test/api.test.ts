@@ -146,6 +146,86 @@ describe("registry", () => {
   });
 });
 
+describe("/v1/py (mzizi-registry#472)", () => {
+  type PyItem = {
+    name: string;
+    target: string;
+    package: {
+      name: string;
+      registry: string;
+      pip: string;
+      import: string;
+      module: string;
+      url: string;
+      git: string;
+    } | null;
+    files: Array<{ path: string; type: string; content: string }>;
+  };
+
+  it("serves a resilience component's Python, naming the PyPI package and module", async () => {
+    const res = await get("/v1/py/circuit-breaker");
+    expect(res.status).toBe(200);
+    expect(res.headers.get("access-control-allow-origin")).toBe("*");
+    const body = (await res.json()) as PyItem;
+    expect(body.target).toBe("python");
+    expect(body.package).toEqual({
+      name: "mzizi-resilience",
+      registry: "pypi",
+      pip: "pip install mzizi-resilience",
+      import: "mzizi_resilience",
+      module: "mzizi_resilience.circuit_breaker",
+      url: "https://pypi.org/project/mzizi-resilience/",
+      git: 'pip install "mzizi-resilience @ git+https://github.com/mzizi-dev/mzizi-registry#subdirectory=mzizi-py"',
+    });
+    expect(body.files[0].path).toBe(
+      "components/registry/n5-resilience/circuit-breaker.py",
+    );
+    expect(body.files[0].type).toBe("registry:python");
+    expect(body.files[0].content).toContain("class CircuitBreakerCore");
+  });
+
+  it("names the package for every component with a packaged .py", async () => {
+    const packaged = components.filter((c) => c.pyPackage);
+    expect(packaged.length).toBeGreaterThan(0);
+    for (const c of packaged) {
+      const body = (await (await get(`/v1/py/${c.name}`)).json()) as PyItem;
+      expect(body.package?.name).toBe("mzizi-resilience");
+      expect(body.package?.module).toBe(
+        `mzizi_resilience.${c.name.replace(/-/g, "_")}`,
+      );
+      expect(body.files[0].path).toBe(c.pyPath);
+    }
+  });
+
+  it("serves an unpackaged single-file module with package null", async () => {
+    const res = await get("/v1/py/mzizi-tokens-python");
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as PyItem;
+    expect(body.package).toBeNull();
+    expect(body.files[0].path).toBe(
+      "components/registry/n1-tokens/mzizi-tokens-python.py",
+    );
+  });
+
+  it("404s a component with no Python, and an unknown name", async () => {
+    const noPy = components.find((c) => !c.pyPath)!;
+    const res = await get(`/v1/py/${noPy.name}`);
+    expect(res.status).toBe(404);
+    expect(((await res.json()) as { error: string }).error).toBe(
+      `"${noPy.name}" has no Python implementation`,
+    );
+    const unknown = await get("/v1/py/does-not-exist");
+    expect(unknown.status).toBe(404);
+    expect(((await unknown.json()) as { error: string }).error).toBe(
+      'Component "does-not-exist" not found in registry',
+    );
+  });
+
+  it("answers on the /api/v1 spelling too", async () => {
+    expect((await get("/api/v1/py/circuit-breaker")).status).toBe(200);
+  });
+});
+
 describe("/v1/astro (mzizi-registry#397)", () => {
   type AstroItem = {
     name: string;

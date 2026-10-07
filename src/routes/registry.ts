@@ -1,6 +1,6 @@
 /**
  * The component registry: /v1/ui, /v1/ui/{name}[/docs|/versions], /v1/rs/{name},
- * /v1/astro, /v1/astro/{name},
+ * /v1/py/{name}, /v1/astro, /v1/astro/{name},
  * /v1/search, /v1/stats. Ported from mzizi-registry app/api/v1/{ui,rs,search,stats}.
  */
 import type { Hono } from "hono";
@@ -21,6 +21,9 @@ import {
   astroNotFound,
   docsBody,
   docsNotFound,
+  pyBody,
+  pyNoPython,
+  pyNotFound,
   rsBody,
   rsNoCrate,
   rsNoRust,
@@ -235,6 +238,19 @@ export function registerRegistry(v1: Hono) {
       200,
       CORS_CACHE,
     );
+  });
+
+  // The Python target (mzizi-registry#472): a component's `.py`, with the PyPI
+  // package that ships it (mzizi-registry lib/python-packages.ts), resolved at
+  // build time. Like /v1/rs, a read surface: a consumer installs the package.
+  // `package` is null for a single-file module that is not packaged.
+  v1.get("/py/:name", (c) => {
+    const name = c.req.param("name");
+    const component = readComponent(name);
+    if (!component) return json(pyNotFound(name), 404, CORS);
+    const source = readSource(name, "py");
+    if (source === null) return json(pyNoPython(name), 404, CORS);
+    return json(pyBody(component, name, source), 200, CORS_CACHE);
   });
 
   // The Astro target (mzizi-registry#397): a component's pure `.astro`, or a
