@@ -149,6 +149,15 @@ const collections = [
 ];
 const types = [...new Set(index.items.map((i) => i.type).filter(Boolean))];
 
+// /v1/py/{renamed} 308s to the current name like /v1/ui and /v1/rs; production
+// answers its route-not-found 404 until this deploys (mzizi-registry#472).
+for (const r of renames.slice(0, 3)) {
+  EXPECTED[`GET /v1/py/${r}`] = {
+    allow: ["status", "location", "body", "header:cache-control"],
+    why: "New route /v1/py/{name} (mzizi-registry#472): a renamed name 308s to the current one, as on /v1/ui and /v1/rs.",
+  };
+}
+
 const step = Number.isFinite(SAMPLE)
   ? Math.max(1, Math.floor(names.length / SAMPLE))
   : 1;
@@ -191,6 +200,7 @@ const paths = [
       `/v1/ui/${r}`,
       `/v1/ui/${r}/docs`,
       `/v1/rs/${r}`,
+      `/v1/py/${r}`,
       `/api/v1/ui/${r}?x=1`,
     ]),
   "/v1/ui/",

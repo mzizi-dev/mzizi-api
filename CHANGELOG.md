@@ -32,7 +32,8 @@ To see which registry commit production is serving, read the
   `mzizi_resilience.circuit_breaker`), the PyPI URL and the pip-from-git
   install. `package` is `null` for Python that is not packaged (N1's
   single-file `mzizi-tokens-python`). A component with no `.py` is a `404`
-  naming the missing Python build; an unknown name is the usual `404`.
+  naming the missing Python build; an unknown name is the usual `404`; a
+  renamed `nyuchi-*` name `308`s to the current one, as on `/v1/ui` and `/v1/rs`.
 - The package and module come from mzizi-registry's `lib/python-packages.ts`
   (`mzizi-py/package-for-node.json`, the map the registry's `pnpm py:generate`
   packages from), resolved at build time. `scripts/extract.ts` checks every

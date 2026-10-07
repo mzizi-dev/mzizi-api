@@ -221,6 +221,14 @@ describe("/v1/py (mzizi-registry#472)", () => {
     );
   });
 
+  it("308s a renamed component to its current name, as /v1/rs does", async () => {
+    const res = await get("/v1/py/nyuchi-a11y?x=1");
+    expect(res.status).toBe(308);
+    expect(res.headers.get("location")).toBe("/v1/py/mzizi-a11y?x=1");
+    const api = await get("/api/v1/py/nyuchi-a11y");
+    expect(api.headers.get("location")).toBe("/api/v1/py/mzizi-a11y");
+  });
+
   it("answers on the /api/v1 spelling too", async () => {
     expect((await get("/api/v1/py/circuit-breaker")).status).toBe(200);
   });

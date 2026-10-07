@@ -13,10 +13,12 @@ import { renames } from "./data";
 const COMPONENT_PATH_PREFIXES = [
   "/api/v1/ui",
   "/api/v1/rs",
+  "/api/v1/py",
   "/api/health",
   "/api/chaos",
   "/v1/ui",
   "/v1/rs",
+  "/v1/py",
 ];
 
 /** `/v1/ui/nyuchi-footer/docs` → `/v1/ui/mzizi-footer/docs`, or null. */
