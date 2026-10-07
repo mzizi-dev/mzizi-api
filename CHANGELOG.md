@@ -23,6 +23,19 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — the registry pin moves to mzizi-registry `main` at `81a37ed` (v4.7.0) (2026-10-07)
+
+- **The registry pin moves from `0caf9dc` (v4.6.0) to `81a37ed`**, registry
+  `main` at v4.7.0 (mzizi-registry#467), which adds #465 and #466. It goes
+  through `staging` in place of the bot's #67.
+- **No component is added or removed** and no status moves.
+- **Changed content:** `markdown-renderer` 1.1.0 (`/v1/ui/markdown-parse`,
+  `/v1/rs/markdown-renderer`): link addresses with a control character,
+  whitespace or credentials are refused, and rich-text lists stay nested with
+  `<ol start>`. The v4.7.0 record leads `/v1/changelog`.
+- **`scripts/parity.mjs` `EXPECTED`** lists the 4 differences; the 0caf9dc
+  entries are in #65.
+
 ### Changed — the registry pin moves to mzizi-registry `main` at `0caf9dc` (v4.6.0) (2026-10-07)
 
 - **The registry pin moves from `9f3631c` (v4.5.0) to `0caf9dc`**, registry
