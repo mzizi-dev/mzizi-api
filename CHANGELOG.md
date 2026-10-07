@@ -23,6 +23,13 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Added — `CLAUDE.md` for Claude Code (2026-10-07)
+
+- **`CLAUDE.md` imports `AGENTS.md`** and adds what it leaves out: the
+  verified commands (including how to run a single test), the build-time data
+  pipeline and request path, which files are generated, and the
+  `staging` → `main` release and versioning flow. No API response changes.
+
 ### Added — `/v1/brand` serves a `-text` pair for all 21 colour families, and each mineral's full record (2026-10-07)
 
 - **Every entry in `minerals[]`, `heritage[]` and `experimental[]` gains
