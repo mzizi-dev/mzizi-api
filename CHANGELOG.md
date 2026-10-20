@@ -23,6 +23,42 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+## [2026-10-20]
+
+Released to `main` as `v0.8.0` (#78).
+
+### Added — `CLAUDE.md` for Claude Code (2026-10-07)
+
+- **`CLAUDE.md` imports `AGENTS.md`** and adds what it leaves out: the
+  verified commands (including how to run a single test), the build-time data
+  pipeline and request path, which files are generated, and the
+  `staging` → `main` release and versioning flow. No API response changes.
+
+### Added — `/v1/brand` serves a `-text` pair for all 21 colour families, and each mineral's full record (2026-10-07)
+
+- **Every entry in `minerals[]`, `heritage[]` and `experimental[]` gains
+  `textLight` / `textDark`**: the family as text on `--base`, the value of
+  `--color-<name>-text` in `mzizi-tokens-globals.css`. Before this a caller
+  could find no text value for a family and reached for `darkHex`, an accent
+  (mzizi-registry#316). The values come from the registry's own
+  `textOnBaseTier()` at the pinned commit, and the build fails if any family
+  lacks a pair or if any value differs from that stylesheet.
+- **Each mineral also gains `onContainerLight` / `onContainerDark`** (text on
+  the mineral's container), **`role`, `family` and `sortOrder`**, so a
+  mineral is the whole `MineralToken` from the registry's
+  `lib/tokens/palette.generated.ts`, plus `hex`.
+- Additive: every field served before keeps its value and its relative order,
+  including `hex` (`mineralApiHex`). `scripts/parity.mjs` gains `added`, an
+  `EXPECTED` entry that excuses only named new keys and holds the rest of the
+  body to production. `/v1/brand` and `/api/v1/brand` use it, and the v4.8.0
+  pin's entries, which production now serves, are pruned.
+- The served OpenAPI document (the registry's `openapi.yaml` at the pin) does
+  not list these fields yet; mzizi-dev/mzizi-registry#480 adds them.
+
+## [2026-10-07]
+
+Released to `main` as `v0.5.0` (#66), `v0.6.0` (#69) and `v0.7.0` (#71).
+
 ### Changed — the registry pin moves to mzizi-registry `main` at `f70703d` (v4.8.0) (2026-10-07)
 
 - **The registry pin moves from `81a37ed` (v4.7.0) to `f70703d`**, registry
@@ -84,6 +120,10 @@ To see which registry commit production is serving, read the
 - **`scripts/parity.mjs` `EXPECTED`** lists the two routes (`/v1/brand`,
   `/api/v1/brand`); the 9f3631c entries are in #60.
 
+## [2026-10-06]
+
+Released to `main` as `v0.4.0` (#61).
+
 ### Changed — the registry pin moves to mzizi-registry `main` at `9f3631c` (v4.5.0) (2026-10-06)
 
 - **The registry pin moves from `5067b5e` (v4.4.0) to `9f3631c`**, registry
@@ -99,6 +139,10 @@ To see which registry commit production is serving, read the
   `circles` brand block (#448, #449).
 - **`scripts/parity.mjs` `EXPECTED`** lists the 7 differences from production
   with their reasons; the 5067b5e entries are in #56.
+
+## [2026-10-05]
+
+Released to `main` as `v0.1.0` (#50), `v0.2.0` (#54) and `v0.3.0` (#58).
 
 ### Added — each release to `main` is tagged as the next minor (2026-10-06)
 
@@ -214,6 +258,10 @@ mzizi-registry is now the single source of every component in every format, and 
   README, "Registry pin bump", and CONTRIBUTING are updated to match. No route,
   response or pin changes.
 
+## [2026-10-04]
+
+Merged straight to `main`, with no release tag.
+
 ### Added — `AGENTS.md` links the published design system (2026-10-04)
 
 - **`AGENTS.md` links the Design System artifact**
@@ -268,6 +316,10 @@ mzizi-registry is now the single source of every component in every format, and 
   documentation) change nothing the API serves. Strict parity against
   production showed 1 difference over 1,368 requests.
 
+## [2026-10-02]
+
+Merged straight to `main`, with no release tag.
+
 ### Security — security reports go to `security@nyuchi.com` (2026-10-03)
 
 - **`/.well-known/security.txt` now names `Contact: mailto:security@nyuchi.com`**, and `SECURITY.md`'s email fallback behind GitHub private advisories matches, in place of `security@bundu.org` (owner decision, 2026-10-03: one security contact for every repository). `Expires`, `Canonical`, `Policy` and `Preferred-Languages` are unchanged.
@@ -312,16 +364,7 @@ mzizi-registry is now the single source of every component in every format, and 
 
 - **Removed `.github/workflows/lint.yml`.** The `mzizi-dev` org ruleset now runs the shared lint on every pull request through `mzizi-dev/.github`'s `org-lint.yml`, publishing the same five `lint / …` checks, so the repo's own caller only ran lint a second time.
 
-### Added
-
-- `CHANGELOG.md`, backfilled from every merged pull request since the
-  repository began (2026-09-09).
-- The `changelog / entry required` check (`.github/workflows/changelog.yml`,
-  `scripts/changelog-gate.sh`), which fails a pull request that changes a
-  non-exempt file without adding to this file. `scripts/changelog-gate.test.sh`
-  tests the gate, and the check runs it first. The registry-pin bot's own
-  pull request is exempt only while it changes nothing but the pin; a bump that
-  someone takes over to port a handler change needs an entry like any other.
+## [2026-09-30]
 
 ### Changed
 
@@ -406,17 +449,6 @@ mzizi-registry is now the single source of every component in every format, and 
 - The registry-pin bot (`registry-pin-bump.yml`) also re-checks its pull
   request when the Changelog workflow finishes, so a bump never waits an hour
   for that check.
-
-### Fixed
-
-- README, "Registry pin bump", lists **Checks: Read-only** and **Commit statuses:
-  Read-only** for `RELEASE_BUMP_TOKEN`. The bot reads a bump's check runs and
-  status before merging; without them it fails with a 403.
-
-## [2026-09-30]
-
-### Changed
-
 - **`/v1/skills` serves `@nyuchi/mzizi-skills` 0.8.0: five skills**
   (`mzizi-language`, `mzizi-roots`, `mzizi-design`, `mzizi-backend`,
   `discoverability`). The registry pin moves to mzizi-registry `eb4935e`
@@ -434,6 +466,14 @@ mzizi-registry is now the single source of every component in every format, and 
 
 ### Added
 
+- `CHANGELOG.md`, backfilled from every merged pull request since the
+  repository began (2026-09-09).
+- The `changelog / entry required` check (`.github/workflows/changelog.yml`,
+  `scripts/changelog-gate.sh`), which fails a pull request that changes a
+  non-exempt file without adding to this file. `scripts/changelog-gate.test.sh`
+  tests the gate, and the check runs it first. The registry-pin bot's own
+  pull request is exempt only while it changes nothing but the pin; a bump that
+  someone takes over to port a handler change needs an entry like any other.
 - **The registry pin moves by itself.** `registry-pin-bump.yml` keeps one bot
   pull request on `bot/registry-pin` that sets `scripts/registry-ref.json` to
   mzizi-registry `main`. It merges (rebase) only when it is the bot's single
@@ -443,6 +483,12 @@ mzizi-registry is now the single source of every component in every format, and 
 - The Parity workflow runs on every pull request that changes the pin, or
   parity itself, against production, in `--strict` mode unless the pull request
   edits `scripts/parity.mjs`. (#16)
+
+### Fixed
+
+- README, "Registry pin bump", lists **Checks: Read-only** and **Commit statuses:
+  Read-only** for `RELEASE_BUMP_TOKEN`. The bot reads a bump's check runs and
+  status before merging; without them it fails with a 403.
 
 ## [2026-09-29]
 
