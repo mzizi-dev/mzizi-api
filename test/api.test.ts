@@ -480,6 +480,164 @@ describe("architecture and content", () => {
     ).toBe(21);
   });
 
+  // Reference values, typed out from the pinned registry (f70703d):
+  // `--{mineral,heritage,exp}-<name>-text` in the `:root` (light) and
+  // `[data-theme="dark"]` blocks of
+  // components/registry/n1-tokens/mzizi-tokens-globals.css, and the rest from
+  // lib/tokens/palette.source.ts. Independent of src/data on purpose: a test
+  // that read brand.json back would pass on whatever the build produced.
+  const TEXT: Record<string, Record<string, [string, string]>> = {
+    minerals: {
+      cobalt: ["#0047AB", "#86DCFF"],
+      sodalite: ["#283593", "#C6CFFF"],
+      terracotta: ["#8E4928", "#EBCCA3"],
+    },
+    heritage: {
+      hematite: ["#4A616B", "#C9D2D7"],
+      savanna: ["#725915", "#EBCF7D"],
+      kalahari: ["#675C46", "#E8D9B5"],
+    },
+    experimental: {
+      storm: ["#284CA6", "#C4D1F1"],
+      ember: ["#843D20", "#EEC9BA"],
+      protea: ["#932464", "#F1C4DD"],
+    },
+  };
+  const KEYS: Record<string, string[]> = {
+    minerals: [
+      "name",
+      "role",
+      "family",
+      "hex",
+      "lightHex",
+      "darkHex",
+      "containerLight",
+      "containerDark",
+      "onContainerLight",
+      "onContainerDark",
+      "textLight",
+      "textDark",
+      "cssVar",
+      "sortOrder",
+      "origin",
+      "symbolism",
+      "usage",
+    ],
+    heritage: [
+      "name",
+      "hex",
+      "lightHex",
+      "darkHex",
+      "textLight",
+      "textDark",
+      "cssVar",
+      "origin",
+      "symbolism",
+      "usage",
+    ],
+    experimental: [
+      "name",
+      "hex",
+      "lightHex",
+      "darkHex",
+      "containerLight",
+      "containerDark",
+      "onContainerLight",
+      "onContainerDark",
+      "textLight",
+      "textDark",
+      "uiLight",
+      "uiDark",
+      "cssVar",
+      "heptagonIndex",
+    ],
+  };
+
+  it("serves a -text pair on every one of the 21 colour families (mzizi-registry#316)", async () => {
+    const body = (await (await get("/v1/brand")).json()) as Record<
+      string,
+      Record<string, unknown>[]
+    >;
+    for (const family of ["minerals", "heritage", "experimental"]) {
+      expect(body[family]).toHaveLength(7);
+      for (const row of body[family]) {
+        expect(Object.keys(row), `${family}/${String(row.name)}`).toEqual(
+          KEYS[family],
+        );
+        expect(row.textLight).toMatch(/^#[0-9A-F]{6}$/);
+        expect(row.textDark).toMatch(/^#[0-9A-F]{6}$/);
+      }
+      const byName = Object.fromEntries(body[family].map((r) => [r.name, r]));
+      for (const [name, [light, dark]] of Object.entries(TEXT[family])) {
+        expect(byName[name], `${family}/${name}`).toMatchObject({
+          textLight: light,
+          textDark: dark,
+        });
+      }
+    }
+  });
+
+  it("serves each mineral's full palette record and keeps `hex` (mzizi-registry#316)", async () => {
+    const body = (await (await get("/v1/brand")).json()) as {
+      minerals: Record<string, unknown>[];
+    };
+    const byName = Object.fromEntries(body.minerals.map((m) => [m.name, m]));
+    // Every field, typed out: the text a consumer could not find before is
+    // `onContainer*` (text on the container) and `text*` (text on --base).
+    expect(byName.sodalite).toEqual({
+      name: "sodalite",
+      role: "Intelligence",
+      family: "deep-earth",
+      hex: "#283593",
+      lightHex: "#283593",
+      darkHex: "#3D5AFE",
+      containerLight: "#E8EAF6",
+      containerDark: "#0D1442",
+      onContainerLight: "#141A5C",
+      onContainerDark: "#C5CAE9",
+      textLight: "#283593",
+      textDark: "#C6CFFF",
+      cssVar: "--color-sodalite",
+      sortOrder: 5,
+      origin: "Kunene River, Namibia & South Africa",
+      symbolism: "Intelligence, depth, reasoning",
+      usage: "AI/Shamwari surfaces, deep-reasoning states",
+    });
+    // `hex` keeps its documented per-mineral value (brand.source.ts
+    // `mineralApiHex`): light for cobalt, dark for tanzanite.
+    expect(byName.cobalt.hex).toBe("#0047AB");
+    expect(byName.tanzanite.hex).toBe("#B388FF");
+  });
+
+  it("serves the heritage and experimental text pairs beside their existing values", async () => {
+    const body = (await (await get("/v1/brand")).json()) as Record<
+      string,
+      Record<string, unknown>[]
+    >;
+    expect(body.heritage.find((h) => h.name === "hematite")).toMatchObject({
+      hex: "#90A4AE",
+      lightHex: "#546E7A",
+      darkHex: "#90A4AE",
+      textLight: "#4A616B",
+      textDark: "#C9D2D7",
+      cssVar: "--color-hematite",
+    });
+    expect(body.experimental.find((e) => e.name === "storm")).toMatchObject({
+      hex: "#7E9BE0",
+      lightHex: "#284CA6",
+      darkHex: "#7E9BE0",
+      containerLight: "#DBE0EB",
+      containerDark: "#212735",
+      onContainerLight: "#1A409B",
+      onContainerDark: "#99B2EE",
+      textLight: "#284CA6",
+      textDark: "#C4D1F1",
+      uiLight: "#577BD6",
+      uiDark: "#426CD1",
+      heptagonIndex: 4,
+    });
+  });
+
   it("projects a brand's accent family only on the rows that carry one", async () => {
     const body = (await (await get("/v1/brand")).json()) as {
       ecosystem: { name: string; mineral: string; accent?: string }[];
