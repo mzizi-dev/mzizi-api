@@ -23,6 +23,24 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Fixed — parity's `added` check fails closed on malformed rows and values (2026-10-20)
+
+- **A non-object element no longer crashes the parity run.** The `added`
+  check (`EXPECTED` entries with `body:added`, used for `/v1/brand`) ran
+  `k in row` on every element, which throws a `TypeError` on a number, string
+  or boolean and rejected the whole run. Such an element, and an array where
+  an object belongs, is now an unexplained `body` difference.
+- **Each added key's value must have its field's shape.** `added` now maps
+  each key to a value check: `hex` (`#RRGGBB`) for `textLight`, `textDark`,
+  `onContainerLight` and `onContainerDark`, `index` (a whole number of zero or
+  more) for `sortOrder`, `nonEmptyString` for `role`, and `mineralFamily`
+  (`deep-earth` or `hand`) for `family`. Before this, a null or mistyped value
+  passed as long as the key was present.
+- Each response body is parsed once per request, and the check no longer
+  deletes keys from the parsed body. The comparison moved to
+  `scripts/parity-body.mjs`, tested offline by `test/parity-body.test.ts`.
+  No API response changes.
+
 ### Added — `CLAUDE.md` for Claude Code (2026-10-07)
 
 - **`CLAUDE.md` imports `AGENTS.md`** and adds what it leaves out: the
