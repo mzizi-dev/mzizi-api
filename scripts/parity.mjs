@@ -29,6 +29,7 @@
  * serves, and they must not excuse a new difference on the same route.
  */
 import { readFileSync, writeFileSync } from "node:fs";
+import { firstDiff, onlyAdded, parseJson } from "./parity-body.mjs";
 
 const args = Object.fromEntries(
   process.argv.slice(2).reduce((acc, a, i, all) => {
@@ -77,12 +78,16 @@ const HEADERS = [
  * request (a 500, a lost header) still fails the run.
  *
  * `added` is narrower than allowing `body`, for a change that only adds keys
- * to the objects of a JSON array: `{ "<top-level key>": ["<new key>", …] }`.
- * The candidate body must carry every listed key on every element of each
- * listed array; with those keys removed it must equal the baseline exactly,
+ * to the objects of a JSON array:
+ * `{ "<top-level key>": { "<new key>": "<value check>", … } }`, where the value
+ * check is one of `VALUE_CHECKS` in `scripts/parity-body.mjs` (`hex`,
+ * `nonEmptyString`, `index`, `mineralFamily`). Every element of each listed
+ * array must be an object carrying every listed key, with a value that passes
+ * its check; with those keys removed the body must equal the baseline exactly,
  * key order included. Only then is the difference the kind `body:added`,
- * which the entry's `allow` must name. Any other change to the body stays a
- * plain `body` difference and fails the run.
+ * which the entry's `allow` must name. Anything else, including a non-object
+ * element or a null or mistyped added value, stays a plain `body` difference
+ * and fails the run.
  *
  * The baseline is api.mzizi.dev, which this Worker already serves, so these
  * are only what the current registry pin changes. Earlier bumps' entries are in
@@ -105,18 +110,21 @@ const HEADERS = [
 // were pruned once production served them (they are in #70).
 const BRAND_ADDED = {
   allow: ["body:added"],
+  // The shapes of MineralToken / textOnBaseTier() at the pin: `#RRGGBB`
+  // hex strings, a non-empty role, the two mineral families, a whole-number
+  // sortOrder.
   added: {
-    minerals: [
-      "role",
-      "family",
-      "onContainerLight",
-      "onContainerDark",
-      "textLight",
-      "textDark",
-      "sortOrder",
-    ],
-    heritage: ["textLight", "textDark"],
-    experimental: ["textLight", "textDark"],
+    minerals: {
+      role: "nonEmptyString",
+      family: "mineralFamily",
+      onContainerLight: "hex",
+      onContainerDark: "hex",
+      textLight: "hex",
+      textDark: "hex",
+      sortOrder: "index",
+    },
+    heritage: { textLight: "hex", textDark: "hex" },
+    experimental: { textLight: "hex", textDark: "hex" },
   },
   why: "mzizi-registry#316: every colour family gains textLight/textDark (the registry's textOnBaseTier(), `--color-<name>-text`), and each mineral role, family, onContainerLight/onContainerDark and sortOrder from lib/tokens/palette.generated.ts. Only these keys are added; the rest of the body equals production.",
 };
@@ -322,71 +330,14 @@ function normalise(path, r) {
   return r.text;
 }
 
-function sameBody(a, b, contentType) {
-  if (contentType?.includes("json")) {
-    try {
-      return JSON.stringify(JSON.parse(a)) === JSON.stringify(JSON.parse(b));
-    } catch {
-      return a === b;
-    }
-  }
-  return a === b;
-}
-
-/** JSON-path of the first difference, for the report. */
-function firstDiff(a, b, at = "$") {
-  if (
-    typeof a !== typeof b ||
-    Array.isArray(a) !== Array.isArray(b) ||
-    a === null ||
-    b === null
-  ) {
-    return a === b
-      ? null
-      : `${at}: ${JSON.stringify(a)?.slice(0, 80)} ≠ ${JSON.stringify(b)?.slice(0, 80)}`;
-  }
-  if (typeof a !== "object")
-    return a === b
-      ? null
-      : `${at}: ${JSON.stringify(a).slice(0, 80)} ≠ ${JSON.stringify(b).slice(0, 80)}`;
-  const keys = [...new Set([...Object.keys(a), ...Object.keys(b)])];
-  if (
-    !Array.isArray(a) &&
-    Object.keys(a).join() !== Object.keys(b).join() &&
-    keys.every((k) => k in a && k in b)
-  ) {
-    return `${at}: key order differs`;
-  }
-  for (const k of keys) {
-    const d = firstDiff(a[k], b[k], `${at}.${k}`);
-    if (d) return d;
-  }
-  return null;
-}
-
 /**
- * An EXPECTED entry's `added` check: null when the candidate differs from the
- * baseline only by the listed keys, else what else differs.
+ * `aj` / `bj` are the bodies already parsed by `parseJson` (undefined when
+ * not JSON), so each body is parsed once per request.
  */
-function onlyAdded(baseline, candidate, added) {
-  let a;
-  let b;
-  try {
-    a = JSON.parse(baseline);
-    b = JSON.parse(candidate);
-  } catch {
-    return "body is not JSON";
-  }
-  for (const [section, keys] of Object.entries(added)) {
-    if (!Array.isArray(b?.[section])) return `$.${section}: not an array`;
-    for (const [i, row] of b[section].entries()) {
-      for (const k of keys) {
-        if (!row || !(k in row)) return `$.${section}.${i}.${k}: missing`;
-        delete row[k];
-      }
-    }
-  }
-  return firstDiff(a, b);
+function sameBody(a, b, aj, bj, contentType) {
+  if (contentType?.includes("json") && aj !== undefined && bj !== undefined)
+    return JSON.stringify(aj) === JSON.stringify(bj);
+  return a === b;
 }
 
 const results = [];
@@ -419,26 +370,23 @@ await Promise.all(
       }
       const lb = normalise(req.path, live);
       const cb = normalise(req.path, local);
-      if (!sameBody(lb, cb, live.headers["content-type"])) {
-        let detail = "body differs";
-        try {
-          detail =
-            "body " +
-            (firstDiff(JSON.parse(lb), JSON.parse(cb)) ??
-              "differs (serialisation)");
-        } catch {
-          detail = `body differs (${lb.length} vs ${cb.length} bytes)`;
-        }
+      const lj = parseJson(lb);
+      const cj = parseJson(cb);
+      if (!sameBody(lb, cb, lj, cj, live.headers["content-type"])) {
+        const detail =
+          lj !== undefined && cj !== undefined
+            ? "body " + (firstDiff(lj, cj) ?? "differs (serialisation)")
+            : `body differs (${lb.length} vs ${cb.length} bytes)`;
         const e = STRICT
           ? undefined
           : (EXPECTED[`${req.method} ${req.path}`] ??
             EXPECTED[`* ${req.path}`]);
-        const rest = e?.added ? onlyAdded(lb, cb, e.added) : "n/a";
+        const rest = e?.added ? onlyAdded(lj, cj, e.added) : "n/a";
         if (rest === null) {
           kinds.push("body:added");
           diffs.push(
             `body: only adds ${Object.entries(e.added)
-              .map(([k, v]) => `${k}[].{${v.join(",")}}`)
+              .map(([k, v]) => `${k}[].{${Object.keys(v).join(",")}}`)
               .join(", ")}`,
           );
         } else {
