@@ -298,7 +298,8 @@ uses its own token:
    Until it exists, every run logs a warning and does nothing.
 3. **Allow auto-merge** (Settings, General, Pull Requests) must stay on, with
    rebase merging. Both are on in both repositories (read off the GitHub API on
-   2026-09-30).
+   2026-09-30). It is there for the bot alone: people and agents never turn
+   auto-merge on for a pull request (AGENTS.md, "Merge convention").
 4. **Keep the secret visible to mzizi-registry.** Its `notify-pin-bots.yml`
    sends the `registry-main-moved` dispatch with the same `RELEASE_BUMP_TOKEN`
    org secret, which needs Contents: Read and write here (it has it already).
