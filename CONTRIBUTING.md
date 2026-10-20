@@ -102,16 +102,43 @@ route is valid. This form broke `mzizi-mcp` (agent-tools#102) and the console.
 
 ## Pull requests
 
-### Rebase-only
+### Merging: rebase, or squash; never a merge commit
 
-Merge commits and squash merges are disabled org-wide (read off the GitHub API,
-2026-09-12). Land with:
+Merge commits are off: the repo flag is `allow_merge_commit: false`, and the
+org and enterprise rulesets allow only squash and rebase and require linear
+history on `main` and `staging`. Org admins can bypass those rulesets; nobody
+else can, and nobody uses `--admin`. The earlier rebase-only note (squash off,
+read 2026-09-12) no longer matches; the live API and rulesets are the
+authority. `AGENTS.md` "Merge convention" has the full rules.
+
+Rebase a PR whose branch is linear:
 
 ```bash
-gh pr merge <n> --rebase --auto
+gh pr merge <n> --rebase
 ```
 
-Write commit messages that are worth keeping: what changed and _why_.
+Squash a PR whose branch carries merge commits, including one updated with
+"Update branch" (required checks are strict, so a PR behind its base must be
+updated first). Here the squash commit's message is the PR's title and body
+(`PR_TITLE`, `PR_BODY`), so the body must say what changed and why. Branches
+are deleted on merge by the repo setting, so `--delete-branch` adds nothing.
+
+Before merging anything:
+
+- **The merge gate.** The work is complete, CI is green, it is verified at
+  runtime, and code review has run with its findings resolved.
+- **No auto-merge.** Never pass `--auto`: it merges on green CI, before the
+  gate. Only the registry pin bot turns auto-merge on, for its own
+  `bot/registry-pin` PR (README, "Registry pin bump").
+- **Releases are the owner's.** A merge into `main` deploys `api.mzizi.dev`.
+  Only the owner, or someone the owner authorised, releases `staging` to
+  `main`: a `release/` branch made of `main` plus `staging`'s exact tree,
+  squashed, then synced back into `staging` (a branch off `staging` with
+  `main` merged in, squashed) so the trees match again.
+
+Write commit messages that are worth keeping: what changed and _why_. A rebase
+merge keeps each commit (with a new SHA, so cite commits by their SHA on
+`staging` or `main`, not on a branch); a squash keeps only the PR body.
 
 ### CI gates
 
