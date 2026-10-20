@@ -53,7 +53,7 @@ To see which registry commit production is serving, read the
   (`parity.yml` `paths`), with README and CLAUDE.md saying so. No API
   response changes.
 
-### Security — `hono` 4.13.13, past GHSA-5r4p-p66f-jhc7 (2026-10-20)
+### Security — `hono` 4.13.13 and `wrangler` 4.151.3, past GHSA-5r4p-p66f-jhc7 and GHSA-wq5f-xc86-pv6w (2026-10-20)
 
 - **`hono` moves from 4.13.10 to 4.13.13** (`^4.13.13` in `package.json`).
   [GHSA-5r4p-p66f-jhc7](https://github.com/advisories/GHSA-5r4p-p66f-jhc7)
@@ -69,6 +69,14 @@ To see which registry commit production is serving, read the
   authentication or rate limiting of its own to skip: it is read-only and
   public. Responses are unchanged, and parity against production is 1534 of
   1534 identical.
+- **`wrangler` (dev only) moves to 4.151.3, whose miniflare 5.20261019.1-beta
+  pins `sharp` 0.35.5, past
+  [GHSA-wq5f-xc86-pv6w](https://github.com/advisories/GHSA-wq5f-xc86-pv6w).**
+  `npm audit` is now 0. Every wrangler since 4.130.0 pins a prerelease
+  miniflare (4.147.0 pinned `5.20261001.0-alpha`), so this adds no new kind
+  of prerelease dependency. `@cloudflare/workers-types` moves to
+  5.20261019.1, the version wrangler 4.151.3 requires as a peer. No runtime or
+  response change.
 
 ## [2026-10-20]
 
