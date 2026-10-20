@@ -21,7 +21,7 @@
     "ci:prepare": "npm run build:data"
   },
   "dependencies": {
-    "hono": "^4.13.10"
+    "hono": "^4.13.13"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260928.1",

@@ -53,6 +53,23 @@ To see which registry commit production is serving, read the
   (`parity.yml` `paths`), with README and CLAUDE.md saying so. No API
   response changes.
 
+### Security — `hono` 4.13.13, past GHSA-5r4p-p66f-jhc7 (2026-10-20)
+
+- **`hono` moves from 4.13.10 to 4.13.13** (`^4.13.13` in `package.json`).
+  [GHSA-5r4p-p66f-jhc7](https://github.com/advisories/GHSA-5r4p-p66f-jhc7)
+  (CVE-2026-111757, moderate) affects 4.12.4 to 4.13.10, and 4.13.11 fixes it:
+  `serveStatic` decodes the request path a second time, so middleware mounted
+  on part of a static directory can be skipped for files under it.
+- **Not exploitable in this Worker; the bump clears the alert.** The Worker
+  imports nothing from `hono` but the `Hono` class: no `serveStatic`, no
+  `hono/*` middleware, and no static-assets binding in `wrangler.jsonc`. Its
+  one middleware, `app.use("*", …)` in `src/index.ts`, is mounted on every
+  path. It applies the redirects, the security headers and the CORS and
+  `X-Mzizi-Source` headers, and it runs before any route. The API has no
+  authentication or rate limiting of its own to skip: it is read-only and
+  public. Responses are unchanged, and parity against production is 1534 of
+  1534 identical.
+
 ## [2026-10-20]
 
 Released to `main` as `v0.8.0` (#78).
