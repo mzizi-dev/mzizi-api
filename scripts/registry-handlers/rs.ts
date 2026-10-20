@@ -39,7 +39,7 @@ const CORS_CACHE = {
  * Most of the registry is TypeScript-only today. Answering 200 with an empty body — or
  * falling back to the `.tsx` — would tell a Dioxus consumer that a Rust implementation
  * exists when it does not, and CLAUDE.md §8.9 is explicit: never present a target as though
- * components exist for it when the honest answer is "the source is yours to write".
+ * components exist for it when the honest answer is "no Rust build yet".
  *
  * THIS IS A READ SURFACE, NOT AN INSTALL PATH.
  *
@@ -80,9 +80,11 @@ export async function GET(
         {
           error: `"${name}" has no Rust implementation`,
           message:
-            "This component ships for React only. The contract, tokens and variants are on " +
-            `https://api.mzizi.dev/v1/ui/${encodeURIComponent(name)} — the Dioxus source is ` +
-            "yours to write against them.",
+            "This component has no Mzizi Roots (Rust) build yet. Roots components are moving to " +
+            "Mzizi's own Rust renderer: a pure `render(props) -> String`, with behaviour attached in " +
+            "the browser through `web-sys` on the component's `data-slot` root. A Rust build of this " +
+            "component would follow that shape. The contract, tokens and variants are on " +
+            `https://api.mzizi.dev/v1/ui/${encodeURIComponent(name)}.`,
         },
         { status: 404, headers: { "Access-Control-Allow-Origin": "*" } },
       );

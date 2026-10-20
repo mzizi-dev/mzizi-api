@@ -51,6 +51,25 @@ To see which registry commit production is serving, read the
 - The served OpenAPI document (the registry's `openapi.yaml` at the pin) does
   not list these fields yet; mzizi-dev/mzizi-registry#480 adds them.
 
+### Changed — `/v1/rs/{name}` no longer says the Dioxus source is yours to write
+
+- **The 404 `message` for a component with no Rust build** (`/v1/rs/{name}`, 596
+  of the 656 slugs at the current pin) now reads: "This component has no Mzizi
+  Roots (Rust) build yet. Roots components are moving to Mzizi's own Rust
+  renderer: a pure `render(props) -> String`, with behaviour attached in the
+  browser through `web-sys` on the component's `data-slot` root. A Rust build of
+  this component would follow that shape. The contract, tokens and variants are
+  on `https://api.mzizi.dev/v1/ui/{name}`." It replaces "This component ships for
+  React only … the Dioxus source is yours to write against them."
+- **Unchanged:** the status (404), the `error` text, every 200 body, and the
+  `target: "dioxus"` field on the Rust implementations that exist. Those
+  Rust crates are still built on Dioxus 0.7; they are moving to Mzizi's own
+  renderer (research track, mzizi-registry#503).
+- **`scripts/parity.mjs`** gains a prefix entry, `GET /v1/rs/*`, for these
+  596 differences: status 404, body only, and only in `$.message`. Any other
+  difference on `/v1/rs/*` still counts as unexplained. Remove the entry once
+  production serves the new message.
+
 ### Changed — the registry pin moves to mzizi-registry `main` at `f70703d` (v4.8.0) (2026-10-07)
 
 - **The registry pin moves from `81a37ed` (v4.7.0) to `f70703d`**, registry

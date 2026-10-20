@@ -123,6 +123,14 @@ const BRAND_ADDED = {
 const EXPECTED = {
   "GET /v1/brand": BRAND_ADDED,
   "GET /api/v1/brand": BRAND_ADDED,
+  // A trailing `/*` matches every path under that prefix. Used here because the
+  // no-Rust answer is one 404 per component (596 slugs), and only its message differs.
+  "GET /v1/rs/*": {
+    allow: ["body"],
+    status: 404,
+    only: "body $.message:",
+    why: "Roots copy: the no-Rust 404 message now says the component has no Mzizi Roots (Rust) build yet, and that Roots is moving to Mzizi's own Rust renderer (Dioxus was the wording before). Status, error text and every 200 body are unchanged. Remove this entry once production serves the new message.",
+  },
 };
 
 // ── Build the request list ─────────────────────────────────────────────────
@@ -463,8 +471,18 @@ results.sort((a, b) => (a.path + a.method).localeCompare(b.path + b.method));
 const key = (r) => `${r.method} ${r.path}`;
 const expectation = (r) => {
   if (STRICT) return undefined;
-  const e = EXPECTED[key(r)] ?? EXPECTED[`* ${r.path}`];
-  return e && r.kinds.every((k) => e.allow.includes(k)) ? e : undefined;
+  const prefix = Object.keys(EXPECTED).find(
+    (k) => k.endsWith("/*") && key(r).startsWith(k.slice(0, -1)),
+  );
+  const e =
+    EXPECTED[key(r)] ??
+    EXPECTED[`* ${r.path}`] ??
+    (prefix ? EXPECTED[prefix] : undefined);
+  if (!e || !r.kinds.every((k) => e.allow.includes(k))) return undefined;
+  if (e.status !== undefined && r.liveStatus !== e.status) return undefined;
+  if (e.only !== undefined && !r.diffs.every((d) => d.startsWith(e.only)))
+    return undefined;
+  return e;
 };
 const failed = results.filter((r) => r.diffs.length && !expectation(r));
 const expected = results.filter((r) => r.diffs.length && expectation(r));
