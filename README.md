@@ -431,14 +431,14 @@ bring the change back.
 The Bundu ecosystem has four API gateways. Each has its own repository and host. This
 repository is the first one, the registry API.
 
-| Gateway                                                        | Repository                                                            | Host                                   | Today                      | Decided, not built                                          |
-| -------------------------------------------------------------- | --------------------------------------------------------------------- | -------------------------------------- | -------------------------- | ----------------------------------------------------------- |
-| Mzizi API (this repository; the registry API, public and free) | `mzizi-dev/mzizi-api` (formerly `mzizi-api-gateway`)                  | `api.mzizi.dev`                        | A Hono (TypeScript) Worker | Nothing decided moves it off Hono                           |
-| Nyuchi API (B2B, scoped `nyk_` keys)                           | `nyuchi/nyuchi-api` (formerly `nyuchi/api-gateway`, private)          | `api.nyuchi.com`                       | FastAPI on Fly             | Rebuild in Rust, with the async-writes data gateway         |
-| Mukoko API (consumer app surfaces)                             | `mukoko-dev/mukoko-api` (private, unchanged)                          | `api.mukoko.com` (no DNS yet)          | Being built on Workers     | Switch to a Rust build                                      |
-| Nyuchi Servers API (internal only)                             | `nyuchi/nyuchi-servers-api` (formerly `nyuchi/data-gateway`, private) | `api.nyuchiservers.com` (no public IP) | Not built                  | Internal-only Fly origin behind a private Cloudflare Tunnel |
+| Gateway                                                        | Repository                                                            | Host                                   | Today                      | Decided, not built                                                         |
+| -------------------------------------------------------------- | --------------------------------------------------------------------- | -------------------------------------- | -------------------------- | -------------------------------------------------------------------------- |
+| Mzizi API (this repository; the registry API, public and free) | `mzizi-dev/mzizi-api` (formerly `mzizi-api-gateway`)                  | `api.mzizi.dev`                        | A Hono (TypeScript) Worker | Stays a Hono Worker for now                                                |
+| Nyuchi API (B2B, scoped `nyk_` keys)                           | `nyuchi/nyuchi-api` (formerly `nyuchi/api-gateway`, private)          | `api.nyuchi.com`                       | FastAPI on Fly             | Built in Rust, including its async-writes data gateway                     |
+| Mukoko API (consumer app surfaces)                             | `mukoko-dev/mukoko-api` (private, unchanged)                          | `api.mukoko.com` (no DNS yet)          | Being built on Workers     | Built in Rust                                                              |
+| Nyuchi Servers API (internal only)                             | `nyuchi/nyuchi-servers-api` (formerly `nyuchi/data-gateway`, private) | `api.nyuchiservers.com` (no public IP) | Not built                  | Built in Rust; internal-only Fly origin behind a private Cloudflare Tunnel |
 
-These are decisions, not shipped code. Only the Mzizi API is built, and it is the only
+These are decisions, not shipped code. Decided, not built: the Nyuchi API (including its async-writes data gateway), the Nyuchi Servers API and the Mukoko API are built in Rust; the Mzizi API stays a Hono Worker for now. Only the Mzizi API is built, and it is the only
 one this repository describes.
 
 **Build targets (decided, not built).** The Mzizi build-out covers Cloudflare Workers,
