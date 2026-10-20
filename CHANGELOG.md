@@ -23,6 +23,30 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — the merge convention: rebase or squash, never auto-merge (2026-10-20)
+
+- **The repository is no longer described as rebase-only.** `AGENTS.md`
+  ("Merge convention"), `CONTRIBUTING.md` ("Merging: rebase, or squash; never
+  a merge commit") and `CLAUDE.md` now state the settings read off the GitHub
+  API and rulesets on 2026-10-20: rebase and squash are allowed, merge commits
+  are not (`allow_merge_commit: false`; the org and enterprise rulesets allow
+  only `squash` and `rebase` and require linear history on `main` and
+  `staging`), and a squash commit's message is the PR's title and body. The
+  2026-09-12 note that squash was off no longer held.
+- **No more `gh pr merge <n> --rebase --auto`.** Auto-merge merges on green CI,
+  before the org merge gate (runtime verification and code review), so people
+  and agents never turn it on. A linear branch is rebased; one carrying merge
+  commits, including after "Update branch" (required checks are strict), is
+  squashed. Org admins can bypass the rulesets; agents never do, and nobody
+  uses `--admin`. The registry pin bot keeps using auto-merge for its own
+  `bot/registry-pin` pull request, which the README now says is its only use.
+- **Releases and sync-back are written down.** A merge into `main` deploys
+  `api.mzizi.dev`, so only the owner, or an agent the owner authorised,
+  releases `staging` to `main`: a `release/` branch of `main` plus `staging`'s
+  tree, squashed. After each release a sync PR into `staging` (a branch off
+  `staging` with `main` merged in, squashed) makes the trees match again. No
+  route, response or default changed.
+
 ### Fixed — parity's `added` check fails closed on malformed rows and values (2026-10-20)
 
 - **A non-object element no longer crashes the parity run.** The `added`
