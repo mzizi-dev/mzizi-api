@@ -70,6 +70,7 @@ import {
   spacing,
   typography,
 } from "@/lib/tokens/brand.source";
+import { textOnBaseTier } from "@/scripts/render-globals-css";
 import { OPENAPI_YAML } from "@/lib/openapi.generated";
 import { COMPONENT_RENAMES } from "@/lib/component-renames";
 import { CRATE_GIT, crateFor } from "@/lib/rust-crates";
@@ -80,7 +81,8 @@ import { GET as docsHandler } from "./registry-handlers/ui-docs";
 import { GET as versionsHandler } from "./registry-handlers/ui-versions";
 import { GET as aiInstructionHandler } from "./registry-handlers/ai-instruction";
 import { GET as rsHandler } from "./registry-handlers/rs";
-import { writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { search, type SearchableItem } from "../src/search";
 import {
   VERSIONS_NOT_SERVED,
@@ -285,6 +287,98 @@ async function checkHandlers(
   return checks;
 }
 
+/**
+ * The 21 colour families, each entry with its `-text` pair merged in:
+ * `textLight` / `textDark`, the family as text on `--base`
+ * (mzizi-registry#316). The values come from the registry's own
+ * `textOnBaseTier()` (scripts/render-globals-css.ts), called on all 21
+ * families as `renderGlobalsCss()` calls it, so they are the values the
+ * registry writes as `--{mineral,heritage,exp}-<name>-text` in
+ * mzizi-tokens-globals.css.
+ *
+ * Fails the build if any family has no text pair, and if any value differs
+ * from the one in that stylesheet at the pinned commit (read from the checkout,
+ * whose path build-data.mjs passes as argv[3]), or the stylesheet carries a
+ * `-text` family this data doesn't.
+ */
+function withTextOnBase() {
+  const sections = [
+    { key: "minerals", prefix: "mineral", rows: minerals },
+    { key: "heritageColors", prefix: "heritage", rows: heritageColors },
+    { key: "experimentalColors", prefix: "exp", rows: experimentalColors },
+  ] as const;
+  const tier = textOnBaseTier(
+    sections.flatMap((s) =>
+      s.rows.map((r) => ({
+        name: r.name,
+        lightHex: r.lightHex,
+        darkHex: r.darkHex,
+      })),
+    ),
+  );
+
+  const registryDir = process.argv[3];
+  if (!registryDir)
+    throw new Error("extract: argv[3] must be the registry checkout");
+  const css = readFileSync(
+    join(registryDir, "components/registry/n1-tokens/mzizi-tokens-globals.css"),
+    "utf8",
+  );
+  const block = (selector: string) => {
+    const at = css.indexOf(`\n${selector} {\n`);
+    if (at < 0)
+      throw new Error(`mzizi-tokens-globals.css: no \`${selector} {\` block`);
+    const body = css.slice(at, css.indexOf("\n}", at));
+    return new Map(
+      [
+        ...body.matchAll(
+          /--((?:mineral|heritage|exp)-[a-z]+)-text:\s*(#[0-9a-fA-F]{6});/g,
+        ),
+      ].map(([, name, hex]) => [name, hex.toUpperCase()]),
+    );
+  };
+  const cssText = {
+    light: block(":root"),
+    dark: block('[data-theme="dark"]'),
+  };
+
+  const problems: string[] = [];
+  const served = new Set<string>();
+  const out = Object.fromEntries(
+    sections.map((s) => [
+      s.key,
+      s.rows.map((r) => {
+        const t = tier.get(r.name);
+        const id = `${s.prefix}-${r.name}`;
+        served.add(id);
+        if (!t?.light.hex || !t?.dark.hex) {
+          problems.push(`${id}: textOnBaseTier() gave no text pair`);
+          return r;
+        }
+        for (const mode of ["light", "dark"] as const) {
+          const want = cssText[mode].get(id);
+          if (want !== t[mode].hex)
+            problems.push(
+              `${id} ${mode}: textOnBaseTier() ${t[mode].hex}, mzizi-tokens-globals.css --${id}-text ${want ?? "(absent)"}`,
+            );
+        }
+        return { ...r, textLight: t.light.hex, textDark: t.dark.hex };
+      }),
+    ]),
+  );
+  for (const mode of ["light", "dark"] as const)
+    for (const id of cssText[mode].keys())
+      if (!served.has(id))
+        problems.push(
+          `mzizi-tokens-globals.css (${mode}) has --${id}-text, which no family serves`,
+        );
+  if (problems.length)
+    throw new Error(
+      `extract: the -text pair disagrees with the registry:\n  ${problems.join("\n  ")}`,
+    );
+  return out;
+}
+
 async function main() {
   const components = readComponents().map((c) => {
     // `sources`/`sourcePath` are the on-disk index; no route serves them except
@@ -406,9 +500,7 @@ async function main() {
     },
     samples: sampleData,
     brand: {
-      minerals,
-      heritageColors,
-      experimentalColors,
+      ...withTextOnBase(),
       backgroundColors,
       brandMeta,
       ecosystem,
