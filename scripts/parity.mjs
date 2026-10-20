@@ -29,7 +29,7 @@
  * serves, and they must not excuse a new difference on the same route.
  */
 import { readFileSync, writeFileSync } from "node:fs";
-import { firstDiff, onlyAdded, parseJson } from "./parity-body.mjs";
+import { compareBodies, normaliseBody } from "./parity-body.mjs";
 
 const args = Object.fromEntries(
   process.argv.slice(2).reduce((acc, a, i, all) => {
@@ -319,27 +319,6 @@ async function hit(base, { method, path }) {
   }
 }
 
-function normalise(path, r) {
-  if (path.endsWith("/health") && r.status === 200) {
-    const j = JSON.parse(r.text);
-    j.timestamp = "<timestamp>";
-    return JSON.stringify(j);
-  }
-  if (path.endsWith("security.txt"))
-    return r.text.replace(/^Expires: .*$/m, "Expires: <expires>");
-  return r.text;
-}
-
-/**
- * `aj` / `bj` are the bodies already parsed by `parseJson` (undefined when
- * not JSON), so each body is parsed once per request.
- */
-function sameBody(a, b, aj, bj, contentType) {
-  if (contentType?.includes("json") && aj !== undefined && bj !== undefined)
-    return JSON.stringify(aj) === JSON.stringify(bj);
-  return a === b;
-}
-
 const results = [];
 let cursor = 0;
 await Promise.all(
@@ -368,33 +347,18 @@ await Promise.all(
           );
         }
       }
-      const lb = normalise(req.path, live);
-      const cb = normalise(req.path, local);
-      const lj = parseJson(lb);
-      const cj = parseJson(cb);
-      if (!sameBody(lb, cb, lj, cj, live.headers["content-type"])) {
-        const detail =
-          lj !== undefined && cj !== undefined
-            ? "body " + (firstDiff(lj, cj) ?? "differs (serialisation)")
-            : `body differs (${lb.length} vs ${cb.length} bytes)`;
-        const e = STRICT
+      const body = compareBodies(
+        normaliseBody(req.path, live.status, live.text),
+        normaliseBody(req.path, local.status, local.text),
+        live.headers["content-type"],
+        STRICT
           ? undefined
           : (EXPECTED[`${req.method} ${req.path}`] ??
-            EXPECTED[`* ${req.path}`]);
-        const rest = e?.added ? onlyAdded(lj, cj, e.added) : "n/a";
-        if (rest === null) {
-          kinds.push("body:added");
-          diffs.push(
-            `body: only adds ${Object.entries(e.added)
-              .map(([k, v]) => `${k}[].{${Object.keys(v).join(",")}}`)
-              .join(", ")}`,
-          );
-        } else {
-          kinds.push("body");
-          diffs.push(
-            e?.added ? `${detail} (beyond the added keys: ${rest})` : detail,
-          );
-        }
+              EXPECTED[`* ${req.path}`]),
+      );
+      if (body) {
+        kinds.push(body.kind);
+        diffs.push(body.diff);
       }
       results.push({
         ...req,

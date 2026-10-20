@@ -90,7 +90,9 @@ against production and needs network; a route change has to pass both.
   is not bumped by these workflows.
 - A push to `main` deploys `api.mzizi.dev` via Cloudflare Workers Builds.
 - The pin bot (`bot/registry-pin`) works against `main`, and the Parity
-  workflow runs only on PRs into `main` that touch the pin or parity files.
+  workflow runs only on PRs into `main` that touch the pin or parity files
+  (`scripts/registry-ref.json`, `scripts/parity.mjs`,
+  `scripts/parity-body.mjs`, `.github/workflows/parity.yml`).
   A PR into `staging` that moves the pin gets no automatic parity run: run
   `npm run parity` yourself and paste the summary into the PR.
 - CI runs on PRs into `main`, `staging` and `claude/**`.
