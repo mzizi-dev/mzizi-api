@@ -228,7 +228,8 @@ in `scripts/registry-ref.json` to registry `main`:
    tests, format, wrangler bundle), `secret scan`, the five `lint / *` checks,
    Workers Builds, and **`parity`**: [`parity.yml`](.github/workflows/parity.yml)
    runs on every pull request that changes `scripts/registry-ref.json` (or
-   parity itself),
+   parity itself: `scripts/parity.mjs`, `scripts/parity-body.mjs` or
+   `parity.yml`),
    building the pull request under `wrangler dev` and comparing it with
    production `https://api.mzizi.dev`. On a pull request that doesn't edit
    `scripts/parity.mjs`, as every bot bump, parity runs `--strict`: `EXPECTED`
@@ -369,8 +370,9 @@ node scripts/parity.mjs --baseline https://api.mzizi.dev --candidate http://loca
 ```
 
 The **Parity** GitHub workflow does the same, with the report as the job
-summary. It runs by hand against any two URLs, and on every pull request that
-changes `scripts/registry-ref.json`, against production. There it passes
+summary. It runs by hand against any two URLs, and against production on every
+pull request into `main` that changes `scripts/registry-ref.json`,
+`scripts/parity.mjs`, `scripts/parity-body.mjs` or `parity.yml`. There it passes
 `--strict` unless the pull request edits `scripts/parity.mjs`: `--strict`
 ignores `EXPECTED`, so every difference counts as unexplained (see
 [Registry pin bump](#registry-pin-bump)).

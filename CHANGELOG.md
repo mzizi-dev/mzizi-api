@@ -36,10 +36,22 @@ To see which registry commit production is serving, read the
   more) for `sortOrder`, `nonEmptyString` for `role`, and `mineralFamily`
   (`deep-earth` or `hand`) for `family`. Before this, a null or mistyped value
   passed as long as the key was present.
-- Each response body is parsed once per request, and the check no longer
-  deletes keys from the parsed body. The comparison moved to
+- **The `added` spec is checked before any body.** A check name must be one
+  of `VALUE_CHECKS`' own names, so `constructor`, `valueOf` and the rest of
+  `Object.prototype` are unknown checks (`valueOf` used to throw), and a typo
+  is reported even when the array it covers is empty.
+- **A 200 `/health` body that isn't JSON no longer crashes the run.** It is
+  compared as it is, and reported as a body difference.
+- **Key order counts only own keys.** `firstDiff` used `in`, which follows the
+  prototype chain, so a missing `toString` key read as a key-order difference.
+- Identical bodies are not parsed at all; differing ones are parsed once per
+  request, and the report's detail is worked out only for a `body`
+  difference. The check no longer deletes keys from the parsed body. The
+  comparison and the `/health` and `security.txt` normalisation moved to
   `scripts/parity-body.mjs`, tested offline by `test/parity-body.test.ts`.
-  No API response changes.
+- **The Parity workflow also runs on a change to `scripts/parity-body.mjs`**
+  (`parity.yml` `paths`), with README and CLAUDE.md saying so. No API
+  response changes.
 
 ### Added — `CLAUDE.md` for Claude Code (2026-10-07)
 

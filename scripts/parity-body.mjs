@@ -30,7 +30,9 @@ export const VALUE_CHECKS = {
   mineralFamily: (v) => v === "deep-earth" || v === "hand",
 };
 
-const isObject = (v) => typeof v === "object" && v !== null;
+/** A JSON object: not null, not an array, not a primitive. */
+export const isRecord = (v) =>
+  typeof v === "object" && v !== null && !Array.isArray(v);
 
 /** JSON-path of the first difference between two parsed values, or null. */
 export function firstDiff(a, b, at = "$") {
@@ -52,7 +54,7 @@ export function firstDiff(a, b, at = "$") {
   if (
     !Array.isArray(a) &&
     Object.keys(a).join() !== Object.keys(b).join() &&
-    keys.every((k) => k in a && k in b)
+    keys.every((k) => Object.hasOwn(a, k) && Object.hasOwn(b, k))
   ) {
     return `${at}: key order differs`;
   }
@@ -64,36 +66,50 @@ export function firstDiff(a, b, at = "$") {
 }
 
 /**
+ * Checks an `added` spec on its own, before any body is looked at, so a typo
+ * in a check name is reported even when the array it covers is empty. Only
+ * VALUE_CHECKS' own names count: `constructor`, `valueOf` and the rest of
+ * Object.prototype are unknown checks. Returns null, or what is wrong.
+ */
+export function checkAddedSpec(added) {
+  if (!isRecord(added)) return "added: not an object";
+  for (const [section, keys] of Object.entries(added)) {
+    if (!isRecord(keys)) return `added.${section}: not an object`;
+    for (const [k, check] of Object.entries(keys))
+      if (typeof check !== "string" || !Object.hasOwn(VALUE_CHECKS, check))
+        return `added.${section}.${k}: unknown value check ${JSON.stringify(check)}`;
+  }
+  return null;
+}
+
+/**
  * An EXPECTED entry's `added` check, on parsed bodies. `added` maps each
  * top-level array to the keys it gains and the VALUE_CHECKS name each value
  * must pass: `{ minerals: { textLight: "hex", sortOrder: "index" } }`.
  *
- * Returns null when every element of each listed array is an object carrying
- * every listed key with a value of its shape, and the candidate with those
- * keys removed equals the baseline exactly (key order included). Otherwise
- * it returns what else differs, which the caller counts as a plain `body`
- * difference.
+ * Returns null when the spec is valid, every element of each listed array is
+ * an object carrying every listed key with a value of its shape, and the
+ * candidate with those keys removed equals the baseline exactly (key order
+ * included). Otherwise it returns what else differs, which the caller counts
+ * as a plain `body` difference.
  */
 export function onlyAdded(baseline, candidate, added) {
+  const specError = checkAddedSpec(added);
+  if (specError) return specError;
   if (baseline === undefined || candidate === undefined)
     return "body is not JSON";
-  if (!isObject(candidate) || Array.isArray(candidate))
-    return "$: not an object";
+  if (!isRecord(candidate)) return "$: not an object";
   const stripped = { ...candidate };
   for (const [section, keys] of Object.entries(added)) {
     const rows = candidate[section];
     if (!Array.isArray(rows)) return `$.${section}: not an array`;
     const out = [];
     for (const [i, row] of rows.entries()) {
-      if (!isObject(row) || Array.isArray(row))
-        return `$.${section}.${i}: not an object`;
+      if (!isRecord(row)) return `$.${section}.${i}: not an object`;
       const rest = { ...row };
       for (const [k, check] of Object.entries(keys)) {
-        const ok = VALUE_CHECKS[check];
-        if (!ok)
-          return `$.${section}.${i}.${k}: unknown value check "${check}"`;
         if (!Object.hasOwn(row, k)) return `$.${section}.${i}.${k}: missing`;
-        if (!ok(row[k]))
+        if (!VALUE_CHECKS[check](row[k]))
           return `$.${section}.${i}.${k}: ${JSON.stringify(row[k])?.slice(0, 40)} is not ${check}`;
         delete rest[k];
       }
@@ -102,4 +118,59 @@ export function onlyAdded(baseline, candidate, added) {
     stripped[section] = out;
   }
   return firstDiff(baseline, stripped);
+}
+
+/**
+ * A response body with its run-to-run noise replaced: /health's `timestamp`
+ * and security.txt's `Expires`. A 200 /health body that isn't a JSON object
+ * comes back unchanged, to be compared (and reported) as it is.
+ */
+export function normaliseBody(path, status, text) {
+  if (path.endsWith("/health") && status === 200) {
+    const j = parseJson(text);
+    if (!isRecord(j)) return text;
+    j.timestamp = "<timestamp>";
+    return JSON.stringify(j);
+  }
+  if (path.endsWith("security.txt"))
+    return text.replace(/^Expires: .*$/m, "Expires: <expires>");
+  return text;
+}
+
+/**
+ * One request's body comparison: `null` when the bodies match, else
+ * `{ kind, diff }`, `kind` being `body:added` (excused by `expected.added`)
+ * or `body`. Identical text is never parsed; otherwise each body is parsed
+ * once. A JSON content type compares the parsed values, so a serialisation
+ * difference alone isn't one. The report's detail is worked out only for a
+ * `body` difference.
+ */
+export function compareBodies(lb, cb, contentType, expected) {
+  if (lb === cb) return null;
+  const lj = parseJson(lb);
+  const cj = parseJson(cb);
+  const parsed = lj !== undefined && cj !== undefined;
+  if (
+    contentType?.includes("json") &&
+    parsed &&
+    JSON.stringify(lj) === JSON.stringify(cj)
+  )
+    return null;
+  const rest = expected?.added ? onlyAdded(lj, cj, expected.added) : "n/a";
+  if (rest === null)
+    return {
+      kind: "body:added",
+      diff: `body: only adds ${Object.entries(expected.added)
+        .map(([k, v]) => `${k}[].{${Object.keys(v).join(",")}}`)
+        .join(", ")}`,
+    };
+  const detail = parsed
+    ? "body " + (firstDiff(lj, cj) ?? "differs (serialisation)")
+    : `body differs (${lb.length} vs ${cb.length} bytes)`;
+  return {
+    kind: "body",
+    diff: expected?.added
+      ? `${detail} (beyond the added keys: ${rest})`
+      : detail,
+  };
 }
