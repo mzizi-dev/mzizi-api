@@ -136,7 +136,7 @@ Released to `main` as `v0.8.0` (#78).
   completes the rename.
 - **README "The four API gateways"** lists the Mzizi, Nyuchi (B2B), Mukoko (consumer) and Nyuchi
   Servers (internal) gateways, with their repositories and hosts. Only the Mzizi API is built
-  here. The Rust rebuilds of the Nyuchi and Mukoko APIs are decided, not built.
+  here. Decided, not built: the Nyuchi API (including its async-writes data gateway), the Nyuchi Servers API and the Mukoko API are built in Rust; the Mzizi API stays a Hono Worker for now.
 - **README "Build targets" and "Fly regions"** record the decisions as direction: Workers,
   containers and bare metal; stateless origins in `jnb`, `cdg` and `sin`, with data services
   staying in `jnb`. No latency figures are claimed.
