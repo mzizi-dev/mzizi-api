@@ -4,6 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 @AGENTS.md
 
+The repository is `mzizi-dev/mzizi-api` (formerly `mzizi-api-gateway`). The Worker, the
+package and the `X-Mzizi-Source` header keep the old name until a deploy-affecting rename is
+decided.
+
 AGENTS.md (imported above) holds the repo's rules: no Supabase or database, the
 read-only API, the `wrangler.jsonc` custom-domain form, the registry pin bot,
 the changelog rule and the merge convention (squash through the merge queue,

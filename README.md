@@ -1,16 +1,23 @@
-# Mzizi API gateway
+# Mzizi API
 
 > `api.mzizi.dev`: the Mzizi registry API as a **Hono Cloudflare Worker**, served from registry data bundled at build time. No origin, no database, no Supabase.
 
-[![CI](https://github.com/mzizi-dev/mzizi-api-gateway/actions/workflows/ci.yml/badge.svg)](https://github.com/mzizi-dev/mzizi-api-gateway/actions/workflows/ci.yml)
-[![Lint](https://github.com/mzizi-dev/mzizi-api-gateway/actions/workflows/lint.yml/badge.svg)](https://github.com/mzizi-dev/mzizi-api-gateway/actions/workflows/lint.yml)
+[![CI](https://github.com/mzizi-dev/mzizi-api/actions/workflows/ci.yml/badge.svg)](https://github.com/mzizi-dev/mzizi-api/actions/workflows/ci.yml)
+[![Lint](https://github.com/mzizi-dev/mzizi-api/actions/workflows/lint.yml/badge.svg)](https://github.com/mzizi-dev/mzizi-api/actions/workflows/lint.yml)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 ![Hono](https://img.shields.io/badge/Hono-4-E36002?style=flat-square&logo=hono&logoColor=white)
 ![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-F38020?style=flat-square&logo=cloudflare&logoColor=white)
 
-**Package:** `mzizi-api-gateway` (private) | **Live API:** [api.mzizi.dev](https://api.mzizi.dev/v1/health) | **Docs:** [docs.mzizi.dev](https://docs.mzizi.dev)
+**Repository:** `mzizi-dev/mzizi-api` (formerly `mzizi-api-gateway`) | **Package and Worker:** `mzizi-api-gateway` (private) | **Live API:** [api.mzizi.dev](https://api.mzizi.dev/v1/health) | **Docs:** [docs.mzizi.dev](https://docs.mzizi.dev)
 
 ---
+
+**The rename.** The repository is `mzizi-dev/mzizi-api`, formerly `mzizi-api-gateway`.
+The Worker name in `wrangler.jsonc`, the package name and the `X-Mzizi-Source` header still
+say `mzizi-api-gateway`. Changing them changes the deployed Worker's name and the header that
+readers use to find the registry commit, so it is a separate decision and is not part of the
+repository rename. Until the owner completes the repository rename, links to
+`mzizi-dev/mzizi-api` return 404.
 
 ## Owner decision (2026-09-28)
 
@@ -275,7 +282,7 @@ uses its own token:
    write access that isn't an organisation owner, so the org ruleset's owner
    bypass can never apply to it:
    - Resource owner: `mzizi-dev`.
-   - Repository access: only `mzizi-dev/mzizi-api-gateway` and
+   - Repository access: only `mzizi-dev/mzizi-api` (formerly `mzizi-api-gateway`) and
      `mzizi-dev/agent-tools`.
    - Repository permissions: **Contents: Read and write**, **Pull requests:
      Read and write**, **Workflows: Read and write** (Metadata: Read is added
@@ -332,6 +339,12 @@ What that means for this API:
   crates.io release. `scripts/extract.ts` checks every `/v1/rs/{name}` answer
   against the registry's last handler for it (`scripts/registry-handlers/rs.ts`,
   ported from 270af9f).
+- **Renderer (decided, not built here).** Mzizi components are built in-house in Rust, not
+  borrowed from another framework. Roots render with Mzizi's own `render(props) -> String`; the
+  skeleton and six static primitives are merged in mzizi-registry
+  ([#506](https://github.com/mzizi-dev/mzizi-registry/pull/506),
+  [#510](https://github.com/mzizi-dev/mzizi-registry/pull/510)). Dioxus remains a dependency of
+  several crates until that migration finishes, and no Dioxus, Leptos or Yew goes into new work.
 - **The direction** is for Rust to be the first answer: Roots components listed
   and described ahead of their React counterparts, and new component endpoints
   designed around the Rust implementation. The registry has had no route
@@ -413,15 +426,40 @@ faster than that, roll this Worker back to its previous deployment
 in the Cloudflare dashboard), then revert on `main` so the next deploy does not
 bring the change back.
 
+## The four API gateways
+
+The Bundu ecosystem has four API gateways. Each has its own repository and host. This
+repository is the first one, the registry API.
+
+| Gateway                                                        | Repository                                                            | Host                                   | Today                      | Decided, not built                                          |
+| -------------------------------------------------------------- | --------------------------------------------------------------------- | -------------------------------------- | -------------------------- | ----------------------------------------------------------- |
+| Mzizi API (this repository; the registry API, public and free) | `mzizi-dev/mzizi-api` (formerly `mzizi-api-gateway`)                  | `api.mzizi.dev`                        | A Hono (TypeScript) Worker | Nothing decided moves it off Hono                           |
+| Nyuchi API (B2B, scoped `nyk_` keys)                           | `nyuchi/nyuchi-api` (formerly `nyuchi/api-gateway`, private)          | `api.nyuchi.com`                       | FastAPI on Fly             | Rebuild in Rust, with the async-writes data gateway         |
+| Mukoko API (consumer app surfaces)                             | `mukoko-dev/mukoko-api` (private, unchanged)                          | `api.mukoko.com` (no DNS yet)          | Being built on Workers     | Switch to a Rust build                                      |
+| Nyuchi Servers API (internal only)                             | `nyuchi/nyuchi-servers-api` (formerly `nyuchi/data-gateway`, private) | `api.nyuchiservers.com` (no public IP) | Not built                  | Internal-only Fly origin behind a private Cloudflare Tunnel |
+
+These are decisions, not shipped code. Only the Mzizi API is built, and it is the only
+one this repository describes.
+
+**Build targets (decided, not built).** The Mzizi build-out covers Cloudflare Workers,
+containers (any OCI host, such as Fly machines) and bare metal (a native Linux binary). This
+repository is a Cloudflare Worker today, and no decision moves the Mzizi API to another target.
+
+**Fly regions (decided, not built).** Stateless gateway origins are decided to run in `jnb`
+(Johannesburg), `cdg` (Paris, with `mad` Madrid second) and `sin` (Singapore). The intended
+coverage is a routing rationale: `jnb` for Southern and East Africa, `cdg` for North and West
+Africa and Europe, and `sin` for Asia-Pacific. Stateful data services stay primary in `jnb`
+until a replication design exists. No latency figures are claimed for any region.
+
 ## Related repositories
 
-| Repository                                                      | What it is                                     | Address                                |
-| --------------------------------------------------------------- | ---------------------------------------------- | -------------------------------------- |
-| [`mzizi`](https://github.com/mzizi-dev/mzizi)                   | The language: Rust compiler research, Phase 0  | —                                      |
-| [`mzizi-registry`](https://github.com/mzizi-dev/mzizi-registry) | The component registry, brand and architecture | [mzizi.dev](https://mzizi.dev)         |
-| [`mzizi-console`](https://github.com/mzizi-dev/mzizi-console)   | The console, run under Nyuchi; reads this API  | [app.mzizi.dev](https://app.mzizi.dev) |
-| [`mzizi-site`](https://github.com/mzizi-dev/mzizi-site)         | Mzizi's front door                             | [mzizi.dev](https://mzizi.dev)         |
-| `mzizi-api-gateway`                                             | This repository                                | [api.mzizi.dev](https://api.mzizi.dev) |
+| Repository                                                                           | What it is                                     | Address                                |
+| ------------------------------------------------------------------------------------ | ---------------------------------------------- | -------------------------------------- |
+| [`mzizi`](https://github.com/mzizi-dev/mzizi)                                        | The language: Rust compiler research, Phase 0  | —                                      |
+| [`mzizi-registry`](https://github.com/mzizi-dev/mzizi-registry)                      | The component registry, brand and architecture | [mzizi.dev](https://mzizi.dev)         |
+| [`mzizi-console`](https://github.com/mzizi-dev/mzizi-console)                        | The console, run under Nyuchi; reads this API  | [app.mzizi.dev](https://app.mzizi.dev) |
+| [`mzizi-site`](https://github.com/mzizi-dev/mzizi-site)                              | Mzizi's front door                             | [mzizi.dev](https://mzizi.dev)         |
+| [`mzizi-api`](https://github.com/mzizi-dev/mzizi-api) (formerly `mzizi-api-gateway`) | This repository                                | [api.mzizi.dev](https://api.mzizi.dev) |
 
 ## Contributing
 
@@ -437,5 +475,5 @@ convention.
 Licensed under the [Apache License 2.0](LICENSE).
 
 Mzizi is an independent open-architecture project that owns, operates and
-develops its framework, design system, registry, docs and this API gateway. The
+develops its framework, design system, registry, docs and this API. The
 Mzizi console and everything revenue-generating are run under **Nyuchi**.

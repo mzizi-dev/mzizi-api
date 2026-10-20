@@ -127,6 +127,23 @@ To see which registry commit production is serving, read the
 
 Released to `main` as `v0.8.0` (#78).
 
+### Changed — documentation for the repository rename and the 2026-10-20 decisions (2026-10-20)
+
+- **The repository is named `mzizi-dev/mzizi-api`** (formerly `mzizi-api-gateway`). The README,
+  AGENTS.md, CLAUDE.md and the badges now use the new name. The Worker name, the package name
+  and the `X-Mzizi-Source` header are unchanged: they are the deployed Worker's identity and
+  changing them is a separate decision. Links to the new name return 404 until the owner
+  completes the rename.
+- **README "The four API gateways"** lists the Mzizi, Nyuchi (B2B), Mukoko (consumer) and Nyuchi
+  Servers (internal) gateways, with their repositories and hosts. Only the Mzizi API is built
+  here. The Rust rebuilds of the Nyuchi and Mukoko APIs are decided, not built.
+- **README "Build targets" and "Fly regions"** record the decisions as direction: Workers,
+  containers and bare metal; stateless origins in `jnb`, `cdg` and `sin`, with data services
+  staying in `jnb`. No latency figures are claimed.
+- **README "Renderer"** records that Mzizi Roots render with Mzizi's own `render(props)`
+  (mzizi-registry#506 and #510, merged), and that Dioxus stays in several crates until the
+  migration finishes. The registry route `/v1/rs/{name}` still serves the Dioxus source today.
+
 ### Added — `CLAUDE.md` for Claude Code (2026-10-07)
 
 - **`CLAUDE.md` imports `AGENTS.md`** and adds what it leaves out: the
