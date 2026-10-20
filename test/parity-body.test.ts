@@ -2,9 +2,13 @@
  * Offline checks of parity's body comparison (scripts/parity-body.mjs): the
  * `added` check that lets an EXPECTED entry excuse only named new keys.
  */
-import { describe, expect, it } from "vite-plus/test";
+import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import {
+  checkAddedSpec,
+  compareBodies,
   firstDiff,
+  isRecord,
+  normaliseBody,
   onlyAdded,
   parseJson,
   VALUE_CHECKS,
@@ -87,9 +91,9 @@ describe("onlyAdded", () => {
     for (const [k, v] of cases) {
       const c = candidate();
       (c.minerals[0] as Record<string, unknown>)[k] = v;
-      expect(onlyAdded(baseline, c, ADDED)).toMatch(
-        new RegExp(`^\\$\\.minerals\\.0\\.${k}: .* is not `),
-      );
+      const got = onlyAdded(baseline, c, ADDED);
+      expect(got?.startsWith(`$.minerals.0.${k}: `)).toBe(true);
+      expect(got).toContain(" is not ");
     }
   });
 
@@ -117,13 +121,131 @@ describe("onlyAdded", () => {
 
   it("names an unknown value check rather than passing it", () => {
     const spec = { heritage: { textLight: "colour" } } as unknown as AddedSpec;
-    expect(onlyAdded(baseline, candidate(), spec)).toMatch(
-      /unknown value check "colour"/,
+    expect(onlyAdded(baseline, candidate(), spec)).toBe(
+      'added.heritage.textLight: unknown value check "colour"',
+    );
+  });
+
+  it("treats Object.prototype names as unknown checks, without throwing", () => {
+    for (const name of [
+      "constructor",
+      "valueOf",
+      "toString",
+      "hasOwnProperty",
+      "__proto__",
+    ]) {
+      const spec = { heritage: { textLight: name } } as unknown as AddedSpec;
+      expect(() => onlyAdded(baseline, candidate(), spec)).not.toThrow();
+      expect(onlyAdded(baseline, candidate(), spec)).toBe(
+        `added.heritage.textLight: unknown value check ${JSON.stringify(name)}`,
+      );
+    }
+  });
+
+  it("reports a typo in the spec even when the array is empty", () => {
+    const spec = { heritage: { textLight: "hexx" } } as unknown as AddedSpec;
+    const empty = { ...candidate(), heritage: [] };
+    expect(onlyAdded({ ...baseline, heritage: [] }, empty, spec)).toBe(
+      'added.heritage.textLight: unknown value check "hexx"',
     );
   });
 });
 
-describe("parseJson, firstDiff and VALUE_CHECKS", () => {
+describe("checkAddedSpec", () => {
+  it("accepts a well-formed spec and rejects malformed ones", () => {
+    expect(checkAddedSpec(ADDED)).toBeNull();
+    expect(checkAddedSpec(null)).toBe("added: not an object");
+    expect(checkAddedSpec(["minerals"])).toBe("added: not an object");
+    expect(checkAddedSpec({ minerals: ["textLight"] })).toBe(
+      "added.minerals: not an object",
+    );
+    expect(checkAddedSpec({ minerals: { textLight: 7 } })).toBe(
+      "added.minerals.textLight: unknown value check 7",
+    );
+  });
+});
+
+describe("normaliseBody", () => {
+  it("blanks /health's timestamp", () => {
+    expect(
+      normaliseBody("/v1/health", 200, '{"status":"ok","timestamp":"t1"}'),
+    ).toBe('{"status":"ok","timestamp":"<timestamp>"}');
+  });
+
+  it("returns a 200 /health body that is not a JSON object unchanged", () => {
+    for (const text of ["<html>oops</html>", "", "[1]", "null", "5"]) {
+      expect(() => normaliseBody("/v1/health", 200, text)).not.toThrow();
+      expect(normaliseBody("/v1/health", 200, text)).toBe(text);
+    }
+  });
+
+  it("blanks security.txt's Expires", () => {
+    expect(
+      normaliseBody("/.well-known/security.txt", 200, "A\nExpires: x\nB"),
+    ).toBe("A\nExpires: <expires>\nB");
+  });
+});
+
+describe("compareBodies", () => {
+  afterEach(() => vi.restoreAllMocks());
+  const json = "application/json";
+  const expected = { added: ADDED };
+
+  it("never parses identical bodies", () => {
+    const parse = vi.spyOn(JSON, "parse");
+    expect(compareBodies('{"a":1}', '{"a":1}', json)).toBeNull();
+    expect(parse).not.toHaveBeenCalled();
+  });
+
+  it("parses each differing body once", () => {
+    const parse = vi.spyOn(JSON, "parse");
+    compareBodies(
+      JSON.stringify(baseline),
+      JSON.stringify(candidate()),
+      json,
+      expected,
+    );
+    expect(parse).toHaveBeenCalledTimes(2);
+  });
+
+  it("ignores a serialisation-only difference for JSON content", () => {
+    expect(compareBodies('{"a":1}', '{ "a": 1 }', json)).toBeNull();
+    expect(compareBodies('{"a":1}', '{ "a": 1 }', "text/plain")).toEqual({
+      kind: "body",
+      diff: "body differs (serialisation)",
+    });
+  });
+
+  it("excuses only the listed additions", () => {
+    expect(
+      compareBodies(
+        JSON.stringify(baseline),
+        JSON.stringify(candidate()),
+        json,
+        expected,
+      )?.kind,
+    ).toBe("body:added");
+    const c = candidate();
+    c.minerals[0]!.hex = "#000000";
+    const got = compareBodies(
+      JSON.stringify(baseline),
+      JSON.stringify(c),
+      json,
+      expected,
+    );
+    expect(got?.kind).toBe("body");
+    expect(got?.diff).toContain("(beyond the added keys: $.minerals.0.hex: ");
+  });
+
+  it("reports non-JSON bodies by size, without throwing", () => {
+    expect(compareBodies("<a>", "<bb>", "text/html")).toEqual({
+      kind: "body",
+      diff: "body differs (3 vs 4 bytes)",
+    });
+  });
+});
+
+describe("parseJson, firstDiff, isRecord and VALUE_CHECKS", () => {
   it("parseJson returns undefined for text that is not JSON", () => {
     expect(parseJson("<html>")).toBeUndefined();
     expect(parseJson('{"a":1}')).toEqual({ a: 1 });
@@ -135,6 +257,19 @@ describe("parseJson, firstDiff and VALUE_CHECKS", () => {
       "$: key order differs",
     );
     expect(firstDiff({ a: [1, 2] }, { a: [1, 3] })).toMatch(/^\$\.a\.1: /);
+  });
+
+  it("firstDiff counts only own keys for key order", () => {
+    // `toString` is on b's prototype, not on b: a missing key, not key order.
+    expect(firstDiff({ x: 1, toString: "t" }, { x: 1 })).toBe(
+      '$.toString: "t" ≠ undefined',
+    );
+  });
+
+  it("isRecord is true only for plain JSON objects", () => {
+    expect(isRecord({})).toBe(true);
+    for (const v of [null, [], 1, "s", true, undefined])
+      expect(isRecord(v)).toBe(false);
   });
 
   it("hex accepts #RRGGBB only", () => {
