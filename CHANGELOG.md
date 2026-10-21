@@ -23,6 +23,22 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — `vite-plus` 1.3.0, and every dependency stated as a minimum (2026-10-21)
+
+- **`vite-plus` moves from 1.0.0 to 1.3.0** (oxfmt 0.73, oxlint 1.88, Vitest
+  5.0.5). Nothing a caller of the API receives changes: `hono` stays at
+  4.13.13, and `vite-plus` is a dev dependency.
+- **Every dependency in `package.json` is now a minimum, `>=x.y.z`,** with no
+  upper bound (owner, 2026-10-21: "mark packages with minimum acceptable,
+  latest shouldn't be a blocker on too old of a version"). Each floor is the
+  version the lockfile already resolved, so no resolution moves except the
+  `vite-plus` tree. `@cloudflare/workers-types` reads `>=5.20261019.1`, the
+  version the lockfile held, not the older `^5.20260928.1` it was declared as.
+- One older entry below is reworded, not changed in meaning: a code span that
+  wrapped across a line inside a list item is kept on one line, because oxfmt
+  0.73 and prettier 3.9.4 indent that wrapped line differently and no
+  formatting satisfies both.
+
 ### Changed — `/v1/rs/{name}` no longer says the Dioxus source is yours to write
 
 - **The 404 `message` for a component with no Rust build** (`/v1/rs/{name}`, 596
@@ -646,10 +662,10 @@ Merged straight to `main`, with no release tag.
   as the operator. The pin moves to mzizi-registry `ce68c64` (registry #373).
   (#14)
 - **`/v1/ui/{name}/docs`, `/v1/search` and `/v1/ai/instructions/{name}` answer
-  from the registry's files** instead of `503 {"error":"Database not
-configured"}`. `/v1/ui/{name}/versions` still answers 503, and its body now
-  says why: version history is console-owned data and this API has no
-  database. The pin moves to mzizi-registry `f19bb0b`. (#13)
+  from the registry's files** instead of replying
+  with `503 {"error":"Database not configured"}`. `/v1/ui/{name}/versions`
+  still answers 503, and its body now says why: version history is
+  console-owned data and this API has no database. The pin moves to mzizi-registry `f19bb0b`. (#13)
 - `wrangler.jsonc` declares `api.mzizi.dev` as this Worker's custom domain, so
   every production deploy keeps it. The owner moved the domain from the
   mzizi-registry Worker to this one on 2026-09-29; parity after the move was

@@ -21,13 +21,13 @@
     "ci:prepare": "npm run build:data"
   },
   "dependencies": {
-    "hono": "^4.13.13"
+    "hono": ">=4.13.13"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20260928.1",
-    "esbuild": "^0.28.2",
-    "typescript": "^5.9.3",
-    "vite-plus": "^1.0.0",
-    "wrangler": "^4.151.3"
+    "@cloudflare/workers-types": ">=5.20261019.1",
+    "esbuild": ">=0.28.2",
+    "typescript": ">=5.9.3",
+    "vite-plus": ">=1.3.0",
+    "wrangler": ">=4.151.3"
   }
 }
