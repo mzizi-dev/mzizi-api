@@ -1,10 +1,15 @@
-# AGENTS.md — mzizi-api-gateway
+# AGENTS.md — mzizi-api (formerly mzizi-api-gateway)
 
 > Vendor-neutral instructions for any AI agent working in this repository. See
 > [`README.md`](./README.md) for the status, the data pipeline and the cutover
 > steps, and [`CONTRIBUTING.md`](./CONTRIBUTING.md) for the change procedure.
 
 ## What this repo is
+
+The repository is `mzizi-dev/mzizi-api`, formerly `mzizi-api-gateway`. The Worker name,
+the package name and the `X-Mzizi-Source` header still say `mzizi-api-gateway`; changing them
+is a deploy decision, not part of the rename. It is the Mzizi API, one of the four API
+gateways (see README, "The four API gateways"). Only this one is the registry API.
 
 A **Hono (TypeScript) Cloudflare Worker** serving `api.mzizi.dev`, the
 Mzizi registry API. **Owner decision, 2026-09-28:** the API Worker is Hono,
