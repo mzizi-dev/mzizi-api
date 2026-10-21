@@ -23,6 +23,30 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — the merge convention: rebase or squash, never auto-merge (2026-10-20)
+
+- **The repository is no longer described as rebase-only.** `AGENTS.md`
+  ("Merge convention"), `CONTRIBUTING.md` ("Merging: rebase, or squash; never
+  a merge commit") and `CLAUDE.md` now state the settings read off the GitHub
+  API and rulesets on 2026-10-20: rebase and squash are allowed, merge commits
+  are not (`allow_merge_commit: false`; the org and enterprise rulesets allow
+  only `squash` and `rebase` and require linear history on `main` and
+  `staging`), and a squash commit's message is the PR's title and body. The
+  2026-09-12 note that squash was off no longer held.
+- **No more `gh pr merge <n> --rebase --auto`.** Auto-merge merges on green CI,
+  before the org merge gate (runtime verification and code review), so people
+  and agents never turn it on. A linear branch is rebased; one carrying merge
+  commits, including after "Update branch" (required checks are strict), is
+  squashed. Org admins can bypass the rulesets; agents never do, and nobody
+  uses `--admin`. The registry pin bot keeps using auto-merge for its own
+  `bot/registry-pin` pull request, which the README now says is its only use.
+- **Releases and sync-back are written down.** A merge into `main` deploys
+  `api.mzizi.dev`, so only the owner, or an agent the owner authorised,
+  releases `staging` to `main`: a `release/` branch of `main` plus `staging`'s
+  tree, squashed. After each release a sync PR into `staging` (a branch off
+  `staging` with `main` merged in, squashed) makes the trees match again. No
+  route, response or default changed.
+
 ### Fixed — parity's `added` check fails closed on malformed rows and values (2026-10-20)
 
 - **A non-object element no longer crashes the parity run.** The `added`
@@ -52,6 +76,31 @@ To see which registry commit production is serving, read the
 - **The Parity workflow also runs on a change to `scripts/parity-body.mjs`**
   (`parity.yml` `paths`), with README and CLAUDE.md saying so. No API
   response changes.
+
+### Security — `hono` 4.13.13 and `wrangler` 4.151.3, past GHSA-5r4p-p66f-jhc7 and GHSA-wq5f-xc86-pv6w (2026-10-20)
+
+- **`hono` moves from 4.13.10 to 4.13.13** (`^4.13.13` in `package.json`).
+  [GHSA-5r4p-p66f-jhc7](https://github.com/advisories/GHSA-5r4p-p66f-jhc7)
+  (CVE-2026-111757, moderate) affects 4.12.4 to 4.13.10, and 4.13.11 fixes it:
+  `serveStatic` decodes the request path a second time, so middleware mounted
+  on part of a static directory can be skipped for files under it.
+- **Not exploitable in this Worker; the bump clears the alert.** The Worker
+  imports nothing from `hono` but the `Hono` class: no `serveStatic`, no
+  `hono/*` middleware, and no static-assets binding in `wrangler.jsonc`. Its
+  one middleware, `app.use("*", …)` in `src/index.ts`, is mounted on every
+  path. It applies the redirects, the security headers and the CORS and
+  `X-Mzizi-Source` headers, and it runs before any route. The API has no
+  authentication or rate limiting of its own to skip: it is read-only and
+  public. Responses are unchanged, and parity against production is 1534 of
+  1534 identical.
+- **`wrangler` (dev only) moves to 4.151.3, whose miniflare 5.20261019.1-beta
+  pins `sharp` 0.35.5, past
+  [GHSA-wq5f-xc86-pv6w](https://github.com/advisories/GHSA-wq5f-xc86-pv6w).**
+  `npm audit` is now 0. Every wrangler since 4.130.0 pins a prerelease
+  miniflare (4.147.0 pinned `5.20261001.0-alpha`), so this adds no new kind
+  of prerelease dependency. `@cloudflare/workers-types` moves to
+  5.20261019.1, the version wrangler 4.151.3 requires as a peer. No runtime or
+  response change.
 
 ## [2026-10-20]
 
