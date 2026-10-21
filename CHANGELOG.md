@@ -23,6 +23,148 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — `/v1/rs/{name}` no longer says the Dioxus source is yours to write
+
+- **The 404 `message` for a component with no Rust build** (`/v1/rs/{name}`, 596
+  of the 656 slugs at the current pin) now reads: "This component has no Mzizi
+  Roots (Rust) build yet. Roots components are moving to Mzizi's own Rust
+  renderer: a pure `render(props) -> String`, with behaviour attached in the
+  browser through `web-sys` on the component's `data-slot` root. A Rust build of
+  this component would follow that shape. The contract, tokens and variants are
+  on `https://api.mzizi.dev/v1/ui/{name}`." It replaces "This component ships for
+  React only … the Dioxus source is yours to write against them."
+- **Unchanged:** the status (404), the `error` text, every 200 body, and the
+  `target: "dioxus"` field on the Rust implementations that exist. Those
+  Rust crates are still built on Dioxus 0.7; they are moving to Mzizi's own
+  renderer (research track, mzizi-registry#503).
+- **`scripts/parity.mjs`** gains a prefix entry, `GET /v1/rs/*`, for these
+  596 differences: status 404, body only, and only in `$.message`. Any other
+  difference on `/v1/rs/*` still counts as unexplained. Remove the entry once
+  production serves the new message.
+
+### Fixed — the registry pin bot merges with squash (2026-10-21)
+
+- Rebase merging is now disabled org-wide and `main` lands through a squash merge queue, so the bot's
+  `merge_method: "rebase"` merge and `mergeMethod: REBASE` auto-merge would be refused and the pin would never move.
+  `scripts/registry-pin-bump.mjs` now uses squash for both (with the merge queue, the auto-merge call enqueues the pull
+  request). The file stays identical to the copy in `mzizi-dev/agent-tools`. No API change.
+
+### Changed — merging is squash through the merge queue (2026-10-21)
+
+- **Merging is now squash through the merge queue; docs updated.** `AGENTS.md`
+  ("Merge convention"), `CONTRIBUTING.md` ("Merging: squash through the merge
+  queue"), `CLAUDE.md` and `README.md` (the pin bot's setup, step 3) now give
+  `gh pr merge <n> --squash --auto`, which adds a pull request to the queue
+  once the merge gate is met. Rebase and merge commits are disabled in the
+  repo settings and rulesets (2026-10-21). The squash commit keeps every
+  commit message in its body (`COMMIT_MESSAGES`), not the PR body as the
+  2026-10-20 entry below said. Updating a branch with its base is fine, and
+  the queue tests each pull request against the latest base. README now notes
+  that the pin bot's script still asks for a rebase merge. No API response or
+  behaviour changed.
+
+### Changed — the merge convention: rebase or squash, never auto-merge (2026-10-20)
+
+- **The repository is no longer described as rebase-only.** `AGENTS.md`
+  ("Merge convention"), `CONTRIBUTING.md` ("Merging: rebase, or squash; never
+  a merge commit") and `CLAUDE.md` now state the settings read off the GitHub
+  API and rulesets on 2026-10-20: rebase and squash are allowed, merge commits
+  are not (`allow_merge_commit: false`; the org and enterprise rulesets allow
+  only `squash` and `rebase` and require linear history on `main` and
+  `staging`), and a squash commit's message is the PR's title and body. The
+  2026-09-12 note that squash was off no longer held.
+- **No more `gh pr merge <n> --rebase --auto`.** Auto-merge merges on green CI,
+  before the org merge gate (runtime verification and code review), so people
+  and agents never turn it on. A linear branch is rebased; one carrying merge
+  commits, including after "Update branch" (required checks are strict), is
+  squashed. Org admins can bypass the rulesets; agents never do, and nobody
+  uses `--admin`. The registry pin bot keeps using auto-merge for its own
+  `bot/registry-pin` pull request, which the README now says is its only use.
+- **Releases and sync-back are written down.** A merge into `main` deploys
+  `api.mzizi.dev`, so only the owner, or an agent the owner authorised,
+  releases `staging` to `main`: a `release/` branch of `main` plus `staging`'s
+  tree, squashed. After each release a sync PR into `staging` (a branch off
+  `staging` with `main` merged in, squashed) makes the trees match again. No
+  route, response or default changed.
+
+### Fixed — parity's `added` check fails closed on malformed rows and values (2026-10-20)
+
+- **A non-object element no longer crashes the parity run.** The `added`
+  check (`EXPECTED` entries with `body:added`, used for `/v1/brand`) ran
+  `k in row` on every element, which throws a `TypeError` on a number, string
+  or boolean and rejected the whole run. Such an element, and an array where
+  an object belongs, is now an unexplained `body` difference.
+- **Each added key's value must have its field's shape.** `added` now maps
+  each key to a value check: `hex` (`#RRGGBB`) for `textLight`, `textDark`,
+  `onContainerLight` and `onContainerDark`, `index` (a whole number of zero or
+  more) for `sortOrder`, `nonEmptyString` for `role`, and `mineralFamily`
+  (`deep-earth` or `hand`) for `family`. Before this, a null or mistyped value
+  passed as long as the key was present.
+- **The `added` spec is checked before any body.** A check name must be one
+  of `VALUE_CHECKS`' own names, so `constructor`, `valueOf` and the rest of
+  `Object.prototype` are unknown checks (`valueOf` used to throw), and a typo
+  is reported even when the array it covers is empty.
+- **A 200 `/health` body that isn't JSON no longer crashes the run.** It is
+  compared as it is, and reported as a body difference.
+- **Key order counts only own keys.** `firstDiff` used `in`, which follows the
+  prototype chain, so a missing `toString` key read as a key-order difference.
+- Identical bodies are not parsed at all; differing ones are parsed once per
+  request, and the report's detail is worked out only for a `body`
+  difference. The check no longer deletes keys from the parsed body. The
+  comparison and the `/health` and `security.txt` normalisation moved to
+  `scripts/parity-body.mjs`, tested offline by `test/parity-body.test.ts`.
+- **The Parity workflow also runs on a change to `scripts/parity-body.mjs`**
+  (`parity.yml` `paths`), with README and CLAUDE.md saying so. No API
+  response changes.
+
+### Security — `hono` 4.13.13 and `wrangler` 4.151.3, past GHSA-5r4p-p66f-jhc7 and GHSA-wq5f-xc86-pv6w (2026-10-20)
+
+- **`hono` moves from 4.13.10 to 4.13.13** (`^4.13.13` in `package.json`).
+  [GHSA-5r4p-p66f-jhc7](https://github.com/advisories/GHSA-5r4p-p66f-jhc7)
+  (CVE-2026-111757, moderate) affects 4.12.4 to 4.13.10, and 4.13.11 fixes it:
+  `serveStatic` decodes the request path a second time, so middleware mounted
+  on part of a static directory can be skipped for files under it.
+- **Not exploitable in this Worker; the bump clears the alert.** The Worker
+  imports nothing from `hono` but the `Hono` class: no `serveStatic`, no
+  `hono/*` middleware, and no static-assets binding in `wrangler.jsonc`. Its
+  one middleware, `app.use("*", …)` in `src/index.ts`, is mounted on every
+  path. It applies the redirects, the security headers and the CORS and
+  `X-Mzizi-Source` headers, and it runs before any route. The API has no
+  authentication or rate limiting of its own to skip: it is read-only and
+  public. Responses are unchanged, and parity against production is 1534 of
+  1534 identical.
+- **`wrangler` (dev only) moves to 4.151.3, whose miniflare 5.20261019.1-beta
+  pins `sharp` 0.35.5, past
+  [GHSA-wq5f-xc86-pv6w](https://github.com/advisories/GHSA-wq5f-xc86-pv6w).**
+  `npm audit` is now 0. Every wrangler since 4.130.0 pins a prerelease
+  miniflare (4.147.0 pinned `5.20261001.0-alpha`), so this adds no new kind
+  of prerelease dependency. `@cloudflare/workers-types` moves to
+  5.20261019.1, the version wrangler 4.151.3 requires as a peer. No runtime or
+  response change.
+
+## [2026-10-20]
+
+Released to `main` as `v0.8.0` (#78).
+
+### Changed — documentation for the repository rename and the 2026-10-20 decisions (2026-10-20)
+
+- **The repository is named `mzizi-dev/mzizi-api`** (formerly `mzizi-api-gateway`). The README,
+  AGENTS.md, CLAUDE.md and the badges now use the new name. The Worker name, the package name
+  and the `X-Mzizi-Source` header are unchanged: they are the deployed Worker's identity and
+  changing them is a separate decision. The owner has renamed the repository; GitHub
+  redirects the old name.
+- **README "The four API gateways"** lists the Mzizi, Nyuchi (B2B), Mukoko (consumer) and Nyuchi
+  Servers (internal) gateways, with their repositories and hosts. Only the Mzizi API is built
+  here. Decided, not built: the Nyuchi API (including its async-writes data gateway), the Nyuchi Servers API and the Mukoko API are built in Rust; the Mzizi API stays a Hono Worker for now.
+- **README "Build targets" and "Fly regions"** record the decisions as direction: Workers,
+  containers (a standard OCI image, Docker by default, any OCI runtime) and bare metal, designed in
+  the language's RFC-0016 (mzizi-dev/mzizi#123), approved as design only, with every build wave
+  waiting for the Phase 0 gate; stateless origins in `jnb`, `cdg` and `sin`, with data services
+  staying in `jnb`. No latency figures are claimed.
+- **README "Renderer"** records that Mzizi Roots are moving to Mzizi's own `render(props)`
+  (mzizi-registry#506 and #510, merged, give seven components that path), and that Dioxus stays in several crates until the
+  migration finishes. The registry route `/v1/rs/{name}` still serves the Dioxus source today.
+
 ### Added — `CLAUDE.md` for Claude Code (2026-10-07)
 
 - **`CLAUDE.md` imports `AGENTS.md`** and adds what it leaves out: the
@@ -51,24 +193,9 @@ To see which registry commit production is serving, read the
 - The served OpenAPI document (the registry's `openapi.yaml` at the pin) does
   not list these fields yet; mzizi-dev/mzizi-registry#480 adds them.
 
-### Changed — `/v1/rs/{name}` no longer says the Dioxus source is yours to write
+## [2026-10-07]
 
-- **The 404 `message` for a component with no Rust build** (`/v1/rs/{name}`, 596
-  of the 656 slugs at the current pin) now reads: "This component has no Mzizi
-  Roots (Rust) build yet. Roots components are moving to Mzizi's own Rust
-  renderer: a pure `render(props) -> String`, with behaviour attached in the
-  browser through `web-sys` on the component's `data-slot` root. A Rust build of
-  this component would follow that shape. The contract, tokens and variants are
-  on `https://api.mzizi.dev/v1/ui/{name}`." It replaces "This component ships for
-  React only … the Dioxus source is yours to write against them."
-- **Unchanged:** the status (404), the `error` text, every 200 body, and the
-  `target: "dioxus"` field on the Rust implementations that exist. Those
-  Rust crates are still built on Dioxus 0.7; they are moving to Mzizi's own
-  renderer (research track, mzizi-registry#503).
-- **`scripts/parity.mjs`** gains a prefix entry, `GET /v1/rs/*`, for these
-  596 differences: status 404, body only, and only in `$.message`. Any other
-  difference on `/v1/rs/*` still counts as unexplained. Remove the entry once
-  production serves the new message.
+Released to `main` as `v0.5.0` (#66), `v0.6.0` (#69) and `v0.7.0` (#71).
 
 ### Changed — the registry pin moves to mzizi-registry `main` at `f70703d` (v4.8.0) (2026-10-07)
 
@@ -131,6 +258,10 @@ To see which registry commit production is serving, read the
 - **`scripts/parity.mjs` `EXPECTED`** lists the two routes (`/v1/brand`,
   `/api/v1/brand`); the 9f3631c entries are in #60.
 
+## [2026-10-06]
+
+Released to `main` as `v0.4.0` (#61).
+
 ### Changed — the registry pin moves to mzizi-registry `main` at `9f3631c` (v4.5.0) (2026-10-06)
 
 - **The registry pin moves from `5067b5e` (v4.4.0) to `9f3631c`**, registry
@@ -146,6 +277,10 @@ To see which registry commit production is serving, read the
   `circles` brand block (#448, #449).
 - **`scripts/parity.mjs` `EXPECTED`** lists the 7 differences from production
   with their reasons; the 5067b5e entries are in #56.
+
+## [2026-10-05]
+
+Released to `main` as `v0.1.0` (#50), `v0.2.0` (#54) and `v0.3.0` (#58).
 
 ### Added — each release to `main` is tagged as the next minor (2026-10-06)
 
@@ -261,6 +396,10 @@ mzizi-registry is now the single source of every component in every format, and 
   README, "Registry pin bump", and CONTRIBUTING are updated to match. No route,
   response or pin changes.
 
+## [2026-10-04]
+
+Merged straight to `main`, with no release tag.
+
 ### Added — `AGENTS.md` links the published design system (2026-10-04)
 
 - **`AGENTS.md` links the Design System artifact**
@@ -315,6 +454,10 @@ mzizi-registry is now the single source of every component in every format, and 
   documentation) change nothing the API serves. Strict parity against
   production showed 1 difference over 1,368 requests.
 
+## [2026-10-02]
+
+Merged straight to `main`, with no release tag.
+
 ### Security — security reports go to `security@nyuchi.com` (2026-10-03)
 
 - **`/.well-known/security.txt` now names `Contact: mailto:security@nyuchi.com`**, and `SECURITY.md`'s email fallback behind GitHub private advisories matches, in place of `security@bundu.org` (owner decision, 2026-10-03: one security contact for every repository). `Expires`, `Canonical`, `Policy` and `Preferred-Languages` are unchanged.
@@ -359,16 +502,7 @@ mzizi-registry is now the single source of every component in every format, and 
 
 - **Removed `.github/workflows/lint.yml`.** The `mzizi-dev` org ruleset now runs the shared lint on every pull request through `mzizi-dev/.github`'s `org-lint.yml`, publishing the same five `lint / …` checks, so the repo's own caller only ran lint a second time.
 
-### Added
-
-- `CHANGELOG.md`, backfilled from every merged pull request since the
-  repository began (2026-09-09).
-- The `changelog / entry required` check (`.github/workflows/changelog.yml`,
-  `scripts/changelog-gate.sh`), which fails a pull request that changes a
-  non-exempt file without adding to this file. `scripts/changelog-gate.test.sh`
-  tests the gate, and the check runs it first. The registry-pin bot's own
-  pull request is exempt only while it changes nothing but the pin; a bump that
-  someone takes over to port a handler change needs an entry like any other.
+## [2026-09-30]
 
 ### Changed
 
@@ -453,17 +587,6 @@ mzizi-registry is now the single source of every component in every format, and 
 - The registry-pin bot (`registry-pin-bump.yml`) also re-checks its pull
   request when the Changelog workflow finishes, so a bump never waits an hour
   for that check.
-
-### Fixed
-
-- README, "Registry pin bump", lists **Checks: Read-only** and **Commit statuses:
-  Read-only** for `RELEASE_BUMP_TOKEN`. The bot reads a bump's check runs and
-  status before merging; without them it fails with a 403.
-
-## [2026-09-30]
-
-### Changed
-
 - **`/v1/skills` serves `@nyuchi/mzizi-skills` 0.8.0: five skills**
   (`mzizi-language`, `mzizi-roots`, `mzizi-design`, `mzizi-backend`,
   `discoverability`). The registry pin moves to mzizi-registry `eb4935e`
@@ -481,6 +604,14 @@ mzizi-registry is now the single source of every component in every format, and 
 
 ### Added
 
+- `CHANGELOG.md`, backfilled from every merged pull request since the
+  repository began (2026-09-09).
+- The `changelog / entry required` check (`.github/workflows/changelog.yml`,
+  `scripts/changelog-gate.sh`), which fails a pull request that changes a
+  non-exempt file without adding to this file. `scripts/changelog-gate.test.sh`
+  tests the gate, and the check runs it first. The registry-pin bot's own
+  pull request is exempt only while it changes nothing but the pin; a bump that
+  someone takes over to port a handler change needs an entry like any other.
 - **The registry pin moves by itself.** `registry-pin-bump.yml` keeps one bot
   pull request on `bot/registry-pin` that sets `scripts/registry-ref.json` to
   mzizi-registry `main`. It merges (rebase) only when it is the bot's single
@@ -490,6 +621,12 @@ mzizi-registry is now the single source of every component in every format, and 
 - The Parity workflow runs on every pull request that changes the pin, or
   parity itself, against production, in `--strict` mode unless the pull request
   edits `scripts/parity.mjs`. (#16)
+
+### Fixed
+
+- README, "Registry pin bump", lists **Checks: Read-only** and **Commit statuses:
+  Read-only** for `RELEASE_BUMP_TOKEN`. The bot reads a bump's check runs and
+  status before merging; without them it fails with a 403.
 
 ## [2026-09-29]
 

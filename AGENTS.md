@@ -1,10 +1,15 @@
-# AGENTS.md — mzizi-api-gateway
+# AGENTS.md — mzizi-api (formerly mzizi-api-gateway)
 
 > Vendor-neutral instructions for any AI agent working in this repository. See
 > [`README.md`](./README.md) for the status, the data pipeline and the cutover
 > steps, and [`CONTRIBUTING.md`](./CONTRIBUTING.md) for the change procedure.
 
 ## What this repo is
+
+The repository is `mzizi-dev/mzizi-api`, formerly `mzizi-api-gateway`. The Worker name,
+the package name and the `X-Mzizi-Source` header still say `mzizi-api-gateway`; changing them
+is a deploy decision, not part of the rename. It is the Mzizi API, one of the four API
+gateways (see README, "The four API gateways"). Only this one is the registry API.
 
 A **Hono (TypeScript) Cloudflare Worker** serving `api.mzizi.dev`, the
 Mzizi registry API. **Owner decision, 2026-09-28:** the API Worker is Hono,
@@ -134,10 +139,32 @@ Owner's rule, 2026-09-30: "changelogs are super important".
 
 ## Merge convention
 
-This repository is rebase-only: `allow_rebase_merge` is `true`, and
-`allow_merge_commit` and `allow_squash_merge` are both `false` (read off the
-GitHub API 2026-09-12, org-wide). Land changes with
-`gh pr merge <n> --rebase --auto`. Never use `--admin`.
+Read off the repo settings and the rulesets on 2026-10-21; they are the
+authority if this drifts.
+
+- **Merge method.** Squash merges through the merge queue:
+  `gh pr merge <n> --squash --auto`. Never `--admin`. The squash commit keeps
+  every commit message in its body (`COMMIT_MESSAGES`), so the per-commit
+  reasoning is preserved. Rebase and merge commits are disabled (repo settings
+  and rulesets, 2026-10-21). Org admins can bypass those rulesets; agents
+  never do.
+- **Branches.** Updating a branch with the base (GitHub's "Update branch") is
+  fine; the squash makes `main` linear. The merge queue tests each PR against
+  the latest base. Merged branches are deleted.
+- **Enqueue only past the merge gate.** `--auto` adds the PR to the merge
+  queue, and is how PRs land. Meet the merge gate first (complete, CI green,
+  verified at runtime, `/code-review` run with findings resolved; see "Dev
+  skills, progress reports and the merge gate" below), then enqueue.
+- **Releases.** A merge into `main` deploys `api.mzizi.dev`, so only the owner
+  releases `staging` to `main`, or an agent the owner has authorised for that
+  release. A release is a `release/` branch made of `main` plus `staging`'s
+  exact tree, squashed into `main`.
+- **Sync back after a release.** The squash commit on `main` is never in
+  `staging`'s history, and `staging` cannot be reset (non-fast-forward pushes
+  are blocked). After each release, open a sync PR into `staging` from a
+  branch off `staging` with `origin/main` merged in, and squash it, so the two
+  trees match again before more work lands. Expect `main...staging` to keep
+  showing old commits as ahead and behind; compare trees, not counts.
 
 ## Honesty rules
 

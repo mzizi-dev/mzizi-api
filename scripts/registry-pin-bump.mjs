@@ -22,7 +22,7 @@
  *      bump pull request: it is updated, never duplicated. Before a push to a
  *      branch with auto-merge on, auto-merge is switched off, so a new commit
  *      can never ride on an old commit's green checks.
- *   4. When nothing was pushed, gate the open pull request: it merges (rebase)
+ *   4. When nothing was pushed, gate the open pull request: it merges (squash)
  *      only if it is the bot's own single commit, changes nothing but PIN_FILE,
  *      moves the pin forward along registry main, and every check run and
  *      status on its head commit has finished green, EXPECTED_CHECKS included.
@@ -568,17 +568,17 @@ async function gate(p) {
   // Everything is green. Merge now if the branch rules allow it; otherwise
   // hand it to GitHub's auto-merge, which waits for the required checks.
   if (DRY_RUN) {
-    log(`[dry-run] merge #${p.number} (rebase) at ${headSha.slice(0, 7)}`);
+    log(`[dry-run] merge #${p.number} (squash) at ${headSha.slice(0, 7)}`);
     return;
   }
   try {
     if (!required)
       throw Object.assign(new Error("rules unread"), { status: 405 });
     await gh("PUT", `/repos/${REPO}/pulls/${p.number}/merge`, {
-      merge_method: "rebase",
+      merge_method: "squash",
       sha: headSha,
     });
-    note(`merged #${p.number} (rebase): all ${checks.length} checks green`);
+    note(`merged #${p.number} (squash): all ${checks.length} checks green`);
   } catch (e) {
     if (![405, 409, 422].includes(e.status)) throw e;
     if (p.auto_merge) {
@@ -593,7 +593,7 @@ async function gate(p) {
           enablePullRequestAutoMerge(
             input: {
               pullRequestId: $id
-              mergeMethod: REBASE
+              mergeMethod: SQUASH
               expectedHeadOid: $sha
             }
           ) {
@@ -604,7 +604,7 @@ async function gate(p) {
       { id: p.node_id, sha: headSha },
     );
     note(
-      `#${p.number}: all checks green; auto-merge (rebase) on (${e.message})`,
+      `#${p.number}: all checks green; auto-merge (squash) on (${e.message})`,
     );
   }
 }
@@ -712,7 +712,7 @@ function prBody() {
     "",
     "## How this lands",
     "",
-    "The bot merges it (rebase) only when all of these hold, and never past the branch rules:",
+    "The bot merges it (squash) only when all of these hold, and never past the branch rules:",
     "",
     `- it is the bot's single commit on the current \`main\`, changing only \`${PIN_FILE}\`;`,
     "- the new pin descends from the old one on registry `main`;",

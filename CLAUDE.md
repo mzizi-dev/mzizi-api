@@ -4,11 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 @AGENTS.md
 
+The repository is `mzizi-dev/mzizi-api` (formerly `mzizi-api-gateway`). The Worker, the
+package and the `X-Mzizi-Source` header keep the old name until a deploy-affecting rename is
+decided.
+
 AGENTS.md (imported above) holds the repo's rules: no Supabase or database, the
 read-only API, the `wrangler.jsonc` custom-domain form, the registry pin bot,
-the changelog rule and rebase-only merges. This file adds only what it leaves
-out. README.md has the full route list, the data pipeline and the cutover
-history.
+the changelog rule and the merge convention (squash through the merge queue,
+`gh pr merge <n> --squash --auto`). This file adds only what it leaves out. README.md has the full
+route list, the data pipeline and the cutover history.
 
 ## Commands
 
@@ -90,7 +94,9 @@ against production and needs network; a route change has to pass both.
   is not bumped by these workflows.
 - A push to `main` deploys `api.mzizi.dev` via Cloudflare Workers Builds.
 - The pin bot (`bot/registry-pin`) works against `main`, and the Parity
-  workflow runs only on PRs into `main` that touch the pin or parity files.
+  workflow runs only on PRs into `main` that touch the pin or parity files
+  (`scripts/registry-ref.json`, `scripts/parity.mjs`,
+  `scripts/parity-body.mjs`, `.github/workflows/parity.yml`).
   A PR into `staging` that moves the pin gets no automatic parity run: run
   `npm run parity` yourself and paste the summary into the PR.
 - CI runs on PRs into `main`, `staging` and `claude/**`.
