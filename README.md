@@ -16,8 +16,8 @@
 The Worker name in `wrangler.jsonc`, the package name and the `X-Mzizi-Source` header still
 say `mzizi-api-gateway`. Changing them changes the deployed Worker's name and the header that
 readers use to find the registry commit, so it is a separate decision and is not part of the
-repository rename. Until the owner completes the repository rename, links to
-`mzizi-dev/mzizi-api` return 404.
+repository rename. The owner has renamed the repository, and GitHub redirects the old
+name.
 
 ## Owner decision (2026-09-28)
 
@@ -340,8 +340,8 @@ What that means for this API:
   against the registry's last handler for it (`scripts/registry-handlers/rs.ts`,
   ported from 270af9f).
 - **Renderer (decided, not built here).** Mzizi components are built in-house in Rust, not
-  borrowed from another framework. Roots render with Mzizi's own `render(props) -> String`; the
-  skeleton and six static primitives are merged in mzizi-registry
+  borrowed from another framework. Roots are moving to Mzizi's own `render(props) -> String`; the
+  skeleton and six static primitives have it, merged in mzizi-registry
   ([#506](https://github.com/mzizi-dev/mzizi-registry/pull/506),
   [#510](https://github.com/mzizi-dev/mzizi-registry/pull/510)). Dioxus remains a dependency of
   several crates until that migration finishes, and no Dioxus, Leptos or Yew goes into new work.
@@ -442,8 +442,11 @@ These are decisions, not shipped code. Decided, not built: the Nyuchi API (inclu
 one this repository describes.
 
 **Build targets (decided, not built).** The Mzizi build-out covers Cloudflare Workers,
-containers (any OCI host, such as Fly machines) and bare metal (a native Linux binary). This
-repository is a Cloudflare Worker today, and no decision moves the Mzizi API to another target.
+containers (a standard OCI image, built with Docker by default and run by any OCI runtime, such
+as on Fly machines) and bare metal (a native Linux binary). The language's RFC-0016
+(`mzizi-dev/mzizi#123`) designs them; the owner approved it as design only on 2026-10-21, and
+every build wave waits for the Phase 0 gate. This repository is a Cloudflare Worker today, and no
+decision moves the Mzizi API to another target.
 
 **Fly regions (decided, not built).** Stateless gateway origins are decided to run in `jnb`
 (Johannesburg), `cdg` (Paris, with `mad` Madrid second) and `sin` (Singapore). The intended
