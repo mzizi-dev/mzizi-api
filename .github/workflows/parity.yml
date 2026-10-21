@@ -4,7 +4,8 @@ name: Parity
 #
 # - Every pull request that moves the registry pin (scripts/registry-ref.json),
 #   including the automated bumps from registry-pin-bump.yml, or that changes
-#   parity itself. Baseline is production, https://api.mzizi.dev; candidate is
+#   parity itself (scripts/parity.mjs, scripts/parity-body.mjs or this file).
+#   Baseline is production, https://api.mzizi.dev; candidate is
 #   the pull request under `wrangler dev`. Any unexplained difference fails the check, and a failed
 #   check stops the automated bump for review. When the pull request doesn't
 #   touch scripts/parity.mjs, the run is `--strict`: EXPECTED then holds only an
@@ -22,9 +23,17 @@ on:
     branches: [main]
     paths:
       - scripts/registry-ref.json
-      # And a change to parity itself, so it is exercised before it gates.
+      # And a change to parity itself (the script, or the body comparison it
+      # imports), so it is exercised before it gates.
       - scripts/parity.mjs
+      - scripts/parity-body.mjs
       - .github/workflows/parity.yml
+  # Required checks must also report on a merge queue's gh-readonly-queue/**
+  # ref, or a queued PR waits until the queue times it out. Harmless where no
+  # queue is configured. merge_group takes no branches or paths filter, so the
+  # job skips itself on a queue for any branch but main (pull_request runs
+  # only on PRs into main).
+  merge_group:
   workflow_dispatch:
     inputs:
       baseline:
@@ -46,6 +55,9 @@ concurrency:
 jobs:
   parity:
     name: parity
+    if: >-
+      github.event_name != 'merge_group' ||
+      github.event.merge_group.base_ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -75,10 +87,10 @@ jobs:
 
       - name: Strict unless this pull request edits EXPECTED
         id: mode
-        if: github.event_name == 'pull_request'
+        if: github.event_name != 'workflow_dispatch'
         env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
         run: |
           if git diff --quiet "$BASE_SHA...$HEAD_SHA" -- scripts/parity.mjs; then
             echo "flags=--strict" >> "$GITHUB_OUTPUT"
