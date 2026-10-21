@@ -42,6 +42,10 @@ To see which registry commit production is serving, read the
   difference on `/v1/rs/*` still counts as unexplained. Remove the entry once
   production serves the new message.
 
+### Added — Dependabot version updates target `staging` (2026-10-21)
+
+- `.github/dependabot.yml` is new: weekly version updates for GitHub Actions and this repository's package manifests, every entry with `target-branch: staging` (owner rule, 2026-10-21: "all dependabot should target staging not main.") and a seven-day cooldown before a new release is proposed.
+
 ### Fixed — the registry pin bot merges with squash (2026-10-21)
 
 - Rebase merging is now disabled org-wide and `main` lands through a squash merge queue, so the bot's
