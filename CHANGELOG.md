@@ -30,6 +30,20 @@ To see which registry commit production is serving, read the
   `scripts/registry-pin-bump.mjs` now uses squash for both (with the merge queue, the auto-merge call enqueues the pull
   request). The file stays identical to the copy in `mzizi-dev/agent-tools`. No API change.
 
+### Changed — merging is squash through the merge queue (2026-10-21)
+
+- **Merging is now squash through the merge queue; docs updated.** `AGENTS.md`
+  ("Merge convention"), `CONTRIBUTING.md` ("Merging: squash through the merge
+  queue"), `CLAUDE.md` and `README.md` (the pin bot's setup, step 3) now give
+  `gh pr merge <n> --squash --auto`, which adds a pull request to the queue
+  once the merge gate is met. Rebase and merge commits are disabled in the
+  repo settings and rulesets (2026-10-21). The squash commit keeps every
+  commit message in its body (`COMMIT_MESSAGES`), not the PR body as the
+  2026-10-20 entry below said. Updating a branch with its base is fine, and
+  the queue tests each pull request against the latest base. README now notes
+  that the pin bot's script still asks for a rebase merge. No API response or
+  behaviour changed.
+
 ### Changed — the merge convention: rebase or squash, never auto-merge (2026-10-20)
 
 - **The repository is no longer described as rebase-only.** `AGENTS.md`

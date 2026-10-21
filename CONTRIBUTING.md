@@ -102,43 +102,39 @@ route is valid. This form broke `mzizi-mcp` (agent-tools#102) and the console.
 
 ## Pull requests
 
-### Merging: rebase, or squash; never a merge commit
+### Merging: squash through the merge queue
 
-Merge commits are off: the repo flag is `allow_merge_commit: false`, and the
-org and enterprise rulesets allow only squash and rebase and require linear
-history on `main` and `staging`. Org admins can bypass those rulesets; nobody
-else can, and nobody uses `--admin`. The earlier rebase-only note (squash off,
-read 2026-09-12) no longer matches; the live API and rulesets are the
-authority. `AGENTS.md` "Merge convention" has the full rules.
-
-Rebase a PR whose branch is linear:
+Squash merges through the merge queue. Rebase and merge commits are disabled
+(repo settings and rulesets, 2026-10-21). Org admins can bypass those
+rulesets; nobody else can, and nobody uses `--admin`. `AGENTS.md` "Merge
+convention" has the full rules.
 
 ```bash
-gh pr merge <n> --rebase
+gh pr merge <n> --squash --auto
 ```
 
-Squash a PR whose branch carries merge commits, including one updated with
-"Update branch" (required checks are strict, so a PR behind its base must be
-updated first). Here the squash commit's message is the PR's title and body
-(`PR_TITLE`, `PR_BODY`), so the body must say what changed and why. Branches
-are deleted on merge by the repo setting, so `--delete-branch` adds nothing.
+The squash commit's message is the PR title plus the commit details
+(`COMMIT_MESSAGES`), so it keeps every commit message in its body and the
+per-commit reasoning is preserved. Updating a branch with the base (GitHub's
+"Update branch") is fine; the squash makes `main` linear. The merge queue
+tests each PR against the latest base. Branches are deleted on merge by the
+repo setting, so `--delete-branch` adds nothing.
 
 Before merging anything:
 
 - **The merge gate.** The work is complete, CI is green, it is verified at
   runtime, and code review has run with its findings resolved.
-- **No auto-merge.** Never pass `--auto`: it merges on green CI, before the
-  gate. Only the registry pin bot turns auto-merge on, for its own
-  `bot/registry-pin` PR (README, "Registry pin bump").
+- **Enqueue only past the gate.** `--auto` adds the PR to the merge queue,
+  and is how PRs land, so pass it only once the gate above is met.
 - **Releases are the owner's.** A merge into `main` deploys `api.mzizi.dev`.
   Only the owner, or someone the owner authorised, releases `staging` to
   `main`: a `release/` branch made of `main` plus `staging`'s exact tree,
   squashed, then synced back into `staging` (a branch off `staging` with
   `main` merged in, squashed) so the trees match again.
 
-Write commit messages that are worth keeping: what changed and _why_. A rebase
-merge keeps each commit (with a new SHA, so cite commits by their SHA on
-`staging` or `main`, not on a branch); a squash keeps only the PR body.
+Write commit messages that are worth keeping: what changed and _why_. The
+squash keeps each message in its body but not each commit, so cite the squash
+commit's SHA on `staging` or `main`, not a commit on a branch.
 
 ### CI gates
 
