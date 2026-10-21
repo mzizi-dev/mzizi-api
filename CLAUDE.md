@@ -6,8 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 AGENTS.md (imported above) holds the repo's rules: no Supabase or database, the
 read-only API, the `wrangler.jsonc` custom-domain form, the registry pin bot,
-the changelog rule and the merge convention (rebase or squash, never
-auto-merge). This file adds only what it leaves out. README.md has the full
+the changelog rule and the merge convention (squash through the merge queue,
+`gh pr merge <n> --squash --auto`). This file adds only what it leaves out. README.md has the full
 route list, the data pipeline and the cutover history.
 
 ## Commands
