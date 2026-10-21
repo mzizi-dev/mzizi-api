@@ -23,6 +23,13 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Fixed — the registry pin bot merges with squash (2026-10-21)
+
+- Rebase merging is now disabled org-wide and `main` lands through a squash merge queue, so the bot's
+  `merge_method: "rebase"` merge and `mergeMethod: REBASE` auto-merge would be refused and the pin would never move.
+  `scripts/registry-pin-bump.mjs` now uses squash for both (with the merge queue, the auto-merge call enqueues the pull
+  request). The file stays identical to the copy in `mzizi-dev/agent-tools`. No API change.
+
 ### Changed — merging is squash through the merge queue (2026-10-21)
 
 - **Merging is now squash through the merge queue; docs updated.** `AGENTS.md`

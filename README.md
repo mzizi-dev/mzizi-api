@@ -299,8 +299,8 @@ uses its own token:
 3. **Allow auto-merge** (Settings, General, Pull Requests) must stay on. It is
    on org-wide (2026-10-21), and agents use it too: `--auto` adds a pull
    request to the merge queue (AGENTS.md, "Merge convention"). Merging is now
-   squash only; the bot's script still asks for a rebase merge
-   (`merge_method: "rebase"`), which the repository no longer allows.
+   squash only, and the bot's script merges with squash too
+   (`merge_method: "squash"`).
 4. **Keep the secret visible to mzizi-registry.** Its `notify-pin-bots.yml`
    sends the `registry-main-moved` dispatch with the same `RELEASE_BUMP_TOKEN`
    org secret, which needs Contents: Read and write here (it has it already).
