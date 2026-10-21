@@ -23,6 +23,25 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — `/v1/rs/{name}` no longer says the Dioxus source is yours to write
+
+- **The 404 `message` for a component with no Rust build** (`/v1/rs/{name}`, 596
+  of the 656 slugs at the current pin) now reads: "This component has no Mzizi
+  Roots (Rust) build yet. Roots components are moving to Mzizi's own Rust
+  renderer: a pure `render(props) -> String`, with behaviour attached in the
+  browser through `web-sys` on the component's `data-slot` root. A Rust build of
+  this component would follow that shape. The contract, tokens and variants are
+  on `https://api.mzizi.dev/v1/ui/{name}`." It replaces "This component ships for
+  React only … the Dioxus source is yours to write against them."
+- **Unchanged:** the status (404), the `error` text, every 200 body, and the
+  `target: "dioxus"` field on the Rust implementations that exist. Those
+  Rust crates are still built on Dioxus 0.7; they are moving to Mzizi's own
+  renderer (research track, mzizi-registry#503).
+- **`scripts/parity.mjs`** gains a prefix entry, `GET /v1/rs/*`, for these
+  596 differences: status 404, body only, and only in `$.message`. Any other
+  difference on `/v1/rs/*` still counts as unexplained. Remove the entry once
+  production serves the new message.
+
 ### Added — Dependabot version updates target `staging` (2026-10-21)
 
 - `.github/dependabot.yml` is new: weekly version updates for GitHub Actions and this repository's package manifests, every entry with `target-branch: staging` (owner rule, 2026-10-21: "all dependabot should target staging not main.") and a seven-day cooldown before a new release is proposed.
