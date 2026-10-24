@@ -23,6 +23,16 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Security — `undici` held at 7.30.1 or later (2026-10-24)
+
+- **`undici` moves from 7.29.1 to 7.30.1**, through a new npm override,
+  `"undici@<7.30.1": ">=7.30.1"` (a minimum, no maximum). It fixes
+  GHSA-4qv8-2p9j-2685, GHSA-f72v-6w45-q472 and GHSA-xjj6-f33q-929c (high),
+  which the org `audit` job reported. `undici` reaches this repository only
+  through `wrangler` → `miniflare`, which pins 7.29.1 exactly, so it is a dev
+  dependency and nothing a caller of the API receives changes. The lock holds
+  7.30.1, the patched 7.x release, rather than 8.x.
+
 ### Changed — `vite-plus` 1.3.0, and every dependency stated as a minimum (2026-10-21)
 
 - **`vite-plus` moves from 1.0.0 to 1.3.0** (oxfmt 0.73, oxlint 1.88, Vitest
