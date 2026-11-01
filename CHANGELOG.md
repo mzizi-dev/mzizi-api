@@ -23,6 +23,11 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — the registry pin moves on to `0d17818`, registry v4.18.0 (2026-11-01)
+
+- `scripts/registry-ref.json` moves from `780457a` (v4.17.0, the entry below) to `0d17818`, registry `main` at **v4.18.0** (mzizi-registry#590), so the release to `main` ships the current registry. On top of v4.17.0 a caller sees the v4.18.0 record leading `/v1/changelog` and skills 0.13.0: seven skills, with `digital-hygiene` and `progress-report`, and new skill descriptions. Component count stays at 675.
+- `scripts/parity.mjs` lists every difference against production (150 requests, all bodies) as intended for this pin. Local `wrangler dev` parity against api.mzizi.dev: 746 intentional, 0 unexplained.
+
 ### Changed — GitHub releases carry the CHANGELOG entries they ship (2026-11-01)
 
 - Owner, 2026-11-01: a release is not done until its tag and its GitHub release, with notes from `CHANGELOG.md`, exist on the merge commit on `main`. `main-release.yml` now opens each release's notes with every `CHANGELOG.md` entry added since the previous `main` release (`.github/scripts/release_notes.py`, adapted from `mzizi-dev/mzizi`), followed by GitHub's list of merged pull requests. Before, the notes were the pull-request list alone.
