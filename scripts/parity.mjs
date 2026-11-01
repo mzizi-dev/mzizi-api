@@ -101,176 +101,26 @@ const HEADERS = [
  * 409a047 hand pin and the /v1/astro OpenAPI paths, #53 for 2902393, registry
  * v4.3.0, #56 for 5067b5e, registry v4.4.0, #60 for 9f3631c, registry v4.5.0, #65 for 0caf9dc, registry v4.6.0, #68 for 81a37ed,
  * registry v4.7.0, #70 for f70703d, registry v4.8.0, #83 for 7567c0b,
- * registry v4.10.0).
+ * registry v4.10.0, #96 for 780457a, registry v4.17.0, #97 for 0d17818,
+ * registry v4.18.0).
  */
-// The registry pin moves from registry main 7567c0b (v4.10.0), which
-// production serves, to 0d17818, the v4.18.0 release (mzizi-registry#590),
-// taking in v4.11.0 to v4.18.0: 19 new components (656 to 675; N2 388 to
-// 394, N3 74 to 84, N6 90 to 93), the kweli brand entry and its marks,
-// --radius-xs, the --tier-*, --assurance-* and --attestation-* roles, skills
-// 0.13.0 (seven skills, with digital-hygiene and progress-report), and new
-// versions of existing components. Every difference below is a body that the
-// new registry content changes; no status, header or redirect moves. The
-// earlier BRAND_ADDED entry is gone: production serves those keys since the
-// v0.8.0 release (#78). Remove these entries once production serves 0d17818.
-const PIN_0D17818 = {
-  allow: ["body"],
-  why: "Registry pin 7567c0b (v4.10.0) to 0d17818 (v4.18.0, mzizi-registry#590): new components, the kweli brand entry and marks, --radius-xs and the trust-model token roles, skills 0.13.0, and updated component sources and descriptions. Only response bodies differ.",
+// /v1/ui/{name} now serves the registry's binary-only items (four PNG kweli
+// icons at 0d17818) with their files as base64 and a MIME type, instead of a
+// 404 for a name /v1/ui lists. The 0d17818 pin's entries were pruned once
+// production served it (they are in #97).
+const BINARY_ITEM = {
+  allow: ["status", "header:cache-control", "body"],
+  status: 404,
+  why: 'Binary-only items: /v1/ui/{name} answers 200 with the PNG as base64 (`encoding: "base64"`, `mime: "image/png"`) where production answers 404 for a name its own /v1/ui lists. Remove once production serves it.',
 };
-const PIN_0D17818_REQUESTS = [
-  "GET /api/v1/architecture",
-  "GET /api/v1/brand",
-  "GET /api/v1/changelog",
-  "GET /api/v1/search?layer=2",
-  "GET /api/v1/search?q=x",
-  "GET /api/v1/skills",
-  "GET /api/v1/stats",
-  "GET /api/v1/ui?node=3",
-  "GET /api/v1",
-  "GET /v1/architecture/nodes/2",
-  "GET /v1/architecture/nodes/3",
-  "GET /v1/architecture/nodes/6",
-  "GET /v1/architecture",
-  "GET /v1/brand",
-  "GET /v1/changelog/4.10.0",
-  "GET /v1/changelog",
-  "GET /v1/rs/mzizi-alert-banner",
-  "GET /v1/rs/mzizi-cover-header",
-  "GET /v1/rs/mzizi-gauge-card",
-  "GET /v1/rs/mzizi-suitability-card",
-  "GET /v1/rs/mzizi-tokens-rust",
-  "GET /v1/search?category=primitives",
-  "GET /v1/search?layer=2",
-  "GET /v1/search?layer=3&node=2",
-  "GET /v1/search?node=2",
-  "GET /v1/search?q=button&node=2&category=primitives",
-  "GET /v1/search?q=button",
-  "GET /v1/skills/discoverability",
-  "GET /v1/skills/does-not-exist",
-  "GET /v1/skills/mzizi-backend",
-  "GET /v1/skills/mzizi-design",
-  "GET /v1/skills/mzizi-language",
-  "GET /v1/skills/mzizi-roots",
-  "GET /v1/skills/summary",
-  "GET /v1/skills",
-  "GET /v1/stats?days=500",
-  "GET /v1/stats?days=7",
-  "GET /v1/stats?days=abc",
-  "GET /v1/stats",
-  "GET /v1/ui?collection=components",
-  "GET /v1/ui?collection=documentation",
-  "GET /v1/ui?collection=primitives",
-  "GET /v1/ui?limit=0",
-  "GET /v1/ui?limit=abc",
-  "GET /v1/ui?node=-1",
-  "GET /v1/ui?node=2&limit=5&offset=3",
-  "GET /v1/ui?node=2",
-  "GET /v1/ui?node=999",
-  "GET /v1/ui?offset=570",
-  "GET /v1/ui?owner=framework",
-  "GET /v1/ui?owner=mzizi",
-  "GET /v1/ui?owner=nyuchi",
-  "GET /v1/ui?type=registry%3Abase",
-  "GET /v1/ui?type=registry%3Ablock",
-  "GET /v1/ui?type=registry%3Ahook",
-  "GET /v1/ui?type=registry%3Aitem",
-  "GET /v1/ui?type=registry%3Alib",
-  "GET /v1/ui?type=registry%3Atheme",
-  "GET /v1/ui?type=registry%3Aui",
-  "GET /v1/ui/ancestry-memorial",
-  "GET /v1/ui/api-usage-meter",
-  "GET /v1/ui/app-brand-mark",
-  "GET /v1/ui/app-data-table",
-  "GET /v1/ui/app-form-field",
-  "GET /v1/ui/chart-area-icons",
-  "GET /v1/ui/chart-area-legend",
-  "GET /v1/ui/chart-bar-interactive",
-  "GET /v1/ui/chart-bar-mixed",
-  "GET /v1/ui/chart-bar-multiple",
-  "GET /v1/ui/chart-line-multiple",
-  "GET /v1/ui/chart-pie-donut-active",
-  "GET /v1/ui/chart-pie-donut-text",
-  "GET /v1/ui/chart-pie-donut",
-  "GET /v1/ui/chart-pie-interactive",
-  "GET /v1/ui/chart-pie-label-custom",
-  "GET /v1/ui/chart-pie-label-list",
-  "GET /v1/ui/chart-pie-label",
-  "GET /v1/ui/chart-pie-legend",
-  "GET /v1/ui/chart-pie-separator-none",
-  "GET /v1/ui/chart-pie-simple",
-  "GET /v1/ui/chart-pie-stacked",
-  "GET /v1/ui/chart-radar-grid-custom",
-  "GET /v1/ui/chart-radial-shape",
-  "GET /v1/ui/chart-tooltip-icons",
-  "GET /v1/ui/discover-category-chip",
-  "GET /v1/ui/driver-profile-card",
-  "GET /v1/ui/escrow-status",
-  "GET /v1/ui/filter-bar",
-  "GET /v1/ui/individual-profile-page",
-  "GET /v1/ui/itinerary-timeline",
-  "GET /v1/ui/maintenance-page",
-  "GET /v1/ui/map-marker",
-  "GET /v1/ui/moderation-queue-item",
-  "GET /v1/ui/mzizi-alert-banner",
-  "GET /v1/ui/mzizi-calendar",
-  "GET /v1/ui/mzizi-cover-header",
-  "GET /v1/ui/mzizi-cover-wash-header",
-  "GET /v1/ui/mzizi-create-listing",
-  "GET /v1/ui/mzizi-event-card",
-  "GET /v1/ui/mzizi-footer",
-  "GET /v1/ui/mzizi-gauge-card",
-  "GET /v1/ui/mzizi-group-card",
-  "GET /v1/ui/mzizi-harness-prewire",
-  "GET /v1/ui/mzizi-harness",
-  "GET /v1/ui/mzizi-icons",
-  "GET /v1/ui/mzizi-notification-item",
-  "GET /v1/ui/mzizi-offer-card",
-  "GET /v1/ui/mzizi-permission-gate",
-  "GET /v1/ui/mzizi-place-card",
-  "GET /v1/ui/mzizi-profile-block",
-  "GET /v1/ui/mzizi-programme-item",
-  "GET /v1/ui/mzizi-provider-card",
-  "GET /v1/ui/mzizi-resilience",
-  "GET /v1/ui/mzizi-review-card",
-  "GET /v1/ui/mzizi-search-view",
-  "GET /v1/ui/mzizi-source-badge",
-  "GET /v1/ui/mzizi-suitability-card",
-  "GET /v1/ui/mzizi-ticket-card",
-  "GET /v1/ui/mzizi-timeline",
-  "GET /v1/ui/mzizi-tokens-arkts",
-  "GET /v1/ui/mzizi-tokens-globals",
-  "GET /v1/ui/mzizi-tokens-kotlin",
-  "GET /v1/ui/mzizi-tokens-python",
-  "GET /v1/ui/mzizi-tokens-react-native",
-  "GET /v1/ui/mzizi-tokens-rust",
-  "GET /v1/ui/mzizi-tokens-swift",
-  "GET /v1/ui/mzizi-tokens-typescript",
-  "GET /v1/ui/mzizi-tokens",
-  "GET /v1/ui/mzizi-trust-gate",
-  "GET /v1/ui/mzizi-trust-meter",
-  "GET /v1/ui/mzizi-verified-badge",
-  "GET /v1/ui/mzizi-wallet-gate",
-  "GET /v1/ui/nft-card",
-  "GET /v1/ui/note-card",
-  "GET /v1/ui/org-profile-page",
-  "GET /v1/ui/permission-badge",
-  "GET /v1/ui/priority-selector",
-  "GET /v1/ui/rating",
-  "GET /v1/ui/reminder-card",
-  "GET /v1/ui/route-card",
-  "GET /v1/ui/schema-viewer",
-  "GET /v1/ui/site-icons",
-  "GET /v1/ui/symptom-checker",
-  "GET /v1/ui/task-board",
-  "GET /v1/ui/timeline",
-  "GET /v1/ui/ui-utils",
-  "GET /v1/ui/ui-variants",
-  "GET /v1/ui/verification-review-card",
-  "GET /v1/ui",
-  "GET /v1",
+const BINARY_ITEM_REQUESTS = [
+  "GET /v1/ui/kweli-apple-touch-icon",
+  "GET /v1/ui/kweli-icon-192",
+  "GET /v1/ui/kweli-icon-512",
+  "GET /v1/ui/kweli-icon-maskable-512",
 ];
 const EXPECTED = {
-  ...Object.fromEntries(PIN_0D17818_REQUESTS.map((r) => [r, PIN_0D17818])),
+  ...Object.fromEntries(BINARY_ITEM_REQUESTS.map((r) => [r, BINARY_ITEM])),
   // A trailing `/*` matches every path under that prefix. Used here because the
   // no-Rust answer is one 404 per component (596 slugs), and only its message differs.
   "GET /v1/rs/*": {
@@ -519,6 +369,46 @@ await Promise.all(
   }),
 );
 
+// ── Names only the candidate lists ──────────────────────────────────────────
+// The request list above comes from the BASELINE index, so a component that is
+// new at the candidate's pin is never probed: production has no such page to
+// compare with. That is how four PNG-only items that answered 404 on
+// /v1/ui/{name} passed parity at registry v4.18.0 while /v1/ui listed them.
+// Every name the candidate lists and the baseline does not is checked against
+// the contract instead: /v1/ui/{name} answers 200 with a `files` array, and
+// /v1/rs/{name} answers 200 or 404 (a component with no Rust build), never a
+// 5xx. These checks have no baseline to differ from, so EXPECTED never excuses
+// them, with or without --strict.
+const candidateNames = (await (await fetch(`${LOCAL}/v1/ui`)).json()).items.map(
+  (i) => i.name,
+);
+const liveNames = new Set(names);
+const newNames = candidateNames.filter((n) => !liveNames.has(n));
+const newFailures = [];
+let newCursor = 0;
+await Promise.all(
+  Array.from({ length: CONCURRENCY }, async () => {
+    while (newCursor < newNames.length) {
+      const name = newNames[newCursor++];
+      const ui = await hit(LOCAL, { method: "GET", path: `/v1/ui/${name}` });
+      let files;
+      try {
+        files = JSON.parse(ui.text).files;
+      } catch {
+        files = undefined;
+      }
+      if (ui.status !== 200 || !Array.isArray(files))
+        newFailures.push(
+          `\`GET /v1/ui/${name}\` answered ${ui.status}${ui.status === 200 ? " without a files array" : ""}`,
+        );
+      const rs = await hit(LOCAL, { method: "GET", path: `/v1/rs/${name}` });
+      if (rs.status !== 200 && rs.status !== 404)
+        newFailures.push(`\`GET /v1/rs/${name}\` answered ${rs.status}`);
+    }
+  }),
+);
+newFailures.sort((a, b) => a.localeCompare(b));
+
 results.sort((a, b) => (a.path + a.method).localeCompare(b.path + b.method));
 const key = (r) => `${r.method} ${r.path}`;
 const expectation = (r) => {
@@ -561,6 +451,8 @@ const lines = [
   `| Identical (status, headers compared, body) | ${identical.length} |`,
   `| Intentional differences | ${expected.length} |`,
   `| **Unexplained differences** | **${failed.length}** |`,
+  `| Names only the candidate lists, checked against the contract | ${newNames.length} |`,
+  `| **Of those, failing the contract** | **${newFailures.length}** |`,
   ``,
   `Identical by status: ${Object.entries(byStatus)
     .map(([s, n]) => `${s} × ${n}`)
@@ -595,7 +487,15 @@ if (failed.length) {
     );
   lines.push("");
 }
+if (newFailures.length) {
+  lines.push(
+    `### Names only the candidate lists that fail the contract`,
+    ``,
+    ...newFailures.map((f) => `- ${f}`),
+    ``,
+  );
+}
 const report = lines.join("\n");
 console.log(report);
 if (args.report) writeFileSync(args.report, report + "\n");
-process.exit(failed.length ? 1 : 0);
+process.exit(failed.length || newFailures.length ? 1 : 0);
