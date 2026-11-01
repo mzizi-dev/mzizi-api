@@ -32,8 +32,16 @@ def show(ref: str, missing_ok: bool = False) -> str:
     out = subprocess.run(
         ["git", "show", f"{ref}:CHANGELOG.md"], capture_output=True, text=True
     )
-    if out.returncode != 0 and missing_ok and "does not exist" in out.stderr:
-        return ""
+    if out.returncode != 0 and missing_ok:
+        # Tell "the ref has no CHANGELOG.md" apart from any other failure: git's
+        # message for it differs with the working tree, so ask git directly.
+        def git_ok(*args: str) -> bool:
+            return subprocess.run(["git", *args], capture_output=True).returncode == 0
+
+        if git_ok("rev-parse", "--verify", "--quiet", f"{ref}^{{commit}}") and not git_ok(
+            "cat-file", "-e", f"{ref}:CHANGELOG.md"
+        ):
+            return ""
     if out.returncode != 0:
         # A wrong note is worse than a failed release run: the run can be re-tried.
         sys.exit(f"release_notes: cannot read CHANGELOG.md at {ref}: {out.stderr.strip()}")
