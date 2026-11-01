@@ -103,25 +103,27 @@ const HEADERS = [
  * registry v4.7.0, #70 for f70703d, registry v4.8.0, #83 for 7567c0b,
  * registry v4.10.0).
  */
-// The registry pin moves from registry main 7567c0b (v4.10.0) to 780457a, the
-// v4.17.0 release (mzizi-registry#580), taking in v4.11.0 to v4.17.0: 19 new
-// components (656 to 675; N2 388 to 394, N3 74 to 84, N6 90 to 93), the kweli
-// brand entry and its marks, --radius-xs, the --tier-*, --assurance-* and
-// --attestation-* roles, and new versions of existing components. Every
-// difference below is a 200 body that the new registry content changes; no
-// status, header or redirect moves. The earlier BRAND_ADDED entry is gone:
-// production serves those keys since the v0.8.0 release (#78). Remove these
-// entries once production serves 780457a.
-const PIN_780457A = {
+// The registry pin moves from registry main 7567c0b (v4.10.0), which
+// production serves, to 0d17818, the v4.18.0 release (mzizi-registry#590),
+// taking in v4.11.0 to v4.18.0: 19 new components (656 to 675; N2 388 to
+// 394, N3 74 to 84, N6 90 to 93), the kweli brand entry and its marks,
+// --radius-xs, the --tier-*, --assurance-* and --attestation-* roles, skills
+// 0.13.0 (seven skills, with digital-hygiene and progress-report), and new
+// versions of existing components. Every difference below is a body that the
+// new registry content changes; no status, header or redirect moves. The
+// earlier BRAND_ADDED entry is gone: production serves those keys since the
+// v0.8.0 release (#78). Remove these entries once production serves 0d17818.
+const PIN_0D17818 = {
   allow: ["body"],
-  why: "Registry pin 7567c0b (v4.10.0) to 780457a (v4.17.0, mzizi-registry#580): new components, the kweli brand entry and marks, --radius-xs and the trust-model token roles, and updated component sources and descriptions. Only response bodies differ.",
+  why: "Registry pin 7567c0b (v4.10.0) to 0d17818 (v4.18.0, mzizi-registry#590): new components, the kweli brand entry and marks, --radius-xs and the trust-model token roles, skills 0.13.0, and updated component sources and descriptions. Only response bodies differ.",
 };
-const PIN_780457A_REQUESTS = [
+const PIN_0D17818_REQUESTS = [
   "GET /api/v1/architecture",
   "GET /api/v1/brand",
   "GET /api/v1/changelog",
   "GET /api/v1/search?layer=2",
   "GET /api/v1/search?q=x",
+  "GET /api/v1/skills",
   "GET /api/v1/stats",
   "GET /api/v1/ui?node=3",
   "GET /api/v1",
@@ -143,6 +145,14 @@ const PIN_780457A_REQUESTS = [
   "GET /v1/search?node=2",
   "GET /v1/search?q=button&node=2&category=primitives",
   "GET /v1/search?q=button",
+  "GET /v1/skills/discoverability",
+  "GET /v1/skills/does-not-exist",
+  "GET /v1/skills/mzizi-backend",
+  "GET /v1/skills/mzizi-design",
+  "GET /v1/skills/mzizi-language",
+  "GET /v1/skills/mzizi-roots",
+  "GET /v1/skills/summary",
+  "GET /v1/skills",
   "GET /v1/stats?days=500",
   "GET /v1/stats?days=7",
   "GET /v1/stats?days=abc",
@@ -260,7 +270,7 @@ const PIN_780457A_REQUESTS = [
   "GET /v1",
 ];
 const EXPECTED = {
-  ...Object.fromEntries(PIN_780457A_REQUESTS.map((r) => [r, PIN_780457A])),
+  ...Object.fromEntries(PIN_0D17818_REQUESTS.map((r) => [r, PIN_0D17818])),
   // A trailing `/*` matches every path under that prefix. Used here because the
   // no-Rust answer is one 404 per component (596 slugs), and only its message differs.
   "GET /v1/rs/*": {
