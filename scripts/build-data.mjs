@@ -141,6 +141,7 @@ mkdirSync(outDir, { recursive: true });
 const files = {
   "components.json": data.components,
   "sources.json": data.sources,
+  "binary.json": data.binary,
   "astro.json": data.astro,
   "helix.json": { model: data.helix, nodeCounts: data.nodeCounts },
   "changelog.json": {
@@ -170,7 +171,7 @@ for (const [name, value] of Object.entries(files)) {
     writeFileSync(path, next);
 }
 console.error(
-  `build-data: ${data.components.length} components, ` +
+  `build-data: ${data.components.length} components (${Object.keys(data.binary).length} binary-only), ` +
     `${data.helix.nodes.length} nodes / ${data.helix.rungs.length} rungs / ${data.helix.strands.length} strands, ` +
     `${data.changelog.length} changelog entries, ${data.skills.names.length} skills, ` +
     `${Object.keys(data.componentDocs).length} docs rows, ` +

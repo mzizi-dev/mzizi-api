@@ -23,6 +23,17 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Fixed — every name `/v1/ui` lists resolves on `/v1/ui/{name}`, including binary-only items (2026-11-01)
+
+- **Since v0.11.0 (registry v4.18.0), `/v1/ui/{name}` answered 404 for four names `/v1/ui` lists**: `kweli-apple-touch-icon`, `kweli-icon-192`, `kweli-icon-512` and `kweli-icon-maskable-512`. Each is a registry item whose only file is a PNG, so it has no text source. Any client that walks the index failed on them; the mzizi-site build did. They now answer 200, with each file as base64: `encoding: "base64"`, `mime` (`image/png`), `path`, `type` and `target`, the way `/v1/astro` ships assets. An item with no source that is not binary still answers 404 as before.
+- `build-data` reads binary-only items from the registry checkout into `src/data/binary.json` (PNG, JPEG, GIF, WebP, AVIF, ICO, WOFF and WOFF2).
+- A new offline test walks every name `/v1/ui` lists and requires 200 from `/v1/ui/{name}`. Run with the fix removed, it fails naming the four.
+- `scripts/parity.mjs` also checks every name the candidate lists and production does not: `/v1/ui/{name}` must answer 200 with a `files` array, and `/v1/rs/{name}` 200 or 404. `EXPECTED` never excuses these checks. Parity missed this bug because it only probed names production already listed, so the new items were never requested. Run against the broken production with the kweli names held back, the check fails on exactly these four. The 0d17818 pin's `EXPECTED` entries are pruned now that production serves it; the four new answers are the only intended differences. Local parity against api.mzizi.dev: 1585 requests, 4 intentional, 0 unexplained.
+
+### Fixed — release notes when the previous release has no `CHANGELOG.md` (2026-11-01)
+
+- `release_notes.py` treats a previous release with no `CHANGELOG.md` as the first release, as its docstring says. It matched git's "does not exist" message, but in a checkout where the file exists on disk git says "exists on disk, but not in", so the first `main-release.yml` run that met such a tag stopped before tagging. It now asks git directly (`git cat-file -e`).
+
 ### Changed — the registry pin moves on to `0d17818`, registry v4.18.0 (2026-11-01)
 
 - `scripts/registry-ref.json` moves from `780457a` (v4.17.0, the entry below) to `0d17818`, registry `main` at **v4.18.0** (mzizi-registry#590), so the release to `main` ships the current registry. On top of v4.17.0 a caller sees the v4.18.0 record leading `/v1/changelog` and skills 0.13.0: seven skills, with `digital-hygiene` and `progress-report`, and new skill descriptions. Component count stays at 675.
