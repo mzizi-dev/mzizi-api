@@ -1,10 +1,15 @@
-# AGENTS.md — mzizi-api-gateway
+# AGENTS.md — mzizi-api (formerly mzizi-api-gateway)
 
 > Vendor-neutral instructions for any AI agent working in this repository. See
 > [`README.md`](./README.md) for the status, the data pipeline and the cutover
 > steps, and [`CONTRIBUTING.md`](./CONTRIBUTING.md) for the change procedure.
 
 ## What this repo is
+
+The repository is `mzizi-dev/mzizi-api`, formerly `mzizi-api-gateway`. The Worker name,
+the package name and the `X-Mzizi-Source` header still say `mzizi-api-gateway`; changing them
+is a deploy decision, not part of the rename. It is the Mzizi API, one of the four API
+gateways (see README, "The four API gateways"). Only this one is the registry API.
 
 A **Hono (TypeScript) Cloudflare Worker** serving `api.mzizi.dev`, the
 Mzizi registry API. **Owner decision, 2026-09-28:** the API Worker is Hono,
@@ -134,28 +139,22 @@ Owner's rule, 2026-09-30: "changelogs are super important".
 
 ## Merge convention
 
-Read off the GitHub API and the rulesets on 2026-10-20; they are the authority
-if this drifts.
+Read off the repo settings and the rulesets on 2026-10-21; they are the
+authority if this drifts.
 
-- **Merge methods.** Rebase and squash are allowed; merge commits are not
-  (repo flags `allow_rebase_merge: true`, `allow_squash_merge: true`,
-  `allow_merge_commit: false`, and the org and enterprise rulesets allow only
-  `squash` and `rebase` and require linear history on `main` and `staging`).
-  Org admins can bypass those rulesets; agents never do, and never use
-  `--admin`.
-- **Which one.** Rebase a PR whose branch is linear. Squash a PR whose branch
-  carries merge commits, including one brought up to date with GitHub's
-  "Update branch" (required status checks are strict, so a PR behind its base
-  must be updated before it can merge). Here a squash commit takes the PR's
-  title and body as its message (`squash_merge_commit_title: PR_TITLE`,
-  `squash_merge_commit_message: PR_BODY`), not the branch's commit messages,
-  so write the PR body as the commit message you want kept.
-- **No auto-merge, ever.** `allow_auto_merge` is on for the repo, but never
-  pass `--auto` or enable auto-merge on any PR: it merges on green CI, before
-  the merge gate's runtime check and code review (see "Dev skills, progress
-  reports and the merge gate" below). It stays on only for the registry pin
-  bot, which turns it on for its own `bot/registry-pin` PR into `main` and
-  nothing else (README, "Registry pin bump").
+- **Merge method.** Squash merges through the merge queue:
+  `gh pr merge <n> --squash --auto`. Never `--admin`. The squash commit keeps
+  every commit message in its body (`COMMIT_MESSAGES`), so the per-commit
+  reasoning is preserved. Rebase and merge commits are disabled (repo settings
+  and rulesets, 2026-10-21). Org admins can bypass those rulesets; agents
+  never do.
+- **Branches.** Updating a branch with the base (GitHub's "Update branch") is
+  fine; the squash makes `main` linear. The merge queue tests each PR against
+  the latest base. Merged branches are deleted.
+- **Enqueue only past the merge gate.** `--auto` adds the PR to the merge
+  queue, and is how PRs land. Meet the merge gate first (complete, CI green,
+  verified at runtime, `/code-review` run with findings resolved; see "Dev
+  skills, progress reports and the merge gate" below), then enqueue.
 - **Releases.** A merge into `main` deploys `api.mzizi.dev`, so only the owner
   releases `staging` to `main`, or an agent the owner has authorised for that
   release. A release is a `release/` branch made of `main` plus `staging`'s

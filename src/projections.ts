@@ -189,9 +189,11 @@ export const rsNotFound = (name: string) => ({
 export const rsNoRust = (name: string) => ({
   error: `"${name}" has no Rust implementation`,
   message:
-    "This component ships for React only. The contract, tokens and variants are on " +
-    `https://api.mzizi.dev/v1/ui/${encodeURIComponent(name)} — the Dioxus source is ` +
-    "yours to write against them.",
+    "This component has no Mzizi Roots (Rust) build yet. Roots components are moving to " +
+    "Mzizi's own Rust renderer: a pure `render(props) -> String`, with behaviour attached in " +
+    "the browser through `web-sys` on the component's `data-slot` root. A Rust build of this " +
+    "component would follow that shape. The contract, tokens and variants are on " +
+    `https://api.mzizi.dev/v1/ui/${encodeURIComponent(name)}.`,
 });
 
 /** app/api/v1/rs/[name]/route.ts: the 500 body when no crate compiles the `.rs`. */
