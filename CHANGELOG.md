@@ -23,6 +23,13 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — the registry pin moves to `780457a`, registry v4.17.0 (2026-11-01)
+
+- `scripts/registry-ref.json` moves from `f70703d` (v4.8.0) on `staging`, and from `7567c0b` (v4.10.0) on `main`, to `780457a`, registry `main` at **v4.17.0** (mzizi-registry#580). It goes through `staging` in place of the bot's #93, which had stopped on a test count and on `--strict` parity.
+- What a caller sees: 675 components (was 656), with N2 at 394, N3 at 84 and N6 at 93; the v4.17.0 record leads `/v1/changelog`; the kweli brand entry and its marks, `--radius-xs`, and the `--tier-*`, `--assurance-*` and `--attestation-*` roles; new versions of existing component sources and descriptions. No route, status, header or redirect changes.
+- `/v1/astro/app-brand-mark` now ships six images (Nyuchi, Mukoko and Kweli, light and dark each); the test expected four.
+- `scripts/parity.mjs` lists every difference against production (141 requests, all `200` bodies) as intended for this pin, and drops the `/v1/brand` `added` entry, which production already serves. Local `wrangler dev` parity against api.mzizi.dev: 737 intentional, 0 unexplained.
+
 ### Security — `undici` held at 7.30.1 or later (2026-10-24)
 
 - **`undici` moves from 7.29.1 to 7.30.1**, through a new npm override,
