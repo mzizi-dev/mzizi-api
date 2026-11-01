@@ -732,3 +732,47 @@ describe("HTTP behaviour", () => {
     expect(await res.text()).toMatch(/^openapi: /m);
   });
 });
+
+describe("/v1/ui/{name} resolves every name /v1/ui lists", () => {
+  // The API contract: a name the index lists must resolve. Registry v4.18.0
+  // listed four PNG-only kweli icons whose /v1/ui/{name} answered 404, which
+  // broke every mzizi-site build that walks the index.
+  it("answers 200 for every listed name", async () => {
+    const index = (await (await get("/v1/ui?limit=10000")).json()) as {
+      items: Array<{ name: string }>;
+      meta: { total: number };
+    };
+    expect(index.items.length).toBe(index.meta.total);
+    expect(index.items.length).toBe(components.length);
+    const failures: string[] = [];
+    for (const { name } of index.items) {
+      const res = await get(`/v1/ui/${name}`);
+      if (res.status !== 200) failures.push(`${name} → ${res.status}`);
+    }
+    expect(failures).toEqual([]);
+  });
+
+  it("ships a binary-only item's files as base64 with their MIME type", async () => {
+    const res = await get("/v1/ui/kweli-icon-512");
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      name: string;
+      files: Array<{
+        path: string;
+        target?: string;
+        content: string;
+        encoding?: string;
+        mime?: string;
+      }>;
+    };
+    expect(body.name).toBe("kweli-icon-512");
+    expect(body.files).toHaveLength(1);
+    const [file] = body.files;
+    expect(file?.encoding).toBe("base64");
+    expect(file?.mime).toBe("image/png");
+    expect(file?.target).toBe("public/icons/kweli-icon-512.png");
+    // A PNG starts with \x89PNG.
+    const head = atob(file?.content ?? "").slice(0, 4);
+    expect(head).toBe("\x89PNG");
+  });
+});
