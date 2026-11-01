@@ -100,37 +100,185 @@ const HEADERS = [
  * Mukoko Events replacing nhimbe from mzizi-registry#411, #51 for the
  * 409a047 hand pin and the /v1/astro OpenAPI paths, #53 for 2902393, registry
  * v4.3.0, #56 for 5067b5e, registry v4.4.0, #60 for 9f3631c, registry v4.5.0, #65 for 0caf9dc, registry v4.6.0, #68 for 81a37ed,
- * registry v4.7.0, #70 for f70703d, registry v4.8.0).
+ * registry v4.7.0, #70 for f70703d, registry v4.8.0, #83 for 7567c0b,
+ * registry v4.10.0).
  */
-// /v1/brand: every colour family gains its `-text` pair (`textLight`,
-// `textDark`), and each mineral the rest of its MineralToken (`role`,
-// `family`, `onContainerLight`, `onContainerDark`, `sortOrder`), from
-// lib/tokens/palette.generated.ts (mzizi-registry#316). Nothing served before
-// changes, which `added` holds the body to. The f70703d (v4.8.0) pin's entries
-// were pruned once production served them (they are in #70).
-const BRAND_ADDED = {
-  allow: ["body:added"],
-  // The shapes of MineralToken / textOnBaseTier() at the pin: `#RRGGBB`
-  // hex strings, a non-empty role, the two mineral families, a whole-number
-  // sortOrder.
-  added: {
-    minerals: {
-      role: "nonEmptyString",
-      family: "mineralFamily",
-      onContainerLight: "hex",
-      onContainerDark: "hex",
-      textLight: "hex",
-      textDark: "hex",
-      sortOrder: "index",
-    },
-    heritage: { textLight: "hex", textDark: "hex" },
-    experimental: { textLight: "hex", textDark: "hex" },
-  },
-  why: "mzizi-registry#316: every colour family gains textLight/textDark (the registry's textOnBaseTier(), `--color-<name>-text`), and each mineral role, family, onContainerLight/onContainerDark and sortOrder from lib/tokens/palette.generated.ts. Only these keys are added; the rest of the body equals production.",
+// The registry pin moves from registry main 7567c0b (v4.10.0), which
+// production serves, to 0d17818, the v4.18.0 release (mzizi-registry#590),
+// taking in v4.11.0 to v4.18.0: 19 new components (656 to 675; N2 388 to
+// 394, N3 74 to 84, N6 90 to 93), the kweli brand entry and its marks,
+// --radius-xs, the --tier-*, --assurance-* and --attestation-* roles, skills
+// 0.13.0 (seven skills, with digital-hygiene and progress-report), and new
+// versions of existing components. Every difference below is a body that the
+// new registry content changes; no status, header or redirect moves. The
+// earlier BRAND_ADDED entry is gone: production serves those keys since the
+// v0.8.0 release (#78). Remove these entries once production serves 0d17818.
+const PIN_0D17818 = {
+  allow: ["body"],
+  why: "Registry pin 7567c0b (v4.10.0) to 0d17818 (v4.18.0, mzizi-registry#590): new components, the kweli brand entry and marks, --radius-xs and the trust-model token roles, skills 0.13.0, and updated component sources and descriptions. Only response bodies differ.",
 };
+const PIN_0D17818_REQUESTS = [
+  "GET /api/v1/architecture",
+  "GET /api/v1/brand",
+  "GET /api/v1/changelog",
+  "GET /api/v1/search?layer=2",
+  "GET /api/v1/search?q=x",
+  "GET /api/v1/skills",
+  "GET /api/v1/stats",
+  "GET /api/v1/ui?node=3",
+  "GET /api/v1",
+  "GET /v1/architecture/nodes/2",
+  "GET /v1/architecture/nodes/3",
+  "GET /v1/architecture/nodes/6",
+  "GET /v1/architecture",
+  "GET /v1/brand",
+  "GET /v1/changelog/4.10.0",
+  "GET /v1/changelog",
+  "GET /v1/rs/mzizi-alert-banner",
+  "GET /v1/rs/mzizi-cover-header",
+  "GET /v1/rs/mzizi-gauge-card",
+  "GET /v1/rs/mzizi-suitability-card",
+  "GET /v1/rs/mzizi-tokens-rust",
+  "GET /v1/search?category=primitives",
+  "GET /v1/search?layer=2",
+  "GET /v1/search?layer=3&node=2",
+  "GET /v1/search?node=2",
+  "GET /v1/search?q=button&node=2&category=primitives",
+  "GET /v1/search?q=button",
+  "GET /v1/skills/discoverability",
+  "GET /v1/skills/does-not-exist",
+  "GET /v1/skills/mzizi-backend",
+  "GET /v1/skills/mzizi-design",
+  "GET /v1/skills/mzizi-language",
+  "GET /v1/skills/mzizi-roots",
+  "GET /v1/skills/summary",
+  "GET /v1/skills",
+  "GET /v1/stats?days=500",
+  "GET /v1/stats?days=7",
+  "GET /v1/stats?days=abc",
+  "GET /v1/stats",
+  "GET /v1/ui?collection=components",
+  "GET /v1/ui?collection=documentation",
+  "GET /v1/ui?collection=primitives",
+  "GET /v1/ui?limit=0",
+  "GET /v1/ui?limit=abc",
+  "GET /v1/ui?node=-1",
+  "GET /v1/ui?node=2&limit=5&offset=3",
+  "GET /v1/ui?node=2",
+  "GET /v1/ui?node=999",
+  "GET /v1/ui?offset=570",
+  "GET /v1/ui?owner=framework",
+  "GET /v1/ui?owner=mzizi",
+  "GET /v1/ui?owner=nyuchi",
+  "GET /v1/ui?type=registry%3Abase",
+  "GET /v1/ui?type=registry%3Ablock",
+  "GET /v1/ui?type=registry%3Ahook",
+  "GET /v1/ui?type=registry%3Aitem",
+  "GET /v1/ui?type=registry%3Alib",
+  "GET /v1/ui?type=registry%3Atheme",
+  "GET /v1/ui?type=registry%3Aui",
+  "GET /v1/ui/ancestry-memorial",
+  "GET /v1/ui/api-usage-meter",
+  "GET /v1/ui/app-brand-mark",
+  "GET /v1/ui/app-data-table",
+  "GET /v1/ui/app-form-field",
+  "GET /v1/ui/chart-area-icons",
+  "GET /v1/ui/chart-area-legend",
+  "GET /v1/ui/chart-bar-interactive",
+  "GET /v1/ui/chart-bar-mixed",
+  "GET /v1/ui/chart-bar-multiple",
+  "GET /v1/ui/chart-line-multiple",
+  "GET /v1/ui/chart-pie-donut-active",
+  "GET /v1/ui/chart-pie-donut-text",
+  "GET /v1/ui/chart-pie-donut",
+  "GET /v1/ui/chart-pie-interactive",
+  "GET /v1/ui/chart-pie-label-custom",
+  "GET /v1/ui/chart-pie-label-list",
+  "GET /v1/ui/chart-pie-label",
+  "GET /v1/ui/chart-pie-legend",
+  "GET /v1/ui/chart-pie-separator-none",
+  "GET /v1/ui/chart-pie-simple",
+  "GET /v1/ui/chart-pie-stacked",
+  "GET /v1/ui/chart-radar-grid-custom",
+  "GET /v1/ui/chart-radial-shape",
+  "GET /v1/ui/chart-tooltip-icons",
+  "GET /v1/ui/discover-category-chip",
+  "GET /v1/ui/driver-profile-card",
+  "GET /v1/ui/escrow-status",
+  "GET /v1/ui/filter-bar",
+  "GET /v1/ui/individual-profile-page",
+  "GET /v1/ui/itinerary-timeline",
+  "GET /v1/ui/maintenance-page",
+  "GET /v1/ui/map-marker",
+  "GET /v1/ui/moderation-queue-item",
+  "GET /v1/ui/mzizi-alert-banner",
+  "GET /v1/ui/mzizi-calendar",
+  "GET /v1/ui/mzizi-cover-header",
+  "GET /v1/ui/mzizi-cover-wash-header",
+  "GET /v1/ui/mzizi-create-listing",
+  "GET /v1/ui/mzizi-event-card",
+  "GET /v1/ui/mzizi-footer",
+  "GET /v1/ui/mzizi-gauge-card",
+  "GET /v1/ui/mzizi-group-card",
+  "GET /v1/ui/mzizi-harness-prewire",
+  "GET /v1/ui/mzizi-harness",
+  "GET /v1/ui/mzizi-icons",
+  "GET /v1/ui/mzizi-notification-item",
+  "GET /v1/ui/mzizi-offer-card",
+  "GET /v1/ui/mzizi-permission-gate",
+  "GET /v1/ui/mzizi-place-card",
+  "GET /v1/ui/mzizi-profile-block",
+  "GET /v1/ui/mzizi-programme-item",
+  "GET /v1/ui/mzizi-provider-card",
+  "GET /v1/ui/mzizi-resilience",
+  "GET /v1/ui/mzizi-review-card",
+  "GET /v1/ui/mzizi-search-view",
+  "GET /v1/ui/mzizi-source-badge",
+  "GET /v1/ui/mzizi-suitability-card",
+  "GET /v1/ui/mzizi-ticket-card",
+  "GET /v1/ui/mzizi-timeline",
+  "GET /v1/ui/mzizi-tokens-arkts",
+  "GET /v1/ui/mzizi-tokens-globals",
+  "GET /v1/ui/mzizi-tokens-kotlin",
+  "GET /v1/ui/mzizi-tokens-python",
+  "GET /v1/ui/mzizi-tokens-react-native",
+  "GET /v1/ui/mzizi-tokens-rust",
+  "GET /v1/ui/mzizi-tokens-swift",
+  "GET /v1/ui/mzizi-tokens-typescript",
+  "GET /v1/ui/mzizi-tokens",
+  "GET /v1/ui/mzizi-trust-gate",
+  "GET /v1/ui/mzizi-trust-meter",
+  "GET /v1/ui/mzizi-verified-badge",
+  "GET /v1/ui/mzizi-wallet-gate",
+  "GET /v1/ui/nft-card",
+  "GET /v1/ui/note-card",
+  "GET /v1/ui/org-profile-page",
+  "GET /v1/ui/permission-badge",
+  "GET /v1/ui/priority-selector",
+  "GET /v1/ui/rating",
+  "GET /v1/ui/reminder-card",
+  "GET /v1/ui/route-card",
+  "GET /v1/ui/schema-viewer",
+  "GET /v1/ui/site-icons",
+  "GET /v1/ui/symptom-checker",
+  "GET /v1/ui/task-board",
+  "GET /v1/ui/timeline",
+  "GET /v1/ui/ui-utils",
+  "GET /v1/ui/ui-variants",
+  "GET /v1/ui/verification-review-card",
+  "GET /v1/ui",
+  "GET /v1",
+];
 const EXPECTED = {
-  "GET /v1/brand": BRAND_ADDED,
-  "GET /api/v1/brand": BRAND_ADDED,
+  ...Object.fromEntries(PIN_0D17818_REQUESTS.map((r) => [r, PIN_0D17818])),
+  // A trailing `/*` matches every path under that prefix. Used here because the
+  // no-Rust answer is one 404 per component (596 slugs), and only its message differs.
+  "GET /v1/rs/*": {
+    allow: ["body"],
+    status: 404,
+    only: "body $.message:",
+    why: "Roots copy: the no-Rust 404 message now says the component has no Mzizi Roots (Rust) build yet, and that Roots is moving to Mzizi's own Rust renderer (Dioxus was the wording before). Status, error text and every 200 body are unchanged. Remove this entry once production serves the new message.",
+  },
 };
 
 // ── Build the request list ─────────────────────────────────────────────────
@@ -375,8 +523,18 @@ results.sort((a, b) => (a.path + a.method).localeCompare(b.path + b.method));
 const key = (r) => `${r.method} ${r.path}`;
 const expectation = (r) => {
   if (STRICT) return undefined;
-  const e = EXPECTED[key(r)] ?? EXPECTED[`* ${r.path}`];
-  return e && r.kinds.every((k) => e.allow.includes(k)) ? e : undefined;
+  const prefix = Object.keys(EXPECTED).find(
+    (k) => k.endsWith("/*") && key(r).startsWith(k.slice(0, -1)),
+  );
+  const e =
+    EXPECTED[key(r)] ??
+    EXPECTED[`* ${r.path}`] ??
+    (prefix ? EXPECTED[prefix] : undefined);
+  if (!e || !r.kinds.every((k) => e.allow.includes(k))) return undefined;
+  if (e.status !== undefined && r.liveStatus !== e.status) return undefined;
+  if (e.only !== undefined && !r.diffs.every((d) => d.startsWith(e.only)))
+    return undefined;
+  return e;
 };
 const failed = results.filter((r) => r.diffs.length && !expectation(r));
 const expected = results.filter((r) => r.diffs.length && expectation(r));

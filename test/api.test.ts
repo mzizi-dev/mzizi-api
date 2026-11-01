@@ -202,8 +202,9 @@ describe("/v1/astro (mzizi-registry#397)", () => {
       await get("/v1/astro/app-brand-mark")
     ).json()) as AstroItem;
     const assets = body.files.filter((f) => f.type === "registry:asset");
-    // Nyuchi's pair, and since mzizi-registry#459 Mukoko's (light and dark each).
-    expect(assets.length).toBe(4);
+    // Nyuchi's pair, since mzizi-registry#459 Mukoko's, and since registry
+    // v4.12.0 Kweli's (light and dark each).
+    expect(assets.length).toBe(6);
     for (const a of assets) expect(a.encoding).toBe("base64");
   });
 
