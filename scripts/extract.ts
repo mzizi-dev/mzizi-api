@@ -440,7 +440,7 @@ async function main() {
   const registryRoot = process.argv[3];
   if (!registryRoot) throw new Error("extract: registry checkout path missing");
   for (const c of components) {
-    if (sources[c.name]?.primary !== null) continue;
+    if (sources[c.name]?.primary != null) continue;
     const declared = (c.files ?? []) as Array<{
       path: string;
       type: string;
