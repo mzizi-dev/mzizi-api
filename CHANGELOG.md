@@ -23,6 +23,10 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — parity's `EXPECTED` is empty again (2026-11-01)
+
+- Production serves v0.12.0, so the intended differences recorded for it no longer apply. The four binary-only `/v1/ui/{name}` entries (#100) and the `GET /v1/rs/*` Roots 404-message entry (#76) are removed from `scripts/parity.mjs`. Parity against api.mzizi.dev on this tree: 1585 requests, all identical, 0 names new to the candidate. Nothing a caller receives changes.
+
 ### Fixed — every name `/v1/ui` lists resolves on `/v1/ui/{name}`, including binary-only items (2026-11-01)
 
 - **Since v0.11.0 (registry v4.18.0), `/v1/ui/{name}` answered 404 for four names `/v1/ui` lists**: `kweli-apple-touch-icon`, `kweli-icon-192`, `kweli-icon-512` and `kweli-icon-maskable-512`. Each is a registry item whose only file is a PNG, so it has no text source. Any client that walks the index failed on them; the mzizi-site build did. They now answer 200, with each file as base64: `encoding: "base64"`, `mime` (`image/png`), `path`, `type` and `target`, the way `/v1/astro` ships assets. An item with no source that is not binary still answers 404 as before.
