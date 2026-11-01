@@ -102,34 +102,13 @@ const HEADERS = [
  * v4.3.0, #56 for 5067b5e, registry v4.4.0, #60 for 9f3631c, registry v4.5.0, #65 for 0caf9dc, registry v4.6.0, #68 for 81a37ed,
  * registry v4.7.0, #70 for f70703d, registry v4.8.0, #83 for 7567c0b,
  * registry v4.10.0, #96 for 780457a, registry v4.17.0, #97 for 0d17818,
- * registry v4.18.0).
+ * registry v4.18.0, #100 for the binary-only items).
  */
-// /v1/ui/{name} now serves the registry's binary-only items (four PNG kweli
-// icons at 0d17818) with their files as base64 and a MIME type, instead of a
-// 404 for a name /v1/ui lists. The 0d17818 pin's entries were pruned once
-// production served it (they are in #97).
-const BINARY_ITEM = {
-  allow: ["status", "header:cache-control", "body"],
-  status: 404,
-  why: 'Binary-only items: /v1/ui/{name} answers 200 with the PNG as base64 (`encoding: "base64"`, `mime: "image/png"`) where production answers 404 for a name its own /v1/ui lists. Remove once production serves it.',
-};
-const BINARY_ITEM_REQUESTS = [
-  "GET /v1/ui/kweli-apple-touch-icon",
-  "GET /v1/ui/kweli-icon-192",
-  "GET /v1/ui/kweli-icon-512",
-  "GET /v1/ui/kweli-icon-maskable-512",
-];
-const EXPECTED = {
-  ...Object.fromEntries(BINARY_ITEM_REQUESTS.map((r) => [r, BINARY_ITEM])),
-  // A trailing `/*` matches every path under that prefix. Used here because the
-  // no-Rust answer is one 404 per component (596 slugs), and only its message differs.
-  "GET /v1/rs/*": {
-    allow: ["body"],
-    status: 404,
-    only: "body $.message:",
-    why: "Roots copy: the no-Rust 404 message now says the component has no Mzizi Roots (Rust) build yet, and that Roots is moving to Mzizi's own Rust renderer (Dioxus was the wording before). Status, error text and every 200 body are unchanged. Remove this entry once production serves the new message.",
-  },
-};
+// The binary-only items' entries (four kweli PNGs, 404 → 200) and the Roots
+// 404-message entry (`GET /v1/rs/*`) were pruned once production served them
+// (they are in #100 and #76). A trailing `/*` key still matches every path
+// under that prefix.
+const EXPECTED = {};
 
 // ── Build the request list ─────────────────────────────────────────────────
 const index = await (await fetch(`${LIVE}/v1/ui`)).json();
