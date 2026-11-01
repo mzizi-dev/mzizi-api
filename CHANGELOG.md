@@ -23,6 +23,94 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — the registry pin moves on to `0d17818`, registry v4.18.0 (2026-11-01)
+
+- `scripts/registry-ref.json` moves from `780457a` (v4.17.0, the entry below) to `0d17818`, registry `main` at **v4.18.0** (mzizi-registry#590), so the release to `main` ships the current registry. On top of v4.17.0 a caller sees the v4.18.0 record leading `/v1/changelog` and skills 0.13.0: seven skills, with `digital-hygiene` and `progress-report`, and new skill descriptions. Component count stays at 675.
+- `scripts/parity.mjs` lists every difference against production (150 requests, all bodies) as intended for this pin. Local `wrangler dev` parity against api.mzizi.dev: 746 intentional, 0 unexplained.
+
+### Changed — GitHub releases carry the CHANGELOG entries they ship (2026-11-01)
+
+- Owner, 2026-11-01: a release is not done until its tag and its GitHub release, with notes from `CHANGELOG.md`, exist on the merge commit on `main`. `main-release.yml` now opens each release's notes with every `CHANGELOG.md` entry added since the previous `main` release (`.github/scripts/release_notes.py`, adapted from `mzizi-dev/mzizi`), followed by GitHub's list of merged pull requests. Before, the notes were the pull-request list alone.
+- A commit that already carries its minor tag but has no release gets one, and a manual run of the workflow on such a commit rewrites its notes from `CHANGELOG.md`, so an earlier release can be corrected.
+- Nothing served changes; only the release pages do.
+
+### Changed — the registry pin moves to `780457a`, registry v4.17.0 (2026-11-01)
+
+- `scripts/registry-ref.json` moves from `f70703d` (v4.8.0) on `staging`, and from `7567c0b` (v4.10.0) on `main`, to `780457a`, registry `main` at **v4.17.0** (mzizi-registry#580). It goes through `staging` in place of the bot's #93, which had stopped on a test count and on `--strict` parity.
+- What a caller sees: 675 components (was 656), with N2 at 394, N3 at 84 and N6 at 93; the v4.17.0 record leads `/v1/changelog`; the kweli brand entry and its marks, `--radius-xs`, and the `--tier-*`, `--assurance-*` and `--attestation-*` roles; new versions of existing component sources and descriptions. No route, status, header or redirect changes.
+- `/v1/astro/app-brand-mark` now ships six images (Nyuchi, Mukoko and Kweli, light and dark each); the test expected four.
+- `scripts/parity.mjs` lists every difference against production (141 requests, all `200` bodies) as intended for this pin, and drops the `/v1/brand` `added` entry, which production already serves. Local `wrangler dev` parity against api.mzizi.dev: 737 intentional, 0 unexplained.
+
+### Security — `undici` held at 7.30.1 or later (2026-10-24)
+
+- **`undici` moves from 7.29.1 to 7.30.1**, through a new npm override,
+  `"undici@<7.30.1": ">=7.30.1"` (a minimum, no maximum). It fixes
+  GHSA-4qv8-2p9j-2685, GHSA-f72v-6w45-q472 and GHSA-xjj6-f33q-929c (high),
+  which the org `audit` job reported. `undici` reaches this repository only
+  through `wrangler` → `miniflare`, which pins 7.29.1 exactly, so it is a dev
+  dependency and nothing a caller of the API receives changes. The lock holds
+  7.30.1, the patched 7.x release, rather than 8.x.
+
+### Changed — `vite-plus` 1.3.0, and every dependency stated as a minimum (2026-10-21)
+
+- **`vite-plus` moves from 1.0.0 to 1.3.0** (oxfmt 0.73, oxlint 1.88, Vitest
+  5.0.5). Nothing a caller of the API receives changes: `hono` stays at
+  4.13.13, and `vite-plus` is a dev dependency.
+- **Every dependency in `package.json` is now a minimum, `>=x.y.z`,** with no
+  upper bound (owner, 2026-10-21: "mark packages with minimum acceptable,
+  latest shouldn't be a blocker on too old of a version"). Each floor is the
+  version the lockfile already resolved, so no resolution moves except the
+  `vite-plus` tree. `@cloudflare/workers-types` reads `>=5.20261019.1`, the
+  version the lockfile held, not the older `^5.20260928.1` it was declared as.
+- One older entry below is reworded, not changed in meaning: a code span that
+  wrapped across a line inside a list item is kept on one line, because oxfmt
+  0.73 and prettier 3.9.4 indent that wrapped line differently and no
+  formatting satisfies both.
+
+### Changed — `/v1/rs/{name}` no longer says the Dioxus source is yours to write
+
+- **The 404 `message` for a component with no Rust build** (`/v1/rs/{name}`, 596
+  of the 656 slugs at the current pin) now reads: "This component has no Mzizi
+  Roots (Rust) build yet. Roots components are moving to Mzizi's own Rust
+  renderer: a pure `render(props) -> String`, with behaviour attached in the
+  browser through `web-sys` on the component's `data-slot` root. A Rust build of
+  this component would follow that shape. The contract, tokens and variants are
+  on `https://api.mzizi.dev/v1/ui/{name}`." It replaces "This component ships for
+  React only … the Dioxus source is yours to write against them."
+- **Unchanged:** the status (404), the `error` text, every 200 body, and the
+  `target: "dioxus"` field on the Rust implementations that exist. Those
+  Rust crates are still built on Dioxus 0.7; they are moving to Mzizi's own
+  renderer (research track, mzizi-registry#503).
+- **`scripts/parity.mjs`** gains a prefix entry, `GET /v1/rs/*`, for these
+  596 differences: status 404, body only, and only in `$.message`. Any other
+  difference on `/v1/rs/*` still counts as unexplained. Remove the entry once
+  production serves the new message.
+
+### Added — Dependabot version updates target `staging` (2026-10-21)
+
+- `.github/dependabot.yml` is new: weekly version updates for GitHub Actions and this repository's package manifests, every entry with `target-branch: staging` (owner rule, 2026-10-21: "all dependabot should target staging not main.") and a seven-day cooldown before a new release is proposed.
+
+### Fixed — the registry pin bot merges with squash (2026-10-21)
+
+- Rebase merging is now disabled org-wide and `main` lands through a squash merge queue, so the bot's
+  `merge_method: "rebase"` merge and `mergeMethod: REBASE` auto-merge would be refused and the pin would never move.
+  `scripts/registry-pin-bump.mjs` now uses squash for both (with the merge queue, the auto-merge call enqueues the pull
+  request). The file stays identical to the copy in `mzizi-dev/agent-tools`. No API change.
+
+### Changed — merging is squash through the merge queue (2026-10-21)
+
+- **Merging is now squash through the merge queue; docs updated.** `AGENTS.md`
+  ("Merge convention"), `CONTRIBUTING.md` ("Merging: squash through the merge
+  queue"), `CLAUDE.md` and `README.md` (the pin bot's setup, step 3) now give
+  `gh pr merge <n> --squash --auto`, which adds a pull request to the queue
+  once the merge gate is met. Rebase and merge commits are disabled in the
+  repo settings and rulesets (2026-10-21). The squash commit keeps every
+  commit message in its body (`COMMIT_MESSAGES`), not the PR body as the
+  2026-10-20 entry below said. Updating a branch with its base is fine, and
+  the queue tests each pull request against the latest base. README now notes
+  that the pin bot's script still asks for a rebase merge. No API response or
+  behaviour changed.
+
 ### Changed — the merge convention: rebase or squash, never auto-merge (2026-10-20)
 
 - **The repository is no longer described as rebase-only.** `AGENTS.md`
@@ -105,6 +193,25 @@ To see which registry commit production is serving, read the
 ## [2026-10-20]
 
 Released to `main` as `v0.8.0` (#78).
+
+### Changed — documentation for the repository rename and the 2026-10-20 decisions (2026-10-20)
+
+- **The repository is named `mzizi-dev/mzizi-api`** (formerly `mzizi-api-gateway`). The README,
+  AGENTS.md, CLAUDE.md and the badges now use the new name. The Worker name, the package name
+  and the `X-Mzizi-Source` header are unchanged: they are the deployed Worker's identity and
+  changing them is a separate decision. The owner has renamed the repository; GitHub
+  redirects the old name.
+- **README "The four API gateways"** lists the Mzizi, Nyuchi (B2B), Mukoko (consumer) and Nyuchi
+  Servers (internal) gateways, with their repositories and hosts. Only the Mzizi API is built
+  here. Decided, not built: the Nyuchi API (including its async-writes data gateway), the Nyuchi Servers API and the Mukoko API are built in Rust; the Mzizi API stays a Hono Worker for now.
+- **README "Build targets" and "Fly regions"** record the decisions as direction: Workers,
+  containers (a standard OCI image, Docker by default, any OCI runtime) and bare metal, designed in
+  the language's RFC-0016 (mzizi-dev/mzizi#123), approved as design only, with every build wave
+  waiting for the Phase 0 gate; stateless origins in `jnb`, `cdg` and `sin`, with data services
+  staying in `jnb`. No latency figures are claimed.
+- **README "Renderer"** records that Mzizi Roots are moving to Mzizi's own `render(props)`
+  (mzizi-registry#506 and #510, merged, give seven components that path), and that Dioxus stays in several crates until the
+  migration finishes. The registry route `/v1/rs/{name}` still serves the Dioxus source today.
 
 ### Added — `CLAUDE.md` for Claude Code (2026-10-07)
 
@@ -583,10 +690,10 @@ Merged straight to `main`, with no release tag.
   as the operator. The pin moves to mzizi-registry `ce68c64` (registry #373).
   (#14)
 - **`/v1/ui/{name}/docs`, `/v1/search` and `/v1/ai/instructions/{name}` answer
-  from the registry's files** instead of `503 {"error":"Database not
-configured"}`. `/v1/ui/{name}/versions` still answers 503, and its body now
-  says why: version history is console-owned data and this API has no
-  database. The pin moves to mzizi-registry `f19bb0b`. (#13)
+  from the registry's files** instead of replying
+  with `503 {"error":"Database not configured"}`. `/v1/ui/{name}/versions`
+  still answers 503, and its body now says why: version history is
+  console-owned data and this API has no database. The pin moves to mzizi-registry `f19bb0b`. (#13)
 - `wrangler.jsonc` declares `api.mzizi.dev` as this Worker's custom domain, so
   every production deploy keeps it. The owner moved the domain from the
   mzizi-registry Worker to this one on 2026-09-29; parity after the move was
