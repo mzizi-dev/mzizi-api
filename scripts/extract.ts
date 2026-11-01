@@ -379,6 +379,29 @@ function withTextOnBase() {
   return out;
 }
 
+/** Binary file extensions a registry item may ship, and their MIME types. */
+const BINARY_MIME: Record<string, string> = {
+  png: "image/png",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  gif: "image/gif",
+  webp: "image/webp",
+  avif: "image/avif",
+  ico: "image/x-icon",
+  woff: "font/woff",
+  woff2: "font/woff2",
+};
+const extOf = (path: string) =>
+  path.slice(path.lastIndexOf(".") + 1).toLowerCase();
+interface BinaryFile {
+  path: string;
+  type: string;
+  target?: string;
+  content: string;
+  encoding: "base64";
+  mime: string;
+}
+
 async function main() {
   const components = readComponents().map((c) => {
     // `sources`/`sourcePath` are the on-disk index; no route serves them except
@@ -406,6 +429,34 @@ async function main() {
       primary: readComponentSource(c.name),
       rs: readComponentSourceFor(c.name, "rs"),
     };
+  }
+
+  // Binary assets (PNG icons and the like): an item whose every file is a binary
+  // asset has no text source, so readComponentSource answers null for it, and
+  // /v1/ui/{name} used to 404 a name /v1/ui lists. Each file is read from the
+  // checkout and shipped as base64 with its MIME type, the way /v1/astro ships
+  // `./assets/` imports. Anything else with no source still 404s as before.
+  const binary: Record<string, BinaryFile[]> = {};
+  const registryRoot = process.argv[3];
+  if (!registryRoot) throw new Error("extract: registry checkout path missing");
+  for (const c of components) {
+    if (sources[c.name]?.primary !== null) continue;
+    const declared = (c.files ?? []) as Array<{
+      path: string;
+      type: string;
+      target?: string;
+    }>;
+    if (!declared.length) continue;
+    const mimes = declared.map((f) => BINARY_MIME[extOf(f.path)]);
+    if (mimes.some((m) => m === undefined)) continue;
+    binary[c.name] = declared.map((f, i) => ({
+      path: f.path,
+      type: f.type,
+      ...(f.target ? { target: f.target } : {}),
+      content: readFileSync(join(registryRoot, f.path)).toString("base64"),
+      encoding: "base64" as const,
+      mime: mimes[i] as string,
+    }));
   }
 
   // /v1/astro/{name} (mzizi-registry#397): the Astro implementation document for
@@ -474,6 +525,7 @@ async function main() {
   const out = {
     components,
     sources,
+    binary,
     astro,
     nodeCounts: readNodeCounts(),
     helix: await getHelixModel(),

@@ -5,6 +5,7 @@
  */
 import componentsJson from "./data/components.json";
 import sourcesJson from "./data/sources.json";
+import binaryJson from "./data/binary.json";
 import astroJson from "./data/astro.json";
 import helixJson from "./data/helix.json";
 import changelogJson from "./data/changelog.json";
@@ -75,6 +76,22 @@ export const readSource = (
   name: string,
   kind: "primary" | "rs",
 ): string | null => sources[name]?.[kind] ?? null;
+
+/** A file of a binary-only item (PNG icons and the like), shipped as base64. */
+export interface BinaryFile {
+  path: string;
+  type: string;
+  target?: string;
+  content: string;
+  encoding: "base64";
+  mime: string;
+}
+const binaryFiles = binaryJson as unknown as Record<string, BinaryFile[]>;
+/** The base64 files of an item whose every file is binary, or null. */
+export const readBinary = (name: string): BinaryFile[] | null =>
+  Object.prototype.hasOwnProperty.call(binaryFiles, name)
+    ? (binaryFiles[name] ?? null)
+    : null;
 
 /** A `/v1/astro/{name}` document: mzizi-registry lib/astro.ts `AstroDocument`. */
 export interface AstroDocument {
