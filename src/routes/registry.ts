@@ -6,6 +6,7 @@
 import type { Hono } from "hono";
 import {
   astroNames,
+  readBinary,
   components,
   crateGit,
   nodeCounts,
@@ -172,6 +173,29 @@ export function registerRegistry(v1: Hono) {
 
     // Keyed by the name asked for, as the registry's readComponentSource(name) is.
     const source = readSource(name, "primary");
+    // A binary-only item (PNG icons): no text source, so its files ship as
+    // base64 with their MIME type, as /v1/astro ships assets. Every name
+    // /v1/ui lists must resolve here.
+    const binaryFiles = source === null ? readBinary(component.name) : null;
+    if (binaryFiles) {
+      return json(
+        {
+          $schema: "https://ui.shadcn.com/schema/registry-item.json",
+          name: component.name,
+          type: component.type,
+          title: component.title,
+          description: component.description,
+          author: component.author,
+          categories: component.categories,
+          docs: component.docs,
+          dependencies: component.dependencies,
+          registryDependencies: component.registryDependencies,
+          files: binaryFiles,
+        },
+        200,
+        CORS_CACHE,
+      );
+    }
     if (source === null) {
       return json(
         { error: `No source code available for "${name}"` },
