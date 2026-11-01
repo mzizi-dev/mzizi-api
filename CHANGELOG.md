@@ -23,6 +23,10 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Fixed — release notes when the previous release has no `CHANGELOG.md` (2026-11-01)
+
+- `release_notes.py` treats a previous release with no `CHANGELOG.md` as the first release, as its docstring says. It matched git's "does not exist" message, but in a checkout where the file exists on disk git says "exists on disk, but not in", so the first `main-release.yml` run that met such a tag stopped before tagging. It now asks git directly (`git cat-file -e`).
+
 ### Changed — the registry pin moves on to `0d17818`, registry v4.18.0 (2026-11-01)
 
 - `scripts/registry-ref.json` moves from `780457a` (v4.17.0, the entry below) to `0d17818`, registry `main` at **v4.18.0** (mzizi-registry#590), so the release to `main` ships the current registry. On top of v4.17.0 a caller sees the v4.18.0 record leading `/v1/changelog` and skills 0.13.0: seven skills, with `digital-hygiene` and `progress-report`, and new skill descriptions. Component count stays at 675.
