@@ -23,6 +23,12 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — GitHub releases carry the CHANGELOG entries they ship (2026-11-01)
+
+- Owner, 2026-11-01: a release is not done until its tag and its GitHub release, with notes from `CHANGELOG.md`, exist on the merge commit on `main`. `main-release.yml` now opens each release's notes with every `CHANGELOG.md` entry added since the previous `main` release (`.github/scripts/release_notes.py`, adapted from `mzizi-dev/mzizi`), followed by GitHub's list of merged pull requests. Before, the notes were the pull-request list alone.
+- A commit that already carries its minor tag but has no release gets one, and a manual run of the workflow on such a commit rewrites its notes from `CHANGELOG.md`, so an earlier release can be corrected.
+- Nothing served changes; only the release pages do.
+
 ### Changed — the registry pin moves to `780457a`, registry v4.17.0 (2026-11-01)
 
 - `scripts/registry-ref.json` moves from `f70703d` (v4.8.0) on `staging`, and from `7567c0b` (v4.10.0) on `main`, to `780457a`, registry `main` at **v4.17.0** (mzizi-registry#580). It goes through `staging` in place of the bot's #93, which had stopped on a test count and on `--strict` parity.
