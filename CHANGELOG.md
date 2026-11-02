@@ -23,6 +23,10 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — TypeScript 7.0.2, the native compiler (2026-11-02)
+
+- `typescript` moves from 5.9.3 to **7.0.2** (Dependabot #105), the native port of the compiler. `tsconfig.json` needed no change: it uses none of the options TypeScript 7 removes (`target`/`module` are ES2022, `moduleResolution` is `Bundler`, no `baseUrl`, `outFile` or `downlevelIteration`), and it already sets `types` explicitly. `tsc --noEmit`, `vp check`, the 66 offline tests and `wrangler deploy --dry-run` pass unchanged. Nothing a caller receives changes: TypeScript only checks types here, and esbuild and wrangler do the bundling.
+
 ### Changed — dev dependencies move to the latest minor and patch releases (2026-11-02)
 
 - `hono` 4.13.13 to 4.13.14, `@cloudflare/workers-types` 5.20261019.1 to 5.20261025.1, `vite-plus` 1.3.0 to 1.4.0 and `wrangler` 4.151.3 to 4.152.0 (Dependabot #104; `package.json` floors and the lockfile move together). Nothing a caller receives changes: typecheck, `vp check`, the 66 offline tests and `wrangler deploy --dry-run` pass on this tree, and a local `wrangler dev` answers `/v1/health` and `/v1/ui` with 200.
