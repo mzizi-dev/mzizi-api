@@ -102,33 +102,55 @@ const HEADERS = [
  * v4.3.0, #56 for 5067b5e, registry v4.4.0, #60 for 9f3631c, registry v4.5.0, #65 for 0caf9dc, registry v4.6.0, #68 for 81a37ed,
  * registry v4.7.0, #70 for f70703d, registry v4.8.0, #83 for 7567c0b,
  * registry v4.10.0, #96 for 780457a, registry v4.17.0, #97 for 0d17818,
- * registry v4.18.0).
+ * registry v4.18.0, #100 for the binary-only items, and the PR that pins
+ * b6773ac, registry v4.20.0).
  */
-// /v1/ui/{name} now serves the registry's binary-only items (four PNG kweli
-// icons at 0d17818) with their files as base64 and a MIME type, instead of a
-// 404 for a name /v1/ui lists. The 0d17818 pin's entries were pruned once
-// production served it (they are in #97).
-const BINARY_ITEM = {
-  allow: ["status", "header:cache-control", "body"],
-  status: 404,
-  why: 'Binary-only items: /v1/ui/{name} answers 200 with the PNG as base64 (`encoding: "base64"`, `mime: "image/png"`) where production answers 404 for a name its own /v1/ui lists. Remove once production serves it.',
+// The binary-only items' entries (four kweli PNGs, 404 → 200) and the Roots
+// 404-message entry (`GET /v1/rs/*`) were pruned once production served them
+// (they are in #100 and #76). A trailing `/*` key still matches every path
+// under that prefix.
+// The registry pin moves from 0d17818 (v4.18.0), which production serves, to
+// b6773ac, the v4.20.0 release (mzizi-registry#602), taking in v4.19.0 and
+// v4.20.0: skills 0.15.0 (nine skills, with mukoko-design and
+// mzizi-architecture), attestation provenance in ui/mzizi-verified-badge and
+// app/tier-status 1.2.0 (mzizi-registry#593, which also rewrites the
+// trust-model descriptions), and the v4.19.0 and v4.20.0 changelog records.
+// Every difference below is a body that the new registry content changes; no
+// status, header or redirect moves. Remove these entries once production
+// serves b6773ac.
+const PIN_B6773AC = {
+  allow: ["body"],
+  why: "Registry pin 0d17818 (v4.18.0) to b6773ac (v4.20.0, mzizi-registry#602): skills 0.15.0, attestation provenance and the trust-model descriptions (#593), and the v4.19.0 and v4.20.0 changelog records. Only response bodies differ.",
 };
-const BINARY_ITEM_REQUESTS = [
-  "GET /v1/ui/kweli-apple-touch-icon",
-  "GET /v1/ui/kweli-icon-192",
-  "GET /v1/ui/kweli-icon-512",
-  "GET /v1/ui/kweli-icon-maskable-512",
+const PIN_B6773AC_REQUESTS = [
+  "GET /api/v1/changelog",
+  "GET /api/v1/search?q=x",
+  "GET /api/v1/skills",
+  "GET /api/v1/ui?node=3",
+  "GET /v1/changelog",
+  "GET /v1/skills",
+  "GET /v1/skills/digital-hygiene",
+  "GET /v1/skills/discoverability",
+  "GET /v1/skills/does-not-exist",
+  "GET /v1/skills/mzizi-backend",
+  "GET /v1/skills/mzizi-design",
+  "GET /v1/skills/mzizi-language",
+  "GET /v1/skills/mzizi-roots",
+  "GET /v1/skills/progress-report",
+  "GET /v1/skills/summary",
+  "GET /v1/ui",
+  "GET /v1/ui/app-tier-status",
+  "GET /v1/ui/mzizi-trust-tier-data",
+  "GET /v1/ui/mzizi-verified-badge",
+  "GET /v1/ui?limit=abc",
+  "GET /v1/ui?node=-1",
+  "GET /v1/ui?owner=mzizi",
+  "GET /v1/ui?owner=nyuchi",
+  "GET /v1/ui?type=registry%3Alib",
+  "GET /v1/ui?type=registry%3Aui",
 ];
 const EXPECTED = {
-  ...Object.fromEntries(BINARY_ITEM_REQUESTS.map((r) => [r, BINARY_ITEM])),
-  // A trailing `/*` matches every path under that prefix. Used here because the
-  // no-Rust answer is one 404 per component (596 slugs), and only its message differs.
-  "GET /v1/rs/*": {
-    allow: ["body"],
-    status: 404,
-    only: "body $.message:",
-    why: "Roots copy: the no-Rust 404 message now says the component has no Mzizi Roots (Rust) build yet, and that Roots is moving to Mzizi's own Rust renderer (Dioxus was the wording before). Status, error text and every 200 body are unchanged. Remove this entry once production serves the new message.",
-  },
+  ...Object.fromEntries(PIN_B6773AC_REQUESTS.map((r) => [r, PIN_B6773AC])),
 };
 
 // ── Build the request list ─────────────────────────────────────────────────
