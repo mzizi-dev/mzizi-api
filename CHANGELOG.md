@@ -27,6 +27,10 @@ To see which registry commit production is serving, read the
 
 - `typescript` moves from 5.9.3 to **7.0.2** (Dependabot #105), the native port of the compiler. `tsconfig.json` needed no change: it uses none of the options TypeScript 7 removes (`target`/`module` are ES2022, `moduleResolution` is `Bundler`, no `baseUrl`, `outFile` or `downlevelIteration`), and it already sets `types` explicitly. `tsc --noEmit`, `vp check`, the 66 offline tests and `wrangler deploy --dry-run` pass unchanged. Nothing a caller receives changes: TypeScript only checks types here, and esbuild and wrangler do the bundling.
 
+### Changed — dev dependencies move to the latest minor and patch releases (2026-11-02)
+
+- `hono` 4.13.13 to 4.13.14, `@cloudflare/workers-types` 5.20261019.1 to 5.20261025.1, `vite-plus` 1.3.0 to 1.4.0 and `wrangler` 4.151.3 to 4.152.0 (Dependabot #104; `package.json` floors and the lockfile move together). Nothing a caller receives changes: typecheck, `vp check`, the 66 offline tests and `wrangler deploy --dry-run` pass on this tree, and a local `wrangler dev` answers `/v1/health` and `/v1/ui` with 200.
+
 ### Changed — the registry pin moves on to `b6773ac`, registry v4.20.0 (2026-11-02)
 
 - `scripts/registry-ref.json` moves from `0d17818` (v4.18.0) to `b6773ac`, registry `main` at **v4.20.0** (mzizi-registry#602), in place of the bot's #106 (which targets `main` and stopped on `--strict` parity). A caller sees the v4.20.0 record leading `/v1/changelog`, skills **0.15.0** on `/v1/skills` (nine skills: `mukoko-design` and `mzizi-architecture` are new, and descriptions change), and the attestation-provenance wording in `ui/mzizi-verified-badge`, `app/tier-status` and `mzizi-trust-tier-data` (mzizi-registry#593). Component count stays at 675.
