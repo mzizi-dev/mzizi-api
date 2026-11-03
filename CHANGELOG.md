@@ -23,6 +23,11 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — AGENTS.md and CONTRIBUTING.md describe the new `staging` merge-queue rules (2026-11-03)
+
+- `AGENTS.md` "Merge convention" and `CONTRIBUTING.md` now state the target `merge-queue-staging` config (SQUASH, was REBASE; no minimum wait, was 5 minutes; up to 5 entries, ALLGREEN, 60-minute check timeout; `merge-queue-main` stays MERGE). The owner applies it in the repo rulesets; until it reads SQUASH/0, branches stay linear because a REBASE queue drops merge commits with MERGE_CONFLICT.
+- They also say: enqueue with `--squash --auto` as soon as the gate is met; forward-port `main`-only commits (the pin bot's) to `staging` before a release; only a major release needs the owner's go-ahead; one `Refs`, `Closes` or `No issue:` line per PR. No API behaviour changes.
+
 ### Changed — parity's `EXPECTED` is empty again: production serves `efb5f3a` (2026-11-03, [#112](https://github.com/mzizi-dev/mzizi-api/issues/112))
 
 - The `PIN_B6773AC` and `PIN_EFB5F3A` entries (201 requests) are removed from `scripts/parity.mjs`: the 2026-11-03 release deployed registry v4.23.0 to api.mzizi.dev, and a `--strict` run of this tree against production is identical on all 1592 requests (0 intentional, 0 unexplained, 0 failing the contract). Nothing a caller receives changes.
