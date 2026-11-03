@@ -23,6 +23,10 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — parity's `EXPECTED` is empty again: production serves `efb5f3a` (2026-11-03, [#112](https://github.com/mzizi-dev/mzizi-api/issues/112))
+
+- The `PIN_B6773AC` and `PIN_EFB5F3A` entries (201 requests) are removed from `scripts/parity.mjs`: the 2026-11-03 release deployed registry v4.23.0 to api.mzizi.dev, and a `--strict` run of this tree against production is identical on all 1592 requests (0 intentional, 0 unexplained, 0 failing the contract). Nothing a caller receives changes.
+
 ### Changed — the registry pin moves on to `efb5f3a`, registry v4.23.0: the Bundu floor (2026-11-03, [#112](https://github.com/mzizi-dev/mzizi-api/issues/112))
 
 - `scripts/registry-ref.json` moves from `b6773ac` (v4.20.0) to `efb5f3a`, registry `main` at **v4.23.0** (mzizi-registry#615), taking in v4.21.0 and v4.22.0, in place of the bot's #110 (which targets `main` and stopped on two outdated tests and parity). Nothing else is pinned by hand: no route, header, redirect or status changes, only response bodies.
