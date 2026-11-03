@@ -481,7 +481,7 @@ describe("architecture and content", () => {
     ).toBe(21);
   });
 
-  // Reference values, typed out from the pinned registry (f70703d):
+  // Reference values, typed out from the pinned registry (efb5f3a, v4.23.0; the text tier moved with the 7:1 floor, mzizi-registry#610):
   // `--{mineral,heritage,exp}-<name>-text` in the `:root` (light) and
   // `[data-theme="dark"]` blocks of
   // components/registry/n1-tokens/mzizi-tokens-globals.css, and the rest from
@@ -491,17 +491,17 @@ describe("architecture and content", () => {
     minerals: {
       cobalt: ["#0047AB", "#86DCFF"],
       sodalite: ["#283593", "#C6CFFF"],
-      terracotta: ["#8E4928", "#EBCCA3"],
+      terracotta: ["#7B3F23", "#EBCCA3"],
     },
     heritage: {
-      hematite: ["#4A616B", "#C9D2D7"],
-      savanna: ["#725915", "#EBCF7D"],
-      kalahari: ["#675C46", "#E8D9B5"],
+      hematite: ["#3E515A", "#C9D2D7"],
+      savanna: ["#614C12", "#EBCF7D"],
+      kalahari: ["#564E3B", "#E8D9B5"],
     },
     experimental: {
-      storm: ["#284CA6", "#C4D1F1"],
-      ember: ["#843D20", "#EEC9BA"],
-      protea: ["#932464", "#F1C4DD"],
+      storm: ["#274AA1", "#C4D1F1"],
+      ember: ["#803B1F", "#EEC9BA"],
+      protea: ["#8F2361", "#F1C4DD"],
     },
   };
   const KEYS: Record<string, string[]> = {
@@ -619,7 +619,7 @@ describe("architecture and content", () => {
       hex: "#90A4AE",
       lightHex: "#546E7A",
       darkHex: "#90A4AE",
-      textLight: "#4A616B",
+      textLight: "#3E515A",
       textDark: "#C9D2D7",
       cssVar: "--color-hematite",
     });
@@ -631,7 +631,7 @@ describe("architecture and content", () => {
       containerDark: "#212735",
       onContainerLight: "#1A409B",
       onContainerDark: "#99B2EE",
-      textLight: "#284CA6",
+      textLight: "#274AA1",
       textDark: "#C4D1F1",
       uiLight: "#577BD6",
       uiDark: "#426CD1",
