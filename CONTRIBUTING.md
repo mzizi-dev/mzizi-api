@@ -126,11 +126,20 @@ Before merging anything:
   runtime, and code review has run with its findings resolved.
 - **Enqueue only past the gate.** `--auto` adds the PR to the merge queue,
   and is how PRs land, so pass it only once the gate above is met.
-- **Releases are the owner's.** A merge into `main` deploys `api.mzizi.dev`.
-  Only the owner, or someone the owner authorised, releases `staging` to
-  `main`: a `release/` branch made of `main` plus `staging`'s exact tree,
+- **Releases.** A merge into `main` deploys `api.mzizi.dev`. Minor and patch
+  releases go out automatically; only a major needs the owner's go-ahead. A
+  release is a `release/` branch made of `main` plus `staging`'s exact tree,
   squashed, then synced back into `staging` (a branch off `staging` with
-  `main` merged in, squashed) so the trees match again.
+  `main` merged in, squashed) so the trees match again. Forward-port commits
+  that are only on `main` (the pin bot's) to `staging` first, or the
+  release-version-check gate fails.
+- **Queue config.** `merge-queue-staging` is to read SQUASH with no minimum
+  wait (it was REBASE with 5 minutes); the owner applies it in the repo
+  rulesets. Until it does (`gh api repos/mzizi-dev/mzizi-api/rulesets`), keep
+  branches linear, since a REBASE queue drops merge commits with
+  MERGE_CONFLICT. `AGENTS.md` "Merge convention" has the details.
+- **One issue line per PR.** One `Refs #n`, `Closes #n` or `No issue:` line in
+  the body, for the "issue attached" check.
 
 Write commit messages that are worth keeping: what changed and _why_. The
 squash keeps each message in its body but not each commit, so cite the squash

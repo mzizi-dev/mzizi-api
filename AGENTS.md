@@ -139,8 +139,8 @@ Owner's rule, 2026-09-30: "changelogs are super important".
 
 ## Merge convention
 
-Read off the repo settings and the rulesets on 2026-10-21; they are the
-authority if this drifts.
+Read off the repo settings and the rulesets on 2026-10-21 and 2026-11-03; they
+are the authority if this drifts.
 
 - **Merge method.** Squash merges through the merge queue:
   `gh pr merge <n> --squash --auto`. Never `--admin`. The squash commit keeps
@@ -148,17 +148,34 @@ authority if this drifts.
   reasoning is preserved. Rebase and merge commits are disabled (repo settings
   and rulesets, 2026-10-21). Org admins can bypass those rulesets; agents
   never do.
+- **The queue rules (target config).** `merge-queue-staging` is to read
+  SQUASH (it was REBASE) with `min_entries_to_merge_wait_minutes` 0 (it was
+  5); it builds and merges up to 5 entries, groups ALLGREEN, and times a
+  check out at 60 minutes. `merge-queue-main` stays MERGE. On `staging`,
+  `required_linear_history` stays on, required reviews are 0, thread
+  resolution is required and non-fast-forward pushes are blocked. The owner
+  applies the change in the repo rulesets. Until `merge-queue-staging` reads
+  SQUASH/0 (check with `gh api repos/mzizi-dev/mzizi-api/rulesets`), keep
+  branches linear (no merge commits): a REBASE queue drops them with
+  MERGE_CONFLICT.
 - **Branches.** Updating a branch with the base (GitHub's "Update branch") is
   fine; the squash makes `main` linear. The merge queue tests each PR against
   the latest base. Merged branches are deleted.
 - **Enqueue only past the merge gate.** `--auto` adds the PR to the merge
   queue, and is how PRs land. Meet the merge gate first (complete, CI green,
   verified at runtime, `/code-review` run with findings resolved; see "Dev
-  skills, progress reports and the merge gate" below), then enqueue.
-- **Releases.** A merge into `main` deploys `api.mzizi.dev`, so only the owner
-  releases `staging` to `main`, or an agent the owner has authorised for that
-  release. A release is a `release/` branch made of `main` plus `staging`'s
-  exact tree, squashed into `main`.
+  skills, progress reports and the merge gate" below), then enqueue as soon as
+  it is met.
+- **One issue line per PR.** Put one `Refs #n`, `Closes #n` or `No issue:`
+  line in every PR body, for the "issue attached" check.
+- **Releases.** A merge into `main` deploys `api.mzizi.dev`. Minor and patch
+  releases go out automatically; only a major needs the owner's go-ahead
+  (owner, 2-3 November 2026: "we are about a 1000 minor releases away from
+  deciding v1"). A release is a `release/` branch made of `main` plus
+  `staging`'s exact tree, squashed into `main`. Before cutting one,
+  forward-port any commit that is only on `main` (the pin bot's) to
+  `staging`, or the release-version-check gate on `main` fails. Don't push to
+  `bot/registry-pin`.
 - **Sync back after a release.** The squash commit on `main` is never in
   `staging`'s history, and `staging` cannot be reset (non-fast-forward pushes
   are blocked). After each release, open a sync PR into `staging` from a
