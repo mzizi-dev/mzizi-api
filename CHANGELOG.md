@@ -23,6 +23,23 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — the registry pin moves on to `efb5f3a`, registry v4.23.0: the Bundu floor (2026-11-03, [#112](https://github.com/mzizi-dev/mzizi-api/issues/112))
+
+- `scripts/registry-ref.json` moves from `b6773ac` (v4.20.0) to `efb5f3a`, registry `main` at **v4.23.0** (mzizi-registry#615), taking in v4.21.0 and v4.22.0, in place of the bot's #110 (which targets `main` and stopped on two outdated tests and parity). Nothing else is pinned by hand: no route, header, redirect or status changes, only response bodies.
+- **What a caller sees (the Bundu floor, mzizi-registry#597 and #614).** `/v1/brand` `accessibility.minTouchTarget` is **49** (was 48) and `defaultTouchTarget` **49** (was 56); every `componentSpecs` entry carries `minTouchTarget: 49`, the button heights are default 49, `sm` 49, `icon` 49 and `lg` 56 (were 56, 48, 48 and 56), and the input heights are 49 (were 56 and 48); the typography scale serves **Body 17px** (was 16) and **Caption 14px** (was 12), H6 17px (was 16); `accessibility.standard` now reads "APCA 3.0 AAA, with WCAG 2 minimums: body text 7:1, non-body text 4.5:1, UI parts 3:1". `/v1/architecture` (node 2's implementation rules), `/v1/ecosystem`'s mobile-first rationale and the AI instruction sets state 49px, 17px and 14px instead of 56px and 48px. Component sources on `/v1/ui/{name}` and `/v1/rs/{name}` move to 14px type and the size roles. The radii are unchanged (4, 7, 12, 14, 17, pill).
+- **Also from the pin:** the light `-text` colours darken for the 7:1 body floor (mzizi-registry#610; e.g. terracotta `textLight` `#8E4928` to `#7B3F23`, hematite `#4A616B` to `#3E515A`), and skills 0.16.0 and the v4.21.0 to v4.23.0 changelog records are served.
+- **Tests.** The two offline tests that hard-code `-text` colours (`serves a -text pair on every one of the 21 colour families` and `serves the heritage and experimental text pairs...`) are updated to the values in the registry's `mzizi-tokens-globals.css` at `efb5f3a`; they failed on the bot's #110 for exactly that reason. They remain independent of `src/data` on purpose.
+- **Parity** against api.mzizi.dev (still on the earlier pin) on this tree: 1589 requests, 1388 identical, **201 differ, all bodies (status 200 on both sides), 0 unexplained, 0 failing the contract**. `scripts/parity.mjs` lists them as `PIN_EFB5F3A` with the reason (163 on `/v1/ui`, 14 on `/v1/rs`, plus brand, architecture, ecosystem, AI instructions and skills); a request that both this pin and the last one change carries both reasons. Remove these entries, and the `PIN_B6773AC` ones, once production serves `efb5f3a`.
+- **Not served here:** `/v1/tokens` is not a route of this Worker, so there is nothing to change for it.
+
+### Changed — TypeScript 7.0.2, the native compiler (2026-11-02)
+
+- `typescript` moves from 5.9.3 to **7.0.2** (Dependabot #105), the native port of the compiler. `tsconfig.json` needed no change: it uses none of the options TypeScript 7 removes (`target`/`module` are ES2022, `moduleResolution` is `Bundler`, no `baseUrl`, `outFile` or `downlevelIteration`), and it already sets `types` explicitly. `tsc --noEmit`, `vp check`, the 66 offline tests and `wrangler deploy --dry-run` pass unchanged. Nothing a caller receives changes: TypeScript only checks types here, and esbuild and wrangler do the bundling.
+
+### Changed — dev dependencies move to the latest minor and patch releases (2026-11-02)
+
+- `hono` 4.13.13 to 4.13.14, `@cloudflare/workers-types` 5.20261019.1 to 5.20261025.1, `vite-plus` 1.3.0 to 1.4.0 and `wrangler` 4.151.3 to 4.152.0 (Dependabot #104; `package.json` floors and the lockfile move together). Nothing a caller receives changes: typecheck, `vp check`, the 66 offline tests and `wrangler deploy --dry-run` pass on this tree, and a local `wrangler dev` answers `/v1/health` and `/v1/ui` with 200.
+
 ### Changed — the registry pin moves on to `b6773ac`, registry v4.20.0 (2026-11-02)
 
 - `scripts/registry-ref.json` moves from `0d17818` (v4.18.0) to `b6773ac`, registry `main` at **v4.20.0** (mzizi-registry#602), in place of the bot's #106 (which targets `main` and stopped on `--strict` parity). A caller sees the v4.20.0 record leading `/v1/changelog`, skills **0.15.0** on `/v1/skills` (nine skills: `mukoko-design` and `mzizi-architecture` are new, and descriptions change), and the attestation-provenance wording in `ui/mzizi-verified-badge`, `app/tier-status` and `mzizi-trust-tier-data` (mzizi-registry#593). Component count stays at 675.
