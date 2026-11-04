@@ -8,9 +8,13 @@ name: Parity
 #   Baseline is production, https://api.mzizi.dev; candidate is
 #   the pull request under `wrangler dev`. Any unexplained difference fails the check, and a failed
 #   check stops the automated bump for review. When the pull request doesn't
-#   touch scripts/parity.mjs, the run is `--strict`: EXPECTED then holds only an
-#   earlier bump's reasons, which production already serves, so nothing in it
-#   may excuse a difference.
+#   touch scripts/parity.mjs, and the pull request targets main, the run is
+#   `--strict`: EXPECTED then holds only an earlier bump's reasons, which
+#   production already serves, so nothing in it may excuse a difference.
+#   Pull requests (and merge queues) into staging run WITHOUT --strict:
+#   staging is ahead of production until the next release, so EXPECTED
+#   legitimately excuses the differences a newer pin brings. Strictness is
+#   restored at the release into main.
 # - By hand (workflow_dispatch), against any two URLs. Before the cutover:
 #   baseline https://api.mzizi.dev (the registry Worker), candidate blank (this
 #   commit under `wrangler dev`) or this Worker's workers.dev URL. After it:
@@ -87,13 +91,17 @@ jobs:
           cat wrangler-dev.log
           exit 1
 
-      - name: Strict unless this pull request edits EXPECTED
+      - name: Strict for main, unless this pull request edits EXPECTED
         id: mode
         if: github.event_name != 'workflow_dispatch'
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
+          BASE_REF: ${{ github.event.pull_request.base.ref || github.event.merge_group.base_ref }}
         run: |
+          # Only a change into main is held to --strict; staging is ahead of
+          # production, so EXPECTED is honoured there.
+          [ "${BASE_REF#refs/heads/}" = main ] || exit 0
           if git diff --quiet "$BASE_SHA...$HEAD_SHA" -- scripts/parity.mjs; then
             echo "flags=--strict" >> "$GITHUB_OUTPUT"
           fi
