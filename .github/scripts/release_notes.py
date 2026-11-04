@@ -124,8 +124,8 @@ def main() -> int:
     if not blocks:
         if allow_empty:
             print("## What changed\n")
-            print("This merge added no `CHANGELOG.md` entry (the changelog gate "
-                  "exempts changes to CI, lockfiles, lint config and typos).\n")
+            print("This merge added no `CHANGELOG.md` entry. (The changelog gate lets "
+                  "changes to CI, lockfiles, lint config and typos through without one.)\n")
             print(footer, end="")
             return 0
         sys.exit(f"release_notes: no CHANGELOG.md entries were added between {prev or 'the start'} and {ref}; "

@@ -102,7 +102,7 @@ class ReleaseNotes(unittest.TestCase):
         self.commit(BEFORE, "no-op")
         out = self.run_notes("--allow-empty", "v1.0.0", "HEAD", COMPARE_URL="https://example.com/c")
         self.assertEqual(out.returncode, 0, out.stderr)
-        self.assertIn("exempts", out.stdout)
+        self.assertIn("added no `CHANGELOG.md` entry", out.stdout)
         self.assertIn("**Full changelog**: https://example.com/c", out.stdout)
 
     def test_unreadable_changelog_fails(self):
