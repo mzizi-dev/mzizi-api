@@ -23,6 +23,24 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed
+
+- **Releases are immutable-release safe (repository):** `main-release.yml` creates the GitHub release as a draft with the changelog-built notes and publishes it once (`.github/scripts/publish-release.sh`), so GitHub's immutable releases (tag and assets locked on publish) cannot break it. The tag is only pushed when the commit has none, never moved, and a published release is never edited. No API change.
+
+### Changed — every release carries notes built from the changelog (2026-11-04, (repository), [mzizi-registry#619](https://github.com/mzizi-dev/mzizi-registry/issues/619))
+
+- The `main-release.yml` minor release builds its notes (the `CHANGELOG.md` entries since the previous release plus a compare link) before it pushes the tag, so a release with no entries fails and tags nothing, and creates the release as a draft that is published once. GitHub's list of merged pull requests is no longer appended, and a manual re-run no longer rewrites a published release's notes (releases are immutable). No API change.
+- Staging patch tags (`v*`) no longer carry GitHub's auto text: `staging-version.yml` tags with the org workflow's `create-release: false` (it has no input for notes) and a new `release` job writes the pre-release with the `CHANGELOG.md` entries the merge added and a compare link. A merge the changelog gate exempts says so.
+- The new `release notes` workflow tests the scripts and, on a `release/` pull request into `main`, fails when the release would have no changelog entries and prints the notes in the run summary. `AGENTS.md` gains "Release notes (hard rule)".
+
+### Added — the spacing floor on `/v1/brand` and the token sources: the registry pin moves on to `1ac4f81`, v4.24.0 (2026-11-04, [mzizi-registry#617](https://github.com/mzizi-dev/mzizi-registry/issues/617))
+
+- `GET /v1/brand` (and `/api/v1/brand`) now carries the spacing floor in its `accessibility` block: `minInset` 14, `minControlGap` 7, `minLabelGap` 7, `minItemGap` 7 and `minBodyLeading` 1.5 (px, except leading, a unitless ratio). No existing field changes.
+- `GET /v1/ui/mzizi-tokens-globals` serves the new `--inset-floor`, `--gap-floor` and `--leading-floor` custom properties and the base-layer rules; the platform token files (`mzizi-tokens-typescript`, `-rust`, `-kotlin`, `-swift`, `-python`, `-react-native`, `-arkts`) carry the 14 and 7 roles. `GET /v1/changelog` leads with the 4.24.0 record.
+- Two new offline tests in `test/api.test.ts` assert the brand block and the stylesheet variables, with the numbers typed from the ruling, not read back from `src/data`.
+- Parity: 13 intentional differences, all response bodies, recorded in `EXPECTED` (`PIN_1AC4F81`) with their reason; 0 unexplained, 0 failing the contract. Remove them once production serves `1ac4f81`.
+- `/v1/tokens` and its `spacingFloor` field, which the registry's docs mention, are not a route of this Worker (it answers 404 there, as it did before this change); this API serves the floor on `/v1/brand` and the token sources.
+
 ### Changed — AGENTS.md and CONTRIBUTING.md describe the new `staging` merge-queue rules (2026-11-03)
 
 - `AGENTS.md` "Merge convention" and `CONTRIBUTING.md` now state the target `merge-queue-staging` config (SQUASH, was REBASE; no minimum wait, was 5 minutes; up to 5 entries, ALLGREEN, 60-minute check timeout; `merge-queue-main` stays MERGE). The owner applies it in the repo rulesets; until it reads SQUASH/0, branches stay linear because a REBASE queue drops merge commits with MERGE_CONFLICT.
@@ -600,7 +618,6 @@ Merged straight to `main`, with no release tag.
 
 ### Changed
 
-- **Releases are immutable-release safe (repository):** `main-release.yml` creates the GitHub release as a draft and publishes it once, so GitHub's immutable releases (tag and assets locked on publish) cannot break it. The tag is only pushed when the commit has none, never moved. A manual run still rewrites a release's notes only. No API change.
 - **`/v1/skills` serves `@nyuchi/mzizi-skills` 0.8.5**, with the same five
   skills and `meta.version` `0.8.5`. The skills now follow language main
   `62a0f32`:
