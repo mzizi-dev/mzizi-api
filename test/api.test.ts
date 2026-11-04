@@ -102,7 +102,6 @@ describe("registry", () => {
   });
 
   type RsItem = {
-    target: string;
     crate: { name: string; registry: string; git: string };
     files: Array<{ path: string; type: string; content: string }>;
   };
@@ -111,7 +110,7 @@ describe("registry", () => {
     const res = await get("/v1/rs/mzizi-meta-tile");
     expect(res.status).toBe(200);
     const body = (await res.json()) as RsItem;
-    expect(body.target).toBe("dioxus");
+    expect(body).not.toHaveProperty("target");
     expect(body.crate).toEqual({
       name: "mzizi-brand",
       registry: "crates.io",

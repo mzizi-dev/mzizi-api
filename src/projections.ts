@@ -216,7 +216,6 @@ export const rsBody = (
   $schema: "https://ui.shadcn.com/schema/registry-item.json",
   name: component.name,
   type: component.type,
-  target: "dioxus",
   description: component.description,
   crate: { name: crate, registry: "crates.io", git: crateGit },
   files: [
