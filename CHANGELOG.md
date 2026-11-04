@@ -600,6 +600,7 @@ Merged straight to `main`, with no release tag.
 
 ### Changed
 
+- **Releases are immutable-release safe (repository):** `main-release.yml` creates the GitHub release as a draft and publishes it once, so GitHub's immutable releases (tag and assets locked on publish) cannot break it. The tag is only pushed when the commit has none, never moved. A manual run still rewrites a release's notes only. No API change.
 - **`/v1/skills` serves `@nyuchi/mzizi-skills` 0.8.5**, with the same five
   skills and `meta.version` `0.8.5`. The skills now follow language main
   `62a0f32`:

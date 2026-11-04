@@ -104,6 +104,9 @@ jobs:
           fi
           gh api "repos/${GH_REPO}/releases/generate-notes" -f "tag_name=$TAG" "${start[@]}" \
             --jq .body >> "$RUNNER_TEMP/notes.md"
-          gh release create "$TAG" --verify-tag --latest --title "$TAG" \
+          # Immutable releases lock the tag and assets on publish: draft, then
+          # publish once. Nothing re-uploads or moves the tag afterwards.
+          gh release create "$TAG" --verify-tag --draft --title "$TAG" \
             --notes-file "$RUNNER_TEMP/notes.md"
+          gh release edit "$TAG" --draft=false --latest
           echo "Released $TAG at $head." | tee -a "$GITHUB_STEP_SUMMARY"
