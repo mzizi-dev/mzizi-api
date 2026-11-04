@@ -109,10 +109,39 @@ const HEADERS = [
 // 404-message entry (`GET /v1/rs/*`) were pruned once production served them
 // (they are in #100 and #76). A trailing `/*` key still matches every path
 // under that prefix.
-// Production serves registry efb5f3a, so nothing is intentionally different: the
-// PIN_B6773AC and PIN_EFB5F3A entries were removed once a strict run against
+// The PIN_B6773AC and PIN_EFB5F3A entries were removed once a strict run against
 // production came back identical on every request (2026-11-03).
-const EXPECTED = {};
+// The registry pin moves from efb5f3a (v4.23.0), which production serves, to
+// 1ac4f81, the v4.24.0 release (mzizi-registry#617, #620): the spacing floor.
+// `/v1/brand` gains `accessibility.minInset` 14, `minControlGap` 7,
+// `minLabelGap` 7, `minItemGap` 7 and `minBodyLeading` 1.5; the token sources
+// (`mzizi-tokens-globals` and the platform token files) gain `--inset-floor`,
+// `--gap-floor`, `--leading-floor` and the 14 and 7 roles; `/v1/changelog`
+// leads with the 4.24.0 record. Every difference is a response body that the
+// new registry content changes; no status, header or redirect moves. Remove
+// these entries once production serves 1ac4f81.
+const PIN_1AC4F81 = {
+  allow: ["body"],
+  why: "Registry pin efb5f3a (v4.23.0) to 1ac4f81 (v4.24.0, mzizi-registry#617, #620): the spacing floor (14px inset, 7px gaps, 1.5 body leading) in /v1/brand's accessibility block and the token sources, and the 4.24.0 changelog record. Only response bodies differ.",
+};
+const PIN_1AC4F81_REQUESTS = [
+  "GET /api/v1/brand",
+  "GET /api/v1/changelog",
+  "GET /v1/brand",
+  "GET /v1/changelog",
+  "GET /v1/rs/mzizi-tokens-rust",
+  "GET /v1/ui/mzizi-tokens-arkts",
+  "GET /v1/ui/mzizi-tokens-globals",
+  "GET /v1/ui/mzizi-tokens-kotlin",
+  "GET /v1/ui/mzizi-tokens-python",
+  "GET /v1/ui/mzizi-tokens-react-native",
+  "GET /v1/ui/mzizi-tokens-rust",
+  "GET /v1/ui/mzizi-tokens-swift",
+  "GET /v1/ui/mzizi-tokens-typescript",
+];
+const EXPECTED = Object.fromEntries(
+  PIN_1AC4F81_REQUESTS.map((r) => [r, PIN_1AC4F81]),
+);
 
 // ── Build the request list ─────────────────────────────────────────────────
 const index = await (await fetch(`${LIVE}/v1/ui`)).json();
