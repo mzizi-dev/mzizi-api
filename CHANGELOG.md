@@ -23,6 +23,13 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — the registry pin moves on to `c3e6e87`, registry v4.25.0: every component is held to the spacing floor (2026-11-04, [mzizi-registry#623](https://github.com/mzizi-dev/mzizi-registry/pull/623))
+
+- `scripts/registry-ref.json` moves from `1ac4f81` (v4.24.0) to `c3e6e87`, registry `main` at **v4.25.0**, in place of the bot's #123 (which targeted `main`, before the bot moved to `staging` in #120, and stopped on `parity`: with `--strict` every difference counts as unexplained). No route, header, redirect or status changes; only response bodies.
+- **What a caller sees.** Component sources on `/v1/ui/{name}` and `/v1/rs/{name}` (277 and 14 of them) use gaps of at least 8px: about 570 `gap-0.5`, `gap-1`, `gap-1.5` and `space-y-1` classes in 315 component files become `gap-2` and `space-y-2`, so an installed component meets the Bundu floor's 7px between controls. `/v1/changelog` (and `/api/v1/changelog`) gain the v4.25.0 record.
+- **Parity.** 1593 requests: 294 intentional body-only differences from production, 0 unexplained, 0 failing the contract. They are listed in `PIN_C3E6E87_REQUESTS` in `scripts/parity.mjs`, to be removed once production serves `c3e6e87`.
+- **Still under the floor upstream.** Some synced components keep `px-2` or `px-2.5` side padding on their controls (mzizi-registry#625). They are not part of this pin.
+
 ### Fixed
 
 - **Parity is not `--strict` on pull requests into `staging` (repository):** `parity.yml` held every pull request to `--strict`, which ignores `EXPECTED`, but `staging` is ahead of production until the next release, so a newer pin's recorded differences (`PIN_1AC4F81`) failed it. Pull requests and merge queues into `staging` now honour `EXPECTED`; those into `main` stay `--strict`. No API change.
