@@ -81,6 +81,9 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           PIN_FILE: scripts/registry-ref.json
           PIN_BUMP_BRANCH: bot/registry-pin
+          # Bumps target staging and reach main with the next release (owner,
+          # 2026-11-04), so main never gets a commit staging lacks.
+          PIN_BASE_BRANCH: staging
           # Must be present and green on the bump's head commit before it
           # merges, on top of every other check that ran on it.
           EXPECTED_CHECKS: |
