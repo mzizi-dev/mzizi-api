@@ -55,7 +55,7 @@ base paths answer: `/v1/...` (canonical) and `/api/v1/...`.
 | `GET /v1/ui` (`node`, `owner`, `collection`, `type`, `limit`, `offset`)                                       | `registry.json` joined to the files on disk                                              |
 | `GET /v1/ui/{name}`: the shadcn install endpoint                                                              | Item plus its source file                                                                |
 | `GET /v1/ui/{name}/docs`                                                                                      | The item's `meta` block in `registry.json`                                               |
-| `GET /v1/rs/{name}`                                                                                           | The Dioxus (`.rs`) source, where one exists                                              |
+| `GET /v1/rs/{name}`                                                                                           | The Rust (`.rs`) source, where one exists                                                |
 | `GET /v1/astro`                                                                                               | Every name with an Astro implementation                                                  |
 | `GET /v1/astro/{name}`                                                                                        | The pure `.astro` (or framework-free `.ts`) document `mzizi add --target astro` installs |
 | `GET /v1/search` (`q`, `node`, `category`; `layer` is a deprecated alias of `node`)                           | `registry.json`                                                                          |
@@ -237,7 +237,7 @@ comes first.
 
 What that means for this API:
 
-- **Today**, `/v1/rs/{name}` serves the Rust (Dioxus) source for every item
+- **Today**, `/v1/rs/{name}` serves the Rust source for every item
   that has one (55 at the current pin), and `/v1/ui/{name}` serves the React
   source that the shadcn CLI installs. Both come from the same pinned registry
   files. Neither changes in this repository before the registry changes.
@@ -250,12 +250,11 @@ What that means for this API:
   crates.io release. `scripts/extract.ts` checks every `/v1/rs/{name}` answer
   against the registry's last handler for it (`scripts/registry-handlers/rs.ts`,
   ported from 270af9f).
-- **Renderer (decided, not built here).** Mzizi components are built in-house in Rust, not
-  borrowed from another framework. Roots are moving to Mzizi's own `render(props) -> String`; the
-  skeleton and six static primitives have it, merged in mzizi-registry
-  ([#506](https://github.com/mzizi-dev/mzizi-registry/pull/506),
-  [#510](https://github.com/mzizi-dev/mzizi-registry/pull/510)). Dioxus remains a dependency of
-  several crates until that migration finishes, and no Dioxus, Leptos or Yew goes into new work.
+- **Renderer (decided, not built here).** Mzizi components are built in-house, not borrowed from
+  another framework (owner, 2026-11-04: Dioxus is out, across every Mzizi repository,
+  [mzizi-registry#635](https://github.com/mzizi-dev/mzizi-registry/issues/635)). This API names no
+  Rust rendering target: the `/v1/rs/{name}` envelope carries no `target` field, only the `crate`
+  and the source. What replaces the old renderer is the registry's decision to make.
 - **The direction** is for Rust to be the first answer: Roots components listed
   and described ahead of their React counterparts, and new component endpoints
   designed around the Rust implementation. The registry has had no route
