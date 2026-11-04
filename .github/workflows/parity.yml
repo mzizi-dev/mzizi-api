@@ -20,7 +20,7 @@ name: Parity
 # Read-only requests; the report is the job summary.
 on:
   pull_request:
-    branches: [main]
+    branches: [main, staging]
     paths:
       - scripts/registry-ref.json
       # And a change to parity itself (the script, or the body comparison it
@@ -31,8 +31,9 @@ on:
   # Required checks must also report on a merge queue's gh-readonly-queue/**
   # ref, or a queued PR waits until the queue times it out. Harmless where no
   # queue is configured. merge_group takes no branches or paths filter, so the
-  # job skips itself on a queue for any branch but main (pull_request runs
-  # only on PRs into main).
+  # job skips itself on a queue for any branch but main or staging
+  # (pull_request runs only on PRs into those two). The bot's bump targets
+  # staging, so it must get parity there.
   merge_group:
   workflow_dispatch:
     inputs:
@@ -57,7 +58,8 @@ jobs:
     name: parity
     if: >-
       github.event_name != 'merge_group' ||
-      github.event.merge_group.base_ref == 'refs/heads/main'
+      github.event.merge_group.base_ref == 'refs/heads/main' ||
+      github.event.merge_group.base_ref == 'refs/heads/staging'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:

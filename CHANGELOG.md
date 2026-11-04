@@ -23,6 +23,10 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed
+
+- **Registry pin bot targets `staging` (repository):** `registry-pin-bump.yml` sets `PIN_BASE_BRANCH: staging`; `scripts/registry-pin-bump.mjs` (identical to the agent-tools copy) opens, builds and squash-merges the bump on `staging`, and closes a bump PR still open against `main`. `parity.yml` now also runs on pull requests and merge queues into `staging`, so a bump is never merged without parity. The pin reaches `api.mzizi.dev` with the next release (owner, 2026-11-04). No API response changes. Takes effect once the workflow files reach `main`.
+
 ### Changed — every release carries notes built from the changelog (2026-11-04, (repository), [mzizi-registry#619](https://github.com/mzizi-dev/mzizi-registry/issues/619))
 
 - The `main-release.yml` minor release builds its notes (the `CHANGELOG.md` entries since the previous release plus a compare link) before it pushes the tag, so a release with no entries fails and tags nothing, and creates the release as a draft that is published once. GitHub's list of merged pull requests is no longer appended, and a manual re-run no longer rewrites a published release's notes (releases are immutable). No API change.
