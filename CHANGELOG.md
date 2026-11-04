@@ -23,6 +23,10 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Fixed — the registry pin bot's pull request states `No issue:` so the issue check passes (2026-11-04, [mzizi-registry#617](https://github.com/mzizi-dev/mzizi-registry/issues/617))
+
+- **Fixed:** the bot's pull request body now has a `No issue: automated registry pin bump…` line at the start of its own line. The org's `issue attached` check failed every bot pull request (it is opened by the owner's account), which kept the bump from merging by itself. The same four lines are in `mzizi-dev/agent-tools`' copy of `scripts/registry-pin-bump.mjs`. No change for a caller of the API.
+
 ### Changed — the registry pin moves on to `c3e6e87`, registry v4.25.0: every component is held to the spacing floor (2026-11-04, [mzizi-registry#623](https://github.com/mzizi-dev/mzizi-registry/pull/623))
 
 - `scripts/registry-ref.json` moves from `1ac4f81` (v4.24.0) to `c3e6e87`, registry `main` at **v4.25.0**, in place of the bot's #123 (which targeted `main`, before the bot moved to `staging` in #120, and stopped on `parity`: with `--strict` every difference counts as unexplained). No route, header, redirect or status changes; only response bodies.
