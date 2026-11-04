@@ -23,6 +23,10 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Fixed
+
+- **Parity is not `--strict` on pull requests into `staging` (repository):** `parity.yml` held every pull request to `--strict`, which ignores `EXPECTED`, but `staging` is ahead of production until the next release, so a newer pin's recorded differences (`PIN_1AC4F81`) failed it. Pull requests and merge queues into `staging` now honour `EXPECTED`; those into `main` stay `--strict`. No API change.
+
 ### Changed
 
 - **Registry pin bot targets `staging` (repository):** `registry-pin-bump.yml` sets `PIN_BASE_BRANCH: staging`; `scripts/registry-pin-bump.mjs` (identical to the agent-tools copy) opens, builds and squash-merges the bump on `staging`, and closes a bump PR still open against `main`. `parity.yml` now also runs on pull requests and merge queues into `staging`, so a bump is never merged without parity. The pin reaches `api.mzizi.dev` with the next release (owner, 2026-11-04). No API response changes. Takes effect once the workflow files reach `main`.
