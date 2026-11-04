@@ -27,7 +27,7 @@ To see which registry commit production is serving, read the
 - **What a maintainer sees differently.** The pin (`scripts/registry-ref.json`) moves only when a person changes it in a pull request into `staging` (`npm run build:data`, typecheck, check, test, then `npm run parity`, with intended differences in `EXPECTED`), and it reaches `main` with the owner's release pull request. That pull request needs a changelog entry like any other. The `RELEASE_BUMP_TOKEN` secret is no longer used here.
 - The pin bot's open pull request #123 is closed. The branch `bot/registry-pin` is left for the owner to delete.
 - `changelog.yml` no longer sets `EXEMPT_BRANCH` or `PIN_FILE`, so no branch is exempt from the changelog check. `scripts/changelog-gate.sh` and its test are untouched, since they are shared byte for byte across the Mzizi repositories; the unset exempt-branch option stays there unused.
-- README, AGENTS.md, CLAUDE.md, CONTRIBUTING.md and SECURITY.md describe a hand-moved pin: README's "Registry pin bump" and "Owner setup" sections are replaced by "Moving the registry pin".
+- README, AGENTS.md, CONTRIBUTING.md and SECURITY.md describe a hand-moved pin: README's "Registry pin bump" and "Owner setup" sections are replaced by "Moving the registry pin".
 
 ### Changed — the registry pin moves on to `b25c9aa`, registry v4.26.0: the skills bundle grows from 9 to 12 skills (2026-11-04, [mzizi-registry#617](https://github.com/mzizi-dev/mzizi-registry/pull/617))
 
