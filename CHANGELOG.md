@@ -23,6 +23,12 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — every release carries notes built from the changelog (2026-11-04, (repository), [mzizi-registry#619](https://github.com/mzizi-dev/mzizi-registry/issues/619))
+
+- The `main-release.yml` minor release builds its notes (the `CHANGELOG.md` entries since the previous release plus a compare link) before it pushes the tag, so a release with no entries fails and tags nothing, and creates the release as a draft that is published once. GitHub's list of merged pull requests is no longer appended, and a manual re-run no longer rewrites a published release's notes (releases are immutable). No API change.
+- Staging patch tags (`v*`) no longer carry GitHub's auto text: `staging-version.yml` tags with the org workflow's `create-release: false` (it has no input for notes) and a new `release` job writes the pre-release with the `CHANGELOG.md` entries the merge added and a compare link. A merge the changelog gate exempts says so.
+- The new `release notes` workflow tests the scripts and, on a `release/` pull request into `main`, fails when the release would have no changelog entries and prints the notes in the run summary. `AGENTS.md` gains "Release notes (hard rule)".
+
 ### Changed — AGENTS.md and CONTRIBUTING.md describe the new `staging` merge-queue rules (2026-11-03)
 
 - `AGENTS.md` "Merge convention" and `CONTRIBUTING.md` now state the target `merge-queue-staging` config (SQUASH, was REBASE; no minimum wait, was 5 minutes; up to 5 entries, ALLGREEN, 60-minute check timeout; `merge-queue-main` stays MERGE). The owner applies it in the repo rulesets; until it reads SQUASH/0, branches stay linear because a REBASE queue drops merge commits with MERGE_CONFLICT.
