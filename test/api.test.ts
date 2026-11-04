@@ -481,6 +481,31 @@ describe("architecture and content", () => {
     ).toBe(21);
   });
 
+  // Spacing floor, registry v4.24.0 (mzizi-registry#617): BUNDU_FLOOR.spacing
+  // = insetPx 14, controlGapPx/labelGapPx/itemGapPx 7, leadingBody 1.5. Typed
+  // out from the issue, not read back from src/data.
+  it("serves the spacing floor on /v1/brand's accessibility block", async () => {
+    const body = (await (await get("/v1/brand")).json()) as {
+      accessibility: Record<string, unknown>;
+    };
+    expect(body.accessibility).toMatchObject({
+      minInset: 14,
+      minControlGap: 7,
+      minLabelGap: 7,
+      minItemGap: 7,
+      minBodyLeading: 1.5,
+    });
+  });
+
+  it("serves the spacing floor custom properties in mzizi-tokens-globals", async () => {
+    const res = await get("/v1/ui/mzizi-tokens-globals");
+    expect(res.status).toBe(200);
+    const text = await res.text();
+    expect(text).toContain("--inset-floor");
+    expect(text).toContain("--gap-floor");
+    expect(text).toContain("--leading-floor");
+  });
+
   // Reference values, typed out from the pinned registry (efb5f3a, v4.23.0; the text tier moved with the 7:1 floor, mzizi-registry#610):
   // `--{mineral,heritage,exp}-<name>-text` in the `:root` (light) and
   // `[data-theme="dark"]` blocks of
