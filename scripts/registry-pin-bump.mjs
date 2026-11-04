@@ -682,6 +682,10 @@ function prBody() {
   const listed = commits.slice(-MAX_LISTED_COMMITS);
   const lines = [
     targetMark(target),
+    // The org's `issue attached` check wants a line that starts with `No issue:`; the bot's own
+    // PR is exactly the trivial, automated change it is for, so it states that itself.
+    "No issue: automated registry pin bump, opened and merged by registry-pin-bump.yml.",
+    "",
     "## Summary",
     "",
     `Moves \`${PIN_FILE}\` from ${link(basePin.ref)} to ${link(target)}, ` +
