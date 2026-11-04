@@ -33,13 +33,10 @@ supply-chain problem for everything that consumes it.
 | No secrets or bindings               | `wrangler.jsonc`                              | There's nothing in the Worker's environment to exfiltrate                                                         |
 | `gitleaks` on full history           | `.github/workflows/ci.yml`                    | A credential committed by accident fails CI rather than shipping                                                  |
 
-**The automated pin bump** (README, "Registry pin bump") merges without a
-person only a commit that moves the pin forward along mzizi-registry `main`,
-changes nothing else, and passes CI and a `--strict` parity run against
-production with zero differences. Anything else waits for review. Its token,
-`RELEASE_BUMP_TOKEN`, is an Actions secret used only by
-`.github/workflows/registry-pin-bump.yml`, which runs from `main` and never
-checks out pull request code.
+**The pin is moved by hand.** No bot or automated workflow changes
+`scripts/registry-ref.json`: a person moves it in a pull request into
+`staging`, which passes CI and a parity run against production, and the owner
+releases it to `main`.
 
 `Access-Control-Allow-Origin: *` is deliberate and isn't a finding. The data is
 public, no route takes credentials, and browsers never attach cookies to these
