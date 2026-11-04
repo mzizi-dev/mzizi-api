@@ -221,16 +221,19 @@ keeps one bot pull request, from the branch `bot/registry-pin`, that sets `ref`
 in `scripts/registry-ref.json` to registry `main`:
 
 1. **Whenever registry `main` moves**, and every hour as a backstop, it
-   compares the pin on `main` with mzizi-registry `main` (`git ls-remote`,
+   compares the pin on `staging` with mzizi-registry `main` (`git ls-remote`,
    public, no token). mzizi-registry's `notify-pin-bots.yml` sends this
    workflow a `repository_dispatch` (`registry-main-moved`) on every push to
    registry `main`; the hourly schedule catches anything that misses, since
    GitHub delays and drops scheduled runs under load. When they differ,
-   `bot/registry-pin` becomes one bot commit on top of the current `main` that
+   `bot/registry-pin` becomes one bot commit on top of the current `staging` that
    moves the pin, and the pull request is opened, or updated if one is open.
    There is only ever one. Its body lists the registry commits between the old
-   pin and the new one. It's rebuilt whenever `main` or registry `main` moves,
-   so it's never behind `main`.
+   pin and the new one. It's rebuilt whenever `staging` or registry `main` moves,
+   so it's never behind `staging`. **The bump targets `staging`, not `main`** (owner,
+   2026-11-04: "Waiting for the next release is good"): the pin reaches production with the
+   next release, and `main` never gets a commit `staging` lacks, which would fail the
+   release-version-check main gate. Parity runs on pull requests into `staging` as well.
 2. **CI runs on it** like on any pull request: `worker` (build, typecheck,
    tests, format, wrangler bundle), `secret scan`, the five `lint / *` checks,
    Workers Builds, and **`parity`**: [`parity.yml`](.github/workflows/parity.yml)
@@ -244,8 +247,8 @@ in `scripts/registry-ref.json` to registry `main`:
    so any difference at all fails it.
 3. **When a check finishes** on `bot/registry-pin` (`workflow_run` for CI, Lint
    and Parity; `check_run` for Workers Builds), and on every other run, the
-   bot gates the pull request. It merges (rebase) only when the pull request is
-   the bot's single commit on the current `main`, changes nothing but
+   bot gates the pull request. It merges (squash) only when the pull request is
+   the bot's single commit on the current `staging`, changes nothing but
    `scripts/registry-ref.json`, moves the pin forward along registry `main`, and
    every check and status on its head commit has finished green, including
    `worker`, `secret scan`, `parity`, Workers Builds and every check `main`'s
@@ -262,7 +265,7 @@ in `scripts/registry-ref.json` to registry `main`:
    hand the bump back. Closing the pull request without merging declines that
    registry commit; the bot opens a new one when registry `main` moves again.
 5. **A bump by hand still works.** While another open pull request moves the
-   pin to registry `main`, the bot opens none. When a bump lands on `main` any
+   pin to registry `main`, the bot opens none. When a bump lands on `staging` any
    other way, the bot closes its own pull request and deletes the branch.
 
 Every trigger runs the same idempotent reconcile from `main`'s copy of the
