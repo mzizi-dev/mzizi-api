@@ -23,6 +23,29 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — every release carries notes built from the changelog (2026-11-04, (repository), [mzizi-registry#619](https://github.com/mzizi-dev/mzizi-registry/issues/619))
+
+- The `main-release.yml` minor release builds its notes (the `CHANGELOG.md` entries since the previous release plus a compare link) before it pushes the tag, so a release with no entries fails and tags nothing, and creates the release as a draft that is published once. GitHub's list of merged pull requests is no longer appended, and a manual re-run no longer rewrites a published release's notes (releases are immutable). No API change.
+- Staging patch tags (`v*`) no longer carry GitHub's auto text: `staging-version.yml` tags with the org workflow's `create-release: false` (it has no input for notes) and a new `release` job writes the pre-release with the `CHANGELOG.md` entries the merge added and a compare link. A merge the changelog gate exempts says so.
+- The new `release notes` workflow tests the scripts and, on a `release/` pull request into `main`, fails when the release would have no changelog entries and prints the notes in the run summary. `AGENTS.md` gains "Release notes (hard rule)".
+
+### Added — the spacing floor on `/v1/brand` and the token sources: the registry pin moves on to `1ac4f81`, v4.24.0 (2026-11-04, [mzizi-registry#617](https://github.com/mzizi-dev/mzizi-registry/issues/617))
+
+- `GET /v1/brand` (and `/api/v1/brand`) now carries the spacing floor in its `accessibility` block: `minInset` 14, `minControlGap` 7, `minLabelGap` 7, `minItemGap` 7 and `minBodyLeading` 1.5 (px, except leading, a unitless ratio). No existing field changes.
+- `GET /v1/ui/mzizi-tokens-globals` serves the new `--inset-floor`, `--gap-floor` and `--leading-floor` custom properties and the base-layer rules; the platform token files (`mzizi-tokens-typescript`, `-rust`, `-kotlin`, `-swift`, `-python`, `-react-native`, `-arkts`) carry the 14 and 7 roles. `GET /v1/changelog` leads with the 4.24.0 record.
+- Two new offline tests in `test/api.test.ts` assert the brand block and the stylesheet variables, with the numbers typed from the ruling, not read back from `src/data`.
+- Parity: 13 intentional differences, all response bodies, recorded in `EXPECTED` (`PIN_1AC4F81`) with their reason; 0 unexplained, 0 failing the contract. Remove them once production serves `1ac4f81`.
+- `/v1/tokens` and its `spacingFloor` field, which the registry's docs mention, are not a route of this Worker (it answers 404 there, as it did before this change); this API serves the floor on `/v1/brand` and the token sources.
+
+### Changed — AGENTS.md and CONTRIBUTING.md describe the new `staging` merge-queue rules (2026-11-03)
+
+- `AGENTS.md` "Merge convention" and `CONTRIBUTING.md` now state the target `merge-queue-staging` config (SQUASH, was REBASE; no minimum wait, was 5 minutes; up to 5 entries, ALLGREEN, 60-minute check timeout; `merge-queue-main` stays MERGE). The owner applies it in the repo rulesets; until it reads SQUASH/0, branches stay linear because a REBASE queue drops merge commits with MERGE_CONFLICT.
+- They also say: enqueue with `--squash --auto` as soon as the gate is met; forward-port `main`-only commits (the pin bot's) to `staging` before a release; only a major release needs the owner's go-ahead; one `Refs`, `Closes` or `No issue:` line per PR. No API behaviour changes.
+
+### Changed — parity's `EXPECTED` is empty again: production serves `efb5f3a` (2026-11-03, [#112](https://github.com/mzizi-dev/mzizi-api/issues/112))
+
+- The `PIN_B6773AC` and `PIN_EFB5F3A` entries (201 requests) are removed from `scripts/parity.mjs`: the 2026-11-03 release deployed registry v4.23.0 to api.mzizi.dev, and a `--strict` run of this tree against production is identical on all 1592 requests (0 intentional, 0 unexplained, 0 failing the contract). Nothing a caller receives changes.
+
 ### Changed — the registry pin moves on to `efb5f3a`, registry v4.23.0: the Bundu floor (2026-11-03, [#112](https://github.com/mzizi-dev/mzizi-api/issues/112))
 
 - `scripts/registry-ref.json` moves from `b6773ac` (v4.20.0) to `efb5f3a`, registry `main` at **v4.23.0** (mzizi-registry#615), taking in v4.21.0 and v4.22.0, in place of the bot's #110 (which targets `main` and stopped on two outdated tests and parity). Nothing else is pinned by hand: no route, header, redirect or status changes, only response bodies.
