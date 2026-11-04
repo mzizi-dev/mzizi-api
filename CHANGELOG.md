@@ -29,7 +29,7 @@ To see which registry commit production is serving, read the
 - Staging patch tags (`v*`) no longer carry GitHub's auto text: `staging-version.yml` tags with the org workflow's `create-release: false` (it has no input for notes) and a new `release` job writes the pre-release with the `CHANGELOG.md` entries the merge added and a compare link. A merge the changelog gate exempts says so.
 - The new `release notes` workflow tests the scripts and, on a `release/` pull request into `main`, fails when the release would have no changelog entries and prints the notes in the run summary. `AGENTS.md` gains "Release notes (hard rule)".
 
-### Changed — the registry pin moves on to `1ac4f81`, registry v4.24.0: the spacing floor (2026-11-04, [mzizi-registry#617](https://github.com/mzizi-dev/mzizi-registry/issues/617))
+### Added — the spacing floor on `/v1/brand` and the token sources: the registry pin moves on to `1ac4f81`, v4.24.0 (2026-11-04, [mzizi-registry#617](https://github.com/mzizi-dev/mzizi-registry/issues/617))
 
 - `GET /v1/brand` (and `/api/v1/brand`) now carries the spacing floor in its `accessibility` block: `minInset` 14, `minControlGap` 7, `minLabelGap` 7, `minItemGap` 7 and `minBodyLeading` 1.5 (px, except leading, a unitless ratio). No existing field changes.
 - `GET /v1/ui/mzizi-tokens-globals` serves the new `--inset-floor`, `--gap-floor` and `--leading-floor` custom properties and the base-layer rules; the platform token files (`mzizi-tokens-typescript`, `-rust`, `-kotlin`, `-swift`, `-python`, `-react-native`, `-arkts`) carry the 14 and 7 roles. `GET /v1/changelog` leads with the 4.24.0 record.

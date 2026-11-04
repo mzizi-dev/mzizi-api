@@ -501,12 +501,14 @@ describe("architecture and content", () => {
     const res = await get("/v1/ui/mzizi-tokens-globals");
     expect(res.status).toBe(200);
     const text = await res.text();
-    expect(text).toContain("--inset-floor");
-    expect(text).toContain("--gap-floor");
-    expect(text).toContain("--leading-floor");
+    // 0.875rem is 14px and 0.4375rem is 7px at the 16px root.
+    const css = JSON.parse(text).files[0].content as string;
+    expect(css).toMatch(/--inset-floor:\s*0\.875rem/);
+    expect(css).toMatch(/--gap-floor:\s*0\.4375rem/);
+    expect(css).toMatch(/--leading-floor:\s*1\.5/);
   });
 
-  // Reference values, typed out from the pinned registry (efb5f3a, v4.23.0; the text tier moved with the 7:1 floor, mzizi-registry#610):
+  // Reference values, typed out from the pinned registry (efb5f3a, v4.23.0, unchanged by v4.24.0; the text tier moved with the 7:1 floor, mzizi-registry#610):
   // `--{mineral,heritage,exp}-<name>-text` in the `:root` (light) and
   // `[data-theme="dark"]` blocks of
   // components/registry/n1-tokens/mzizi-tokens-globals.css, and the rest from
