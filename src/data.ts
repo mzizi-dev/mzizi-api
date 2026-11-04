@@ -43,7 +43,7 @@ export interface RegistryItem {
   iconLibrary?: Loose;
   baseColor?: Loose;
   tailwind?: Loose;
-  /** `sources.rs` from the registry's on-disk index, when the item has a Dioxus file. */
+  /** `sources.rs` from the registry's on-disk index, when the item has a Rust file. */
   rsPath?: string;
   /** mzizi-registry `crateFor(rsPath)`: the crate that compiles the `.rs`, when there is one. */
   rsCrate?: string | null;
