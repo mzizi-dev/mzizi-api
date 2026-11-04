@@ -12,16 +12,41 @@ Fixed or Security, and a breaking change is marked **Breaking**.
 **The rule (owner, 2026-09-30):** every pull request that changes behaviour, an
 API response, a dependency, a default, the registry pin or a documented fact
 adds an entry under `## [Unreleased]` in the same pull request. The
-`changelog / entry required` check fails a pull request that doesn't. Two
-exemptions: the registry-pin bot's own pull request on `bot/registry-pin`,
-which changes only `scripts/registry-ref.json` and lists the registry commits
-in its body, and pull requests labelled `no-changelog` (pure CI, lint or typo
-changes). When a dated section is cut, the Unreleased entries move under it.
+`changelog / entry required` check fails a pull request that doesn't. One
+exemption: pull requests labelled `no-changelog` (pure CI, lint or typo
+changes), besides those that touch only `.github/`, lockfiles or lint config. When a dated section is cut, the Unreleased entries move under it.
 
 To see which registry commit production is serving, read the
 `X-Mzizi-Source` header on any response.
 
 ## [Unreleased]
+
+### Removed — Dioxus from `/v1/rs/{name}` (mzizi-registry#635)
+
+- **`target: "dioxus"` is gone from every 200 body of `/v1/rs/{name}`** (the 55
+  components that have a Rust build at the current pin). The envelope keeps
+  `name`, `type`, `description`, `crate` and `files`. Nothing replaces the field:
+  the API names no Rust rendering target. A client that read `target` gets
+  `undefined`; none in the Mzizi repositories requires it. The frozen port
+  `scripts/registry-handlers/rs.ts` changes in step (the `target` line and its
+  Dioxus wording in comments), because `scripts/extract.ts` checks the
+  projection against it.
+- **README** no longer says `/v1/rs/{name}` serves "Dioxus" source, and the
+  "Renderer" note no longer says Dioxus remains a dependency.
+- **`scripts/parity.mjs`** gains a `GET /v1/rs/*` entry for the 55 differences:
+  status 200, body only, only in `$.target`. Remove it once production serves the
+  change. Production still serves `target: "dioxus"` until the registry pin
+  moves; the registry's own `/v1/rs` output is the upstream to fix (tracked in
+  mzizi-registry#635).
+- History entries below that mention Dioxus stay as written.
+
+### Removed — the registry pin bot (2026-11-04, owner decision: "Remove the pin bot I think it more of a problem than an advantage")
+
+- `.github/workflows/registry-pin-bump.yml` and `scripts/registry-pin-bump.mjs` are deleted. Nothing opens, rebuilds or merges a `bot/registry-pin` pull request any more, hourly or on a registry dispatch.
+- **What a maintainer sees differently.** The pin (`scripts/registry-ref.json`) moves only when a person changes it in a pull request into `staging` (`npm run build:data`, typecheck, check, test, then `npm run parity`, with intended differences in `EXPECTED`), and it reaches `main` with the owner's release pull request. That pull request needs a changelog entry like any other. The `RELEASE_BUMP_TOKEN` secret is no longer used here.
+- The pin bot's open pull request #123 is closed. The branch `bot/registry-pin` is left for the owner to delete.
+- `changelog.yml` no longer sets `EXEMPT_BRANCH` or `PIN_FILE`, so no branch is exempt from the changelog check. `scripts/changelog-gate.sh` and its test are untouched, since they are shared byte for byte across the Mzizi repositories; the unset exempt-branch option stays there unused.
+- README, AGENTS.md, CONTRIBUTING.md and SECURITY.md describe a hand-moved pin: README's "Registry pin bump" and "Owner setup" sections are replaced by "Moving the registry pin".
 
 ### Changed — the registry pin moves on to `b25c9aa`, registry v4.26.0: the skills bundle grows from 9 to 12 skills (2026-11-04, [mzizi-registry#617](https://github.com/mzizi-dev/mzizi-registry/pull/617))
 
