@@ -11,7 +11,26 @@ Fixed or Security, and a breaking change is marked **Breaking**.
 
 **The rule (owner, 2026-09-30):** every pull request that changes behaviour, an
 API response, a dependency, a default, the registry pin or a documented fact
-adds an entry under `## [Unreleased]` in the same pull request. The
+adds an entry under `## [Unreleased]` ### Removed — Dioxus from `/v1/rs/{name}` (mzizi-registry#635)
+
+- **`target: "dioxus"` is gone from every 200 body of `/v1/rs/{name}`** (the 55
+  components that have a Rust build at the current pin). The envelope keeps
+  `name`, `type`, `description`, `crate` and `files`. Nothing replaces the field:
+  the API names no Rust rendering target. A client that read `target` gets
+  `undefined`; none in the Mzizi repositories requires it. The frozen port
+  `scripts/registry-handlers/rs.ts` changes in step (the `target` line and its
+  Dioxus wording in comments), because `scripts/extract.ts` checks the
+  projection against it.
+- **README** no longer says `/v1/rs/{name}` serves "Dioxus" source, and the
+  "Renderer" note no longer says Dioxus remains a dependency.
+- **`scripts/parity.mjs`** gains a `GET /v1/rs/*` entry for the 55 differences:
+  status 200, body only, only in `$.target`. Remove it once production serves the
+  change. Production still serves `target: "dioxus"` until the registry pin
+  moves; the registry's own `/v1/rs` output is the upstream to fix (tracked in
+  mzizi-registry#635).
+- History entries below that mention Dioxus stay as written.
+
+in the same pull request. The
 `changelog / entry required` check fails a pull request that doesn't. Two
 exemptions: the registry-pin bot's own pull request on `bot/registry-pin`,
 which changes only `scripts/registry-ref.json` and lists the registry commits
