@@ -29,6 +29,7 @@ To see which registry commit production is serving, read the
 
 ### Changed
 
+- **Releases are immutable-release safe (repository):** `main-release.yml` creates the GitHub release as a draft with the changelog-built notes and publishes it once (`.github/scripts/publish-release.sh`), so GitHub's immutable releases (tag and assets locked on publish) cannot break it. The tag is only pushed when the commit has none, never moved, and a published release is never edited. No API change.
 - **Registry pin bot targets `staging` (repository):** `registry-pin-bump.yml` sets `PIN_BASE_BRANCH: staging`; `scripts/registry-pin-bump.mjs` (identical to the agent-tools copy) opens, builds and squash-merges the bump on `staging`, and closes a bump PR still open against `main`. `parity.yml` now also runs on pull requests and merge queues into `staging`, so a bump is never merged without parity. The pin reaches `api.mzizi.dev` with the next release (owner, 2026-11-04). No API response changes. Takes effect once the workflow files reach `main`.
 
 ### Changed — every release carries notes built from the changelog (2026-11-04, (repository), [mzizi-registry#619](https://github.com/mzizi-dev/mzizi-registry/issues/619))
