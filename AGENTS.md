@@ -103,6 +103,8 @@ and red on `main`.
 `main`, and merges it (rebase) when every check, including a `--strict` parity
 run against production, is green (README, "Registry pin bump").
 
+- **The bot works against `staging`** (`PIN_BASE_BRANCH`), and a bump reaches
+  `main` with the next release. Parity runs on its pull request there.
 - **Never push to `bot/registry-pin` unless you're taking the bump over.** Any
   commit the bot didn't make hands the branch to people: the bot stops
   rebuilding and merging it. Delete the branch to hand it back.
@@ -173,8 +175,8 @@ are the authority if this drifts.
   (owner, 2-3 November 2026: "we are about a 1000 minor releases away from
   deciding v1"). A release is a `release/` branch made of `main` plus
   `staging`'s exact tree, squashed into `main`. Before cutting one,
-  forward-port any commit that is only on `main` (the pin bot's) to
-  `staging`, or the release-version-check gate on `main` fails. Don't push to
+  forward-port any commit that is only on `main` to
+  `staging` (the pin bot now opens its bumps against `staging`), or the release-version-check gate on `main` fails. Don't push to
   `bot/registry-pin`.
 - **Sync back after a release.** The squash commit on `main` is never in
   `staging`'s history, and `staging` cannot be reset (non-fast-forward pushes
