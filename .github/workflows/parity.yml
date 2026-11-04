@@ -2,12 +2,10 @@ name: Parity
 
 # Two ways in:
 #
-# - Every pull request that moves the registry pin (scripts/registry-ref.json),
-#   including the automated bumps from registry-pin-bump.yml, or that changes
-#   parity itself (scripts/parity.mjs, scripts/parity-body.mjs or this file).
+# - Every pull request that moves the registry pin (scripts/registry-ref.json)
+#   or that changes parity itself (scripts/parity.mjs, scripts/parity-body.mjs or this file).
 #   Baseline is production, https://api.mzizi.dev; candidate is
-#   the pull request under `wrangler dev`. Any unexplained difference fails the check, and a failed
-#   check stops the automated bump for review. When the pull request doesn't
+#   the pull request under `wrangler dev`. Any unexplained difference fails the check. When the pull request doesn't
 #   touch scripts/parity.mjs, and the pull request targets main, the run is
 #   `--strict`: EXPECTED then holds only an earlier bump's reasons, which
 #   production already serves, so nothing in it may excuse a difference.
@@ -36,7 +34,7 @@ on:
   # ref, or a queued PR waits until the queue times it out. Harmless where no
   # queue is configured. merge_group takes no branches or paths filter, so the
   # job skips itself on a queue for any branch but main or staging
-  # (pull_request runs only on PRs into those two). The bot's bump targets
+  # (pull_request runs only on PRs into those two). A pin move targets
   # staging, so it must get parity there.
   merge_group:
   workflow_dispatch:

@@ -96,26 +96,22 @@ Worker on 2026-09-29). Keep it a **bare hostname**, with no `/*` and no
 error only shows on the production deploy. The same commit can be green on a PR
 and red on `main`.
 
-## The registry pin moves by itself
+## The registry pin moves by hand
 
-`.github/workflows/registry-pin-bump.yml` keeps one bot pull request, branch
-`bot/registry-pin`, that moves `scripts/registry-ref.json` to mzizi-registry
-`main`, and merges it (rebase) when every check, including a `--strict` parity
-run against production, is green (README, "Registry pin bump").
+No bot moves `scripts/registry-ref.json` (owner, 2026-11-04: "Remove the pin bot I
+think it more of a problem than an advantage"). Move it in a pull request into
+`staging`: set `ref` to the mzizi-registry commit, run `npm run build:data`,
+`npm run typecheck`, `npm run check` and `npm test`, then `npm run parity`, and
+record each intended difference in `EXPECTED` in `scripts/parity.mjs` (README,
+"Moving the registry pin"; CONTRIBUTING.md has the detail).
 
-- **The bot works against `staging`** (`PIN_BASE_BRANCH`), and a bump reaches
-  `main` with the next release. Parity runs on its pull request there.
-- **Never push to `bot/registry-pin` unless you're taking the bump over.** Any
-  commit the bot didn't make hands the branch to people: the bot stops
-  rebuilding and merging it. Delete the branch to hand it back.
-- **A bump that stops for review** usually needs a handler ported. Do it on
-  that branch, or in your own pull request (the bot opens none while an open
-  pull request moves the pin to registry `main`).
+- **A pull request that moves the pin needs a changelog entry**, like any
+  other change to a served response.
+- **The bump reaches `main` with the owner's release pull request**, not by a
+  separate merge to `main`.
 - **`--strict` parity ignores `EXPECTED`** on any pull request that doesn't edit
-  `scripts/parity.mjs`. After a bump deploys, its `EXPECTED` entries are stale;
-  a later change may prune them.
-- Keep `scripts/registry-pin-bump.mjs` identical to the copy in
-  `mzizi-dev/agent-tools`.
+  `scripts/parity.mjs`. After a pin move deploys, its `EXPECTED` entries are
+  stale; a later change may prune them.
 
 ## Changelog (hard rule)
 
@@ -128,13 +124,10 @@ Owner's rule, 2026-09-30: "changelogs are super important".
   mark breaking changes **Breaking**, and say what changed for a caller of the
   API, not the commit text.
 - The `changelog / entry required` check (`.github/workflows/changelog.yml`)
-  fails a pull request without one. It is exempt for the pin bot's own pull
-  request on `bot/registry-pin` while it changes only
-  `scripts/registry-ref.json` (its body lists the registry commits), for pull
-  requests that touch only `.github/`,
-  lockfiles or lint config, and for pull requests labelled `no-changelog`
-  (pure CI, lint or typo changes). If you take a bump over to port a handler,
-  add the entry.
+  fails a pull request without one. It is exempt for pull requests that touch
+  only `.github/`, lockfiles or lint config, and for pull requests labelled
+  `no-changelog` (pure CI, lint or typo changes). A pull request that moves the
+  pin needs an entry.
 - The logic is `scripts/changelog-gate.sh`, tested by
   `scripts/changelog-gate.test.sh`. Keep both identical to the copies in the
   other Mzizi repositories.
@@ -176,8 +169,7 @@ are the authority if this drifts.
   deciding v1"). A release is a `release/` branch made of `main` plus
   `staging`'s exact tree, squashed into `main`. Before cutting one,
   forward-port any commit that is only on `main` to
-  `staging` (the pin bot now opens its bumps against `staging`), or the release-version-check gate on `main` fails. Don't push to
-  `bot/registry-pin`.
+  `staging`, or the release-version-check gate on `main` fails.
 - **Sync back after a release.** The squash commit on `main` is never in
   `staging`'s history, and `staging` cannot be reset (non-fast-forward pushes
   are blocked). After each release, open a sync PR into `staging` from a
