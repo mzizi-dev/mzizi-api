@@ -23,6 +23,22 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — the registry pin moves on to `c3e6e87`, registry v4.25.0: every component is held to the spacing floor (2026-11-04, [mzizi-registry#623](https://github.com/mzizi-dev/mzizi-registry/pull/623))
+
+- `scripts/registry-ref.json` moves from `1ac4f81` (v4.24.0) to `c3e6e87`, registry `main` at **v4.25.0**, in place of the bot's #123 (which targeted `main`, before the bot moved to `staging` in #120, and stopped on `parity`: with `--strict` every difference counts as unexplained). No route, header, redirect or status changes; only response bodies.
+- **What a caller sees.** Component sources on `/v1/ui/{name}` and `/v1/rs/{name}` (277 and 14 of them) use gaps of at least 8px: about 570 `gap-0.5`, `gap-1`, `gap-1.5` and `space-y-1` classes in 315 component files become `gap-2` and `space-y-2`, so an installed component meets the Bundu floor's 7px between controls. `/v1/changelog` (and `/api/v1/changelog`) gain the v4.25.0 record.
+- **Parity.** 1593 requests: 294 intentional body-only differences from production, 0 unexplained, 0 failing the contract. They are listed in `PIN_C3E6E87_REQUESTS` in `scripts/parity.mjs`, to be removed once production serves `c3e6e87`.
+- **Still under the floor upstream.** Some synced components keep `px-2` or `px-2.5` side padding on their controls (mzizi-registry#625). They are not part of this pin.
+
+### Fixed
+
+- **Parity is not `--strict` on pull requests into `staging` (repository):** `parity.yml` held every pull request to `--strict`, which ignores `EXPECTED`, but `staging` is ahead of production until the next release, so a newer pin's recorded differences (`PIN_1AC4F81`) failed it. Pull requests and merge queues into `staging` now honour `EXPECTED`; those into `main` stay `--strict`. No API change.
+
+### Changed
+
+- **Releases are immutable-release safe (repository):** `main-release.yml` creates the GitHub release as a draft with the changelog-built notes and publishes it once (`.github/scripts/publish-release.sh`), so GitHub's immutable releases (tag and assets locked on publish) cannot break it. The tag is only pushed when the commit has none, never moved, and a published release is never edited. No API change.
+- **Registry pin bot targets `staging` (repository):** `registry-pin-bump.yml` sets `PIN_BASE_BRANCH: staging`; `scripts/registry-pin-bump.mjs` (identical to the agent-tools copy) opens, builds and squash-merges the bump on `staging`, and closes a bump PR still open against `main`. `parity.yml` now also runs on pull requests and merge queues into `staging`, so a bump is never merged without parity. The pin reaches `api.mzizi.dev` with the next release (owner, 2026-11-04). No API response changes. Takes effect once the workflow files reach `main`.
+
 ### Changed — every release carries notes built from the changelog (2026-11-04, (repository), [mzizi-registry#619](https://github.com/mzizi-dev/mzizi-registry/issues/619))
 
 - The `main-release.yml` minor release builds its notes (the `CHANGELOG.md` entries since the previous release plus a compare link) before it pushes the tag, so a release with no entries fails and tags nothing, and creates the release as a draft that is published once. GitHub's list of merged pull requests is no longer appended, and a manual re-run no longer rewrites a published release's notes (releases are immutable). No API change.
