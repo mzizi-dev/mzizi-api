@@ -141,9 +141,17 @@ const PIN_B25C9AA_REQUESTS = [
   "GET /v1/skills/progress-report",
   "GET /v1/skills/summary",
 ];
-const EXPECTED = Object.fromEntries(
-  PIN_B25C9AA_REQUESTS.map((r) => [r, PIN_B25C9AA]),
-);
+const EXPECTED = {
+  ...Object.fromEntries(PIN_B25C9AA_REQUESTS.map((r) => [r, PIN_B25C9AA])),
+  // A trailing `/*` matches every path under that prefix: one 200 per component
+  // that has a Rust build.
+  "GET /v1/rs/*": {
+    allow: ["body"],
+    status: 200,
+    only: "body $.target:",
+    why: 'Dioxus removal (mzizi-registry#635): /v1/rs/{name} no longer carries `target: "dioxus"`. Nothing replaces it; the API names no Rust rendering target. Only that field differs. Remove this entry once production serves the change.',
+  },
+};
 
 // ── Build the request list ─────────────────────────────────────────────────
 const index = await (await fetch(`${LIVE}/v1/ui`)).json();
