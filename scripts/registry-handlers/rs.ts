@@ -20,12 +20,12 @@ const CORS_CACHE = {
 };
 
 /**
- * GET /api/v1/rs/[name] — a component's RUST (Dioxus) implementation.
+ * GET /api/v1/rs/[name] — a component's RUST implementation.
  *
  * TWO SURFACES OVER ONE COMPONENT, NOT TWO COMPONENTS.
  *
  * `button` is one registry item with one contract — one description, one dependency list,
- * one set of documented variants — implemented for React in `button.tsx` and for Dioxus in
+ * one set of documented variants — implemented for React in `button.tsx` and for Rust in
  * `button.rs`, side by side in the same node directory. `/api/v1/ui/{name}` serves the first
  * and stays byte-identical to what it has always served, so every existing `npx shadcn add`
  * keeps working; this route serves the second.
@@ -37,14 +37,14 @@ const CORS_CACHE = {
  * A COMPONENT WITH NO RUST SIBLING IS A 404, DELIBERATELY.
  *
  * Most of the registry is TypeScript-only today. Answering 200 with an empty body — or
- * falling back to the `.tsx` — would tell a Dioxus consumer that a Rust implementation
+ * falling back to the `.tsx` — would tell a Rust consumer that a Rust implementation
  * exists when it does not, and CLAUDE.md §8.9 is explicit: never present a target as though
  * components exist for it when the honest answer is "no Rust build yet".
  *
  * THIS IS A READ SURFACE, NOT AN INSTALL PATH.
  *
  * `npx shadcn add` copies a file into a consumer's project. Rust has no equivalent and does
- * not need one — a Dioxus consumer depends on the crate that compiles the component, named in
+ * not need one — a Rust consumer depends on the crate that compiles the component, named in
  * the payload's `crate` (CLAUDE.md §8.9). This
  * route is for reading: an agent answering a question, a reviewer, someone porting a
  * component. The shadcn-shaped envelope is kept anyway so one client can parse both routes.
@@ -109,7 +109,6 @@ export async function GET(
         $schema: "https://ui.shadcn.com/schema/registry-item.json",
         name: component.name,
         type: component.type,
-        target: "dioxus",
         description: component.description,
         // The crate, not a file copy — see the header. Stated in the payload so a client
         // does not have to infer the distribution model from the route name.
