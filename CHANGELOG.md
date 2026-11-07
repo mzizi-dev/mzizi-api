@@ -12,16 +12,99 @@ Fixed or Security, and a breaking change is marked **Breaking**.
 **The rule (owner, 2026-09-30):** every pull request that changes behaviour, an
 API response, a dependency, a default, the registry pin or a documented fact
 adds an entry under `## [Unreleased]` in the same pull request. The
-`changelog / entry required` check fails a pull request that doesn't. Two
-exemptions: the registry-pin bot's own pull request on `bot/registry-pin`,
-which changes only `scripts/registry-ref.json` and lists the registry commits
-in its body, and pull requests labelled `no-changelog` (pure CI, lint or typo
-changes). When a dated section is cut, the Unreleased entries move under it.
+`changelog / entry required` check fails a pull request that doesn't. One
+exemption: pull requests labelled `no-changelog` (pure CI, lint or typo
+changes), besides those that touch only `.github/`, lockfiles or lint config. When a dated section is cut, the Unreleased entries move under it.
 
 To see which registry commit production is serving, read the
 `X-Mzizi-Source` header on any response.
 
 ## [Unreleased]
+
+### Removed — Dioxus from `/v1/rs/{name}` (mzizi-registry#635)
+
+- **`target: "dioxus"` is gone from every 200 body of `/v1/rs/{name}`** (the 55
+  components that have a Rust build at the current pin). The envelope keeps
+  `name`, `type`, `description`, `crate` and `files`. Nothing replaces the field:
+  the API names no Rust rendering target. A client that read `target` gets
+  `undefined`; none in the Mzizi repositories requires it. The frozen port
+  `scripts/registry-handlers/rs.ts` changes in step (the `target` line and its
+  Dioxus wording in comments), because `scripts/extract.ts` checks the
+  projection against it.
+- **README** no longer says `/v1/rs/{name}` serves "Dioxus" source, and the
+  "Renderer" note no longer says Dioxus remains a dependency.
+- **`scripts/parity.mjs`** gains a `GET /v1/rs/*` entry for the 55 differences:
+  status 200, body only, only in `$.target`. Remove it once production serves the
+  change. Production still serves `target: "dioxus"` until the registry pin
+  moves; the registry's own `/v1/rs` output is the upstream to fix (tracked in
+  mzizi-registry#635).
+- History entries below that mention Dioxus stay as written.
+
+### Removed — the registry pin bot (2026-11-04, owner decision: "Remove the pin bot I think it more of a problem than an advantage")
+
+- `.github/workflows/registry-pin-bump.yml` and `scripts/registry-pin-bump.mjs` are deleted. Nothing opens, rebuilds or merges a `bot/registry-pin` pull request any more, hourly or on a registry dispatch.
+- **What a maintainer sees differently.** The pin (`scripts/registry-ref.json`) moves only when a person changes it in a pull request into `staging` (`npm run build:data`, typecheck, check, test, then `npm run parity`, with intended differences in `EXPECTED`), and it reaches `main` with the owner's release pull request. That pull request needs a changelog entry like any other. The `RELEASE_BUMP_TOKEN` secret is no longer used here.
+- The pin bot's open pull request #123 is closed. The branch `bot/registry-pin` is left for the owner to delete.
+- `changelog.yml` no longer sets `EXEMPT_BRANCH` or `PIN_FILE`, so no branch is exempt from the changelog check. `scripts/changelog-gate.sh` and its test are untouched, since they are shared byte for byte across the Mzizi repositories; the unset exempt-branch option stays there unused.
+- README, AGENTS.md, CONTRIBUTING.md and SECURITY.md describe a hand-moved pin: README's "Registry pin bump" and "Owner setup" sections are replaced by "Moving the registry pin".
+
+### Changed — the registry pin moves on to `b25c9aa`, registry v4.26.0: the skills bundle grows from 9 to 12 skills (2026-11-04, [mzizi-registry#617](https://github.com/mzizi-dev/mzizi-registry/pull/617))
+
+- `scripts/registry-ref.json` moves from `c3e6e87` (v4.25.0) to `b25c9aa`, registry `main` at **v4.26.0**, by hand through `staging` in place of the bot's #123. No route, header, redirect or status changes; only response bodies.
+- **What a caller sees.** `/v1/skills` (and `/api/v1/skills`) and `/v1/skills/summary` now report `meta.count` 12 and `meta.version` `0.18.0` (`@nyuchi/mzizi-skills`), up from 9 and `0.16.0`: `ship-release`, `registry-propagation` and `pr-gates` are new, and the descriptions and bodies of `mzizi-language`, `mzizi-roots`, `mzizi-design`, `mzizi-architecture`, `discoverability` and `progress-report` change. `/v1/skills/{name}` reports `meta.version` `0.18.0` for every skill, and the `available` list on the `404` for an unknown skill gains the three new names. `/v1/changelog` (and `/api/v1/changelog`) gain the v4.26.0 record.
+- **Parity.** 1594 requests: 15 intentional body-only differences from production, 0 unexplained, 0 failing the contract. They are listed in `PIN_B25C9AA_REQUESTS` in `scripts/parity.mjs`, to be removed once production serves `b25c9aa`; the `PIN_C3E6E87` entries are removed because production already serves `c3e6e87`. A new offline test holds the skills count and version.
+
+### Fixed — the registry pin bot's pull request states `No issue:` so the issue check passes (2026-11-04, [mzizi-registry#617](https://github.com/mzizi-dev/mzizi-registry/issues/617))
+
+- **Fixed:** the bot's pull request body now has a `No issue: automated registry pin bump…` line at the start of its own line. The org's `issue attached` check failed every bot pull request (it is opened by the owner's account), which kept the bump from merging by itself. The same four lines are in `mzizi-dev/agent-tools`' copy of `scripts/registry-pin-bump.mjs`. No change for a caller of the API.
+
+### Changed — the registry pin moves on to `c3e6e87`, registry v4.25.0: every component is held to the spacing floor (2026-11-04, [mzizi-registry#623](https://github.com/mzizi-dev/mzizi-registry/pull/623))
+
+- `scripts/registry-ref.json` moves from `1ac4f81` (v4.24.0) to `c3e6e87`, registry `main` at **v4.25.0**, in place of the bot's #123 (which targeted `main`, before the bot moved to `staging` in #120, and stopped on `parity`: with `--strict` every difference counts as unexplained). No route, header, redirect or status changes; only response bodies.
+- **What a caller sees.** Component sources on `/v1/ui/{name}` and `/v1/rs/{name}` (277 and 14 of them) use gaps of at least 8px: about 570 `gap-0.5`, `gap-1`, `gap-1.5` and `space-y-1` classes in 315 component files become `gap-2` and `space-y-2`, so an installed component meets the Bundu floor's 7px between controls. `/v1/changelog` (and `/api/v1/changelog`) gain the v4.25.0 record.
+- **Parity.** 1593 requests: 294 intentional body-only differences from production, 0 unexplained, 0 failing the contract. They are listed in `PIN_C3E6E87_REQUESTS` in `scripts/parity.mjs`, to be removed once production serves `c3e6e87`.
+- **Still under the floor upstream.** Some synced components keep `px-2` or `px-2.5` side padding on their controls (mzizi-registry#625). They are not part of this pin.
+
+### Fixed
+
+- **Parity is not `--strict` on pull requests into `staging` (repository):** `parity.yml` held every pull request to `--strict`, which ignores `EXPECTED`, but `staging` is ahead of production until the next release, so a newer pin's recorded differences (`PIN_1AC4F81`) failed it. Pull requests and merge queues into `staging` now honour `EXPECTED`; those into `main` stay `--strict`. No API change.
+
+### Changed
+
+- **Releases are immutable-release safe (repository):** `main-release.yml` creates the GitHub release as a draft with the changelog-built notes and publishes it once (`.github/scripts/publish-release.sh`), so GitHub's immutable releases (tag and assets locked on publish) cannot break it. The tag is only pushed when the commit has none, never moved, and a published release is never edited. No API change.
+- **Registry pin bot targets `staging` (repository):** `registry-pin-bump.yml` sets `PIN_BASE_BRANCH: staging`; `scripts/registry-pin-bump.mjs` (identical to the agent-tools copy) opens, builds and squash-merges the bump on `staging`, and closes a bump PR still open against `main`. `parity.yml` now also runs on pull requests and merge queues into `staging`, so a bump is never merged without parity. The pin reaches `api.mzizi.dev` with the next release (owner, 2026-11-04). No API response changes. Takes effect once the workflow files reach `main`.
+
+### Changed — every release carries notes built from the changelog (2026-11-04, (repository), [mzizi-registry#619](https://github.com/mzizi-dev/mzizi-registry/issues/619))
+
+- The `main-release.yml` minor release builds its notes (the `CHANGELOG.md` entries since the previous release plus a compare link) before it pushes the tag, so a release with no entries fails and tags nothing, and creates the release as a draft that is published once. GitHub's list of merged pull requests is no longer appended, and a manual re-run no longer rewrites a published release's notes (releases are immutable). No API change.
+- Staging patch tags (`v*`) no longer carry GitHub's auto text: `staging-version.yml` tags with the org workflow's `create-release: false` (it has no input for notes) and a new `release` job writes the pre-release with the `CHANGELOG.md` entries the merge added and a compare link. A merge the changelog gate exempts says so.
+- The new `release notes` workflow tests the scripts and, on a `release/` pull request into `main`, fails when the release would have no changelog entries and prints the notes in the run summary. `AGENTS.md` gains "Release notes (hard rule)".
+
+### Added — the spacing floor on `/v1/brand` and the token sources: the registry pin moves on to `1ac4f81`, v4.24.0 (2026-11-04, [mzizi-registry#617](https://github.com/mzizi-dev/mzizi-registry/issues/617))
+
+- `GET /v1/brand` (and `/api/v1/brand`) now carries the spacing floor in its `accessibility` block: `minInset` 14, `minControlGap` 7, `minLabelGap` 7, `minItemGap` 7 and `minBodyLeading` 1.5 (px, except leading, a unitless ratio). No existing field changes.
+- `GET /v1/ui/mzizi-tokens-globals` serves the new `--inset-floor`, `--gap-floor` and `--leading-floor` custom properties and the base-layer rules; the platform token files (`mzizi-tokens-typescript`, `-rust`, `-kotlin`, `-swift`, `-python`, `-react-native`, `-arkts`) carry the 14 and 7 roles. `GET /v1/changelog` leads with the 4.24.0 record.
+- Two new offline tests in `test/api.test.ts` assert the brand block and the stylesheet variables, with the numbers typed from the ruling, not read back from `src/data`.
+- Parity: 13 intentional differences, all response bodies, recorded in `EXPECTED` (`PIN_1AC4F81`) with their reason; 0 unexplained, 0 failing the contract. Remove them once production serves `1ac4f81`.
+- `/v1/tokens` and its `spacingFloor` field, which the registry's docs mention, are not a route of this Worker (it answers 404 there, as it did before this change); this API serves the floor on `/v1/brand` and the token sources.
+
+### Changed — AGENTS.md and CONTRIBUTING.md describe the new `staging` merge-queue rules (2026-11-03)
+
+- `AGENTS.md` "Merge convention" and `CONTRIBUTING.md` now state the target `merge-queue-staging` config (SQUASH, was REBASE; no minimum wait, was 5 minutes; up to 5 entries, ALLGREEN, 60-minute check timeout; `merge-queue-main` stays MERGE). The owner applies it in the repo rulesets; until it reads SQUASH/0, branches stay linear because a REBASE queue drops merge commits with MERGE_CONFLICT.
+- They also say: enqueue with `--squash --auto` as soon as the gate is met; forward-port `main`-only commits (the pin bot's) to `staging` before a release; only a major release needs the owner's go-ahead; one `Refs`, `Closes` or `No issue:` line per PR. No API behaviour changes.
+
+### Changed — parity's `EXPECTED` is empty again: production serves `efb5f3a` (2026-11-03, [#112](https://github.com/mzizi-dev/mzizi-api/issues/112))
+
+- The `PIN_B6773AC` and `PIN_EFB5F3A` entries (201 requests) are removed from `scripts/parity.mjs`: the 2026-11-03 release deployed registry v4.23.0 to api.mzizi.dev, and a `--strict` run of this tree against production is identical on all 1592 requests (0 intentional, 0 unexplained, 0 failing the contract). Nothing a caller receives changes.
+
+### Changed — the registry pin moves on to `efb5f3a`, registry v4.23.0: the Bundu floor (2026-11-03, [#112](https://github.com/mzizi-dev/mzizi-api/issues/112))
+
+- `scripts/registry-ref.json` moves from `b6773ac` (v4.20.0) to `efb5f3a`, registry `main` at **v4.23.0** (mzizi-registry#615), taking in v4.21.0 and v4.22.0, in place of the bot's #110 (which targets `main` and stopped on two outdated tests and parity). Nothing else is pinned by hand: no route, header, redirect or status changes, only response bodies.
+- **What a caller sees (the Bundu floor, mzizi-registry#597 and #614).** `/v1/brand` `accessibility.minTouchTarget` is **49** (was 48) and `defaultTouchTarget` **49** (was 56); every `componentSpecs` entry carries `minTouchTarget: 49`, the button heights are default 49, `sm` 49, `icon` 49 and `lg` 56 (were 56, 48, 48 and 56), and the input heights are 49 (were 56 and 48); the typography scale serves **Body 17px** (was 16) and **Caption 14px** (was 12), H6 17px (was 16); `accessibility.standard` now reads "APCA 3.0 AAA, with WCAG 2 minimums: body text 7:1, non-body text 4.5:1, UI parts 3:1". `/v1/architecture` (node 2's implementation rules), `/v1/ecosystem`'s mobile-first rationale and the AI instruction sets state 49px, 17px and 14px instead of 56px and 48px. Component sources on `/v1/ui/{name}` and `/v1/rs/{name}` move to 14px type and the size roles. The radii are unchanged (4, 7, 12, 14, 17, pill).
+- **Also from the pin:** the light `-text` colours darken for the 7:1 body floor (mzizi-registry#610; e.g. terracotta `textLight` `#8E4928` to `#7B3F23`, hematite `#4A616B` to `#3E515A`), and skills 0.16.0 and the v4.21.0 to v4.23.0 changelog records are served.
+- **Tests.** The two offline tests that hard-code `-text` colours (`serves a -text pair on every one of the 21 colour families` and `serves the heritage and experimental text pairs...`) are updated to the values in the registry's `mzizi-tokens-globals.css` at `efb5f3a`; they failed on the bot's #110 for exactly that reason. They remain independent of `src/data` on purpose.
+- **Parity** against api.mzizi.dev (still on the earlier pin) on this tree: 1589 requests, 1388 identical, **201 differ, all bodies (status 200 on both sides), 0 unexplained, 0 failing the contract**. `scripts/parity.mjs` lists them as `PIN_EFB5F3A` with the reason (163 on `/v1/ui`, 14 on `/v1/rs`, plus brand, architecture, ecosystem, AI instructions and skills); a request that both this pin and the last one change carries both reasons. Remove these entries, and the `PIN_B6773AC` ones, once production serves `efb5f3a`.
+- **Not served here:** `/v1/tokens` is not a route of this Worker, so there is nothing to change for it.
 
 ### Changed — TypeScript 7.0.2, the native compiler (2026-11-02)
 

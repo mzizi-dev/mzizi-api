@@ -2,15 +2,17 @@ name: Parity
 
 # Two ways in:
 #
-# - Every pull request that moves the registry pin (scripts/registry-ref.json),
-#   including the automated bumps from registry-pin-bump.yml, or that changes
-#   parity itself (scripts/parity.mjs, scripts/parity-body.mjs or this file).
+# - Every pull request that moves the registry pin (scripts/registry-ref.json)
+#   or that changes parity itself (scripts/parity.mjs, scripts/parity-body.mjs or this file).
 #   Baseline is production, https://api.mzizi.dev; candidate is
-#   the pull request under `wrangler dev`. Any unexplained difference fails the check, and a failed
-#   check stops the automated bump for review. When the pull request doesn't
-#   touch scripts/parity.mjs, the run is `--strict`: EXPECTED then holds only an
-#   earlier bump's reasons, which production already serves, so nothing in it
-#   may excuse a difference.
+#   the pull request under `wrangler dev`. Any unexplained difference fails the check. When the pull request doesn't
+#   touch scripts/parity.mjs, and the pull request targets main, the run is
+#   `--strict`: EXPECTED then holds only an earlier bump's reasons, which
+#   production already serves, so nothing in it may excuse a difference.
+#   Pull requests (and merge queues) into staging run WITHOUT --strict:
+#   staging is ahead of production until the next release, so EXPECTED
+#   legitimately excuses the differences a newer pin brings. Strictness is
+#   restored at the release into main.
 # - By hand (workflow_dispatch), against any two URLs. Before the cutover:
 #   baseline https://api.mzizi.dev (the registry Worker), candidate blank (this
 #   commit under `wrangler dev`) or this Worker's workers.dev URL. After it:
@@ -20,7 +22,7 @@ name: Parity
 # Read-only requests; the report is the job summary.
 on:
   pull_request:
-    branches: [main]
+    branches: [main, staging]
     paths:
       - scripts/registry-ref.json
       # And a change to parity itself (the script, or the body comparison it
@@ -31,8 +33,9 @@ on:
   # Required checks must also report on a merge queue's gh-readonly-queue/**
   # ref, or a queued PR waits until the queue times it out. Harmless where no
   # queue is configured. merge_group takes no branches or paths filter, so the
-  # job skips itself on a queue for any branch but main (pull_request runs
-  # only on PRs into main).
+  # job skips itself on a queue for any branch but main or staging
+  # (pull_request runs only on PRs into those two). A pin move targets
+  # staging, so it must get parity there.
   merge_group:
   workflow_dispatch:
     inputs:
@@ -57,15 +60,16 @@ jobs:
     name: parity
     if: >-
       github.event_name != 'merge_group' ||
-      github.event.merge_group.base_ref == 'refs/heads/main'
+      github.event.merge_group.base_ref == 'refs/heads/main' ||
+      github.event.merge_group.base_ref == 'refs/heads/staging'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
           cache: npm
@@ -85,13 +89,17 @@ jobs:
           cat wrangler-dev.log
           exit 1
 
-      - name: Strict unless this pull request edits EXPECTED
+      - name: Strict for main, unless this pull request edits EXPECTED
         id: mode
         if: github.event_name != 'workflow_dispatch'
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
+          BASE_REF: ${{ github.event.pull_request.base.ref || github.event.merge_group.base_ref }}
         run: |
+          # Only a change into main is held to --strict; staging is ahead of
+          # production, so EXPECTED is honoured there.
+          [ "${BASE_REF#refs/heads/}" = main ] || exit 0
           if git diff --quiet "$BASE_SHA...$HEAD_SHA" -- scripts/parity.mjs; then
             echo "flags=--strict" >> "$GITHUB_OUTPUT"
           fi

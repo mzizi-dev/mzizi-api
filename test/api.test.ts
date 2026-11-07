@@ -102,7 +102,6 @@ describe("registry", () => {
   });
 
   type RsItem = {
-    target: string;
     crate: { name: string; registry: string; git: string };
     files: Array<{ path: string; type: string; content: string }>;
   };
@@ -111,7 +110,7 @@ describe("registry", () => {
     const res = await get("/v1/rs/mzizi-meta-tile");
     expect(res.status).toBe(200);
     const body = (await res.json()) as RsItem;
-    expect(body.target).toBe("dioxus");
+    expect(body).not.toHaveProperty("target");
     expect(body.crate).toEqual({
       name: "mzizi-brand",
       registry: "crates.io",
@@ -481,7 +480,34 @@ describe("architecture and content", () => {
     ).toBe(21);
   });
 
-  // Reference values, typed out from the pinned registry (f70703d):
+  // Spacing floor, registry v4.24.0 (mzizi-registry#617): BUNDU_FLOOR.spacing
+  // = insetPx 14, controlGapPx/labelGapPx/itemGapPx 7, leadingBody 1.5. Typed
+  // out from the issue, not read back from src/data.
+  it("serves the spacing floor on /v1/brand's accessibility block", async () => {
+    const body = (await (await get("/v1/brand")).json()) as {
+      accessibility: Record<string, unknown>;
+    };
+    expect(body.accessibility).toMatchObject({
+      minInset: 14,
+      minControlGap: 7,
+      minLabelGap: 7,
+      minItemGap: 7,
+      minBodyLeading: 1.5,
+    });
+  });
+
+  it("serves the spacing floor custom properties in mzizi-tokens-globals", async () => {
+    const res = await get("/v1/ui/mzizi-tokens-globals");
+    expect(res.status).toBe(200);
+    const text = await res.text();
+    // 0.875rem is 14px and 0.4375rem is 7px at the 16px root.
+    const css = JSON.parse(text).files[0].content as string;
+    expect(css).toMatch(/--inset-floor:\s*0\.875rem/);
+    expect(css).toMatch(/--gap-floor:\s*0\.4375rem/);
+    expect(css).toMatch(/--leading-floor:\s*1\.5/);
+  });
+
+  // Reference values, typed out from the pinned registry (efb5f3a, v4.23.0, unchanged by v4.24.0; the text tier moved with the 7:1 floor, mzizi-registry#610):
   // `--{mineral,heritage,exp}-<name>-text` in the `:root` (light) and
   // `[data-theme="dark"]` blocks of
   // components/registry/n1-tokens/mzizi-tokens-globals.css, and the rest from
@@ -491,17 +517,17 @@ describe("architecture and content", () => {
     minerals: {
       cobalt: ["#0047AB", "#86DCFF"],
       sodalite: ["#283593", "#C6CFFF"],
-      terracotta: ["#8E4928", "#EBCCA3"],
+      terracotta: ["#7B3F23", "#EBCCA3"],
     },
     heritage: {
-      hematite: ["#4A616B", "#C9D2D7"],
-      savanna: ["#725915", "#EBCF7D"],
-      kalahari: ["#675C46", "#E8D9B5"],
+      hematite: ["#3E515A", "#C9D2D7"],
+      savanna: ["#614C12", "#EBCF7D"],
+      kalahari: ["#564E3B", "#E8D9B5"],
     },
     experimental: {
-      storm: ["#284CA6", "#C4D1F1"],
-      ember: ["#843D20", "#EEC9BA"],
-      protea: ["#932464", "#F1C4DD"],
+      storm: ["#274AA1", "#C4D1F1"],
+      ember: ["#803B1F", "#EEC9BA"],
+      protea: ["#8F2361", "#F1C4DD"],
     },
   };
   const KEYS: Record<string, string[]> = {
@@ -619,7 +645,7 @@ describe("architecture and content", () => {
       hex: "#90A4AE",
       lightHex: "#546E7A",
       darkHex: "#90A4AE",
-      textLight: "#4A616B",
+      textLight: "#3E515A",
       textDark: "#C9D2D7",
       cssVar: "--color-hematite",
     });
@@ -631,7 +657,7 @@ describe("architecture and content", () => {
       containerDark: "#212735",
       onContainerLight: "#1A409B",
       onContainerDark: "#99B2EE",
-      textLight: "#284CA6",
+      textLight: "#274AA1",
       textDark: "#C4D1F1",
       uiLight: "#577BD6",
       uiDark: "#426CD1",
@@ -774,5 +800,22 @@ describe("/v1/ui/{name} resolves every name /v1/ui lists", () => {
     // A PNG starts with \x89PNG.
     const head = atob(file?.content ?? "").slice(0, 4);
     expect(head).toBe("\x89PNG");
+  });
+});
+
+describe("/v1/skills serves the pinned skills bundle", () => {
+  it("lists the 12 skills of @nyuchi/mzizi-skills 0.18.0, including the three added at 4.26.0", async () => {
+    const res = await get("/v1/skills");
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      meta: { count: number; version: string };
+      data: Array<{ name: string }>;
+    };
+    expect(body.meta).toMatchObject({ count: 12, version: "0.18.0" });
+    expect(body.data).toHaveLength(12);
+    const names = body.data.map((s) => s.name);
+    for (const added of ["ship-release", "registry-propagation", "pr-gates"]) {
+      expect(names).toContain(added);
+    }
   });
 });

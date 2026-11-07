@@ -96,24 +96,22 @@ Worker on 2026-09-29). Keep it a **bare hostname**, with no `/*` and no
 error only shows on the production deploy. The same commit can be green on a PR
 and red on `main`.
 
-## The registry pin moves by itself
+## The registry pin moves by hand
 
-`.github/workflows/registry-pin-bump.yml` keeps one bot pull request, branch
-`bot/registry-pin`, that moves `scripts/registry-ref.json` to mzizi-registry
-`main`, and merges it (rebase) when every check, including a `--strict` parity
-run against production, is green (README, "Registry pin bump").
+No bot moves `scripts/registry-ref.json` (owner, 2026-11-04: "Remove the pin bot I
+think it more of a problem than an advantage"). Move it in a pull request into
+`staging`: set `ref` to the mzizi-registry commit, run `npm run build:data`,
+`npm run typecheck`, `npm run check` and `npm test`, then `npm run parity`, and
+record each intended difference in `EXPECTED` in `scripts/parity.mjs` (README,
+"Moving the registry pin"; CONTRIBUTING.md has the detail).
 
-- **Never push to `bot/registry-pin` unless you're taking the bump over.** Any
-  commit the bot didn't make hands the branch to people: the bot stops
-  rebuilding and merging it. Delete the branch to hand it back.
-- **A bump that stops for review** usually needs a handler ported. Do it on
-  that branch, or in your own pull request (the bot opens none while an open
-  pull request moves the pin to registry `main`).
+- **A pull request that moves the pin needs a changelog entry**, like any
+  other change to a served response.
+- **The bump reaches `main` with the owner's release pull request**, not by a
+  separate merge to `main`.
 - **`--strict` parity ignores `EXPECTED`** on any pull request that doesn't edit
-  `scripts/parity.mjs`. After a bump deploys, its `EXPECTED` entries are stale;
-  a later change may prune them.
-- Keep `scripts/registry-pin-bump.mjs` identical to the copy in
-  `mzizi-dev/agent-tools`.
+  `scripts/parity.mjs`. After a pin move deploys, its `EXPECTED` entries are
+  stale; a later change may prune them.
 
 ## Changelog (hard rule)
 
@@ -126,21 +124,18 @@ Owner's rule, 2026-09-30: "changelogs are super important".
   mark breaking changes **Breaking**, and say what changed for a caller of the
   API, not the commit text.
 - The `changelog / entry required` check (`.github/workflows/changelog.yml`)
-  fails a pull request without one. It is exempt for the pin bot's own pull
-  request on `bot/registry-pin` while it changes only
-  `scripts/registry-ref.json` (its body lists the registry commits), for pull
-  requests that touch only `.github/`,
-  lockfiles or lint config, and for pull requests labelled `no-changelog`
-  (pure CI, lint or typo changes). If you take a bump over to port a handler,
-  add the entry.
+  fails a pull request without one. It is exempt for pull requests that touch
+  only `.github/`, lockfiles or lint config, and for pull requests labelled
+  `no-changelog` (pure CI, lint or typo changes). A pull request that moves the
+  pin needs an entry.
 - The logic is `scripts/changelog-gate.sh`, tested by
   `scripts/changelog-gate.test.sh`. Keep both identical to the copies in the
   other Mzizi repositories.
 
 ## Merge convention
 
-Read off the repo settings and the rulesets on 2026-10-21; they are the
-authority if this drifts.
+Read off the repo settings and the rulesets on 2026-10-21 and 2026-11-03; they
+are the authority if this drifts.
 
 - **Merge method.** Squash merges through the merge queue:
   `gh pr merge <n> --squash --auto`. Never `--admin`. The squash commit keeps
@@ -148,17 +143,33 @@ authority if this drifts.
   reasoning is preserved. Rebase and merge commits are disabled (repo settings
   and rulesets, 2026-10-21). Org admins can bypass those rulesets; agents
   never do.
+- **The queue rules (target config).** `merge-queue-staging` is to read
+  SQUASH (it was REBASE) with `min_entries_to_merge_wait_minutes` 0 (it was
+  5); it builds and merges up to 5 entries, groups ALLGREEN, and times a
+  check out at 60 minutes. `merge-queue-main` stays MERGE. On `staging`,
+  `required_linear_history` stays on, required reviews are 0, thread
+  resolution is required and non-fast-forward pushes are blocked. The owner
+  applies the change in the repo rulesets. Until `merge-queue-staging` reads
+  SQUASH/0 (check with `gh api repos/mzizi-dev/mzizi-api/rulesets`), keep
+  branches linear (no merge commits): a REBASE queue drops them with
+  MERGE_CONFLICT.
 - **Branches.** Updating a branch with the base (GitHub's "Update branch") is
   fine; the squash makes `main` linear. The merge queue tests each PR against
   the latest base. Merged branches are deleted.
 - **Enqueue only past the merge gate.** `--auto` adds the PR to the merge
   queue, and is how PRs land. Meet the merge gate first (complete, CI green,
   verified at runtime, `/code-review` run with findings resolved; see "Dev
-  skills, progress reports and the merge gate" below), then enqueue.
-- **Releases.** A merge into `main` deploys `api.mzizi.dev`, so only the owner
-  releases `staging` to `main`, or an agent the owner has authorised for that
-  release. A release is a `release/` branch made of `main` plus `staging`'s
-  exact tree, squashed into `main`.
+  skills, progress reports and the merge gate" below), then enqueue as soon as
+  it is met.
+- **One issue line per PR.** Put one `Refs #n`, `Closes #n` or `No issue:`
+  line in every PR body, for the "issue attached" check.
+- **Releases.** A merge into `main` deploys `api.mzizi.dev`. Minor and patch
+  releases go out automatically; only a major needs the owner's go-ahead
+  (owner, 2-3 November 2026: "we are about a 1000 minor releases away from
+  deciding v1"). A release is a `release/` branch made of `main` plus
+  `staging`'s exact tree, squashed into `main`. Before cutting one,
+  forward-port any commit that is only on `main` to
+  `staging`, or the release-version-check gate on `main` fails.
 - **Sync back after a release.** The squash commit on `main` is never in
   `staging`'s history, and `staging` cannot be reset (non-fast-forward pushes
   are blocked). After each release, open a sync PR into `staging` from a
@@ -192,6 +203,28 @@ truth is the `design-system/` folder in `mzizi-dev/mzizi-registry` (arriving
 with mzizi-registry#418), which the artifact is built from file for file. Edit
 the folder, never the artifact page; the artifact is republished from registry
 `main` after a merge that touches it.
+
+## Release notes (hard rule)
+
+Owner, 2026-11-04: "Every release should have release notes too with a changelog."
+
+- **Every GitHub release carries notes built from `CHANGELOG.md`**, never GitHub's auto text:
+  the entries added since the previous release (`.github/scripts/release_notes.py`) and a "Full
+  changelog" compare link. That covers the minor release `main-release.yml` makes on `main` and the
+  pre-release for each staging patch tag (`staging-version.yml` tags with the org workflow's
+  `create-release: false`, then its `release` job writes the notes).
+- **A release with no changelog content fails its job.** A minor release builds its notes
+  before it pushes the tag, so a failure tags nothing. A staging patch whose merge added no
+  entry (the changelog gate exempts CI, lockfiles, lint config and typos) says so in its notes.
+- **Notes are set when the release is created.** `.github/scripts/publish-release.sh` makes a
+  draft with the notes and publishes it once. Never `gh release edit` a published release
+  (immutable releases); a re-run leaves a published release alone.
+- **A release PR's body carries the same notes.** Before merging a `release/` PR into `main`,
+  paste the notes it will release (the `release notes / release PR` job prints them in its run
+  summary) into the PR body, so they exist before publish.
+- `.github/scripts/release_notes.py`, `publish-release.sh` and their tests are identical in
+  every Mzizi repository that carries them (mzizi-api, mzizi-docs, mzizi-site, mzizi-registry,
+  agent-tools). Change them everywhere together.
 
 ## Track big work in GitHub issues
 
