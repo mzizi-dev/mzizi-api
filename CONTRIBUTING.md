@@ -6,7 +6,7 @@ a route, moving the registry pin, or keeping the build honest.
 
 - [Setup](#setup)
 - [Changing a route](#changing-a-route)
-- [Bumping the registry pin](#bumping-the-registry-pin)
+- [Moving the registry pin](#moving-the-registry-pin)
 - [`wrangler.jsonc` rules that bite](#wranglerjsonc-rules-that-bite)
 - [Pull requests](#pull-requests)
 - [Code of conduct](#code-of-conduct)
@@ -50,21 +50,17 @@ npm run dev
    live. **0 unexplained differences** is the bar. A deliberate difference goes
    into `EXPECTED` in `scripts/parity.mjs` with a reason.
 
-## Bumping the registry pin
+## Moving the registry pin
 
-**The bot does this when registry `main` moves**, and hourly as a backstop
-(README, "Registry pin bump"): it opens
-`bot/registry-pin`, and merges it when CI and a `--strict` parity run against
-production are green. You bump by hand when it stops for review, that is when
-the registry changed data or a `lib/` reader that a route serves (it has had no
-route handlers since mzizi-registry#389). Push the port to
-`bot/registry-pin` (the bot then leaves the branch to you), or open your own
-pull request (the bot opens none while yours moves the pin to registry `main`,
-and closes its own once yours lands). Either way:
+No bot does this (owner, 2026-11-04). You move the pin by hand, in a pull
+request into `staging`, when you want `api.mzizi.dev` to serve a newer registry
+commit. Check whether the registry changed data or a `lib/` reader that a route
+serves (it has had no route handlers since mzizi-registry#389), and port any
+handler change here in the same pull request. Then:
 
 ```bash
 # edit scripts/registry-ref.json → "ref": "<mzizi-registry commit sha>"
-npm run build:data && npm test && npm run parity
+npm run build:data && npm run typecheck && npm run check && npm test && npm run parity
 ```
 
 Paste the parity summary into the PR. A difference after a bump usually means
@@ -126,11 +122,20 @@ Before merging anything:
   runtime, and code review has run with its findings resolved.
 - **Enqueue only past the gate.** `--auto` adds the PR to the merge queue,
   and is how PRs land, so pass it only once the gate above is met.
-- **Releases are the owner's.** A merge into `main` deploys `api.mzizi.dev`.
-  Only the owner, or someone the owner authorised, releases `staging` to
-  `main`: a `release/` branch made of `main` plus `staging`'s exact tree,
+- **Releases.** A merge into `main` deploys `api.mzizi.dev`. Minor and patch
+  releases go out automatically; only a major needs the owner's go-ahead. A
+  release is a `release/` branch made of `main` plus `staging`'s exact tree,
   squashed, then synced back into `staging` (a branch off `staging` with
-  `main` merged in, squashed) so the trees match again.
+  `main` merged in, squashed) so the trees match again. Forward-port commits
+  that are only on `main` to `staging` first, or the
+  release-version-check gate fails.
+- **Queue config.** `merge-queue-staging` is to read SQUASH with no minimum
+  wait (it was REBASE with 5 minutes); the owner applies it in the repo
+  rulesets. Until it does (`gh api repos/mzizi-dev/mzizi-api/rulesets`), keep
+  branches linear, since a REBASE queue drops merge commits with
+  MERGE_CONFLICT. `AGENTS.md` "Merge convention" has the details.
+- **One issue line per PR.** One `Refs #n`, `Closes #n` or `No issue:` line in
+  the body, for the "issue attached" check.
 
 Write commit messages that are worth keeping: what changed and _why_. The
 squash keeps each message in its body but not each commit, so cite the squash

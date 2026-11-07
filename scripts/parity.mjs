@@ -109,48 +109,48 @@ const HEADERS = [
 // 404-message entry (`GET /v1/rs/*`) were pruned once production served them
 // (they are in #100 and #76). A trailing `/*` key still matches every path
 // under that prefix.
-// The registry pin moves from 0d17818 (v4.18.0), which production serves, to
-// b6773ac, the v4.20.0 release (mzizi-registry#602), taking in v4.19.0 and
-// v4.20.0: skills 0.15.0 (nine skills, with mukoko-design and
-// mzizi-architecture), attestation provenance in ui/mzizi-verified-badge and
-// app/tier-status 1.2.0 (mzizi-registry#593, which also rewrites the
-// trust-model descriptions), and the v4.19.0 and v4.20.0 changelog records.
-// Every difference below is a body that the new registry content changes; no
+// Production serves registry c3e6e87 (v4.25.0), so only the pin below is
+// intentionally different: the PIN_C3E6E87 entries were removed once a strict
+// run against production came back identical on every request (2026-11-04).
+// The registry pin moves from c3e6e87 (v4.25.0) to b25c9aa, the v4.26.0 release
+// (mzizi-registry#617): the skills bundle goes from 9 to 12 skills at
+// @nyuchi/mzizi-skills 0.18.0, so skill descriptions and bodies and
+// `meta.version` (0.16.0 to 0.18.0) change, the list of names on the
+// unknown-skill 404 gains three (ship-release, registry-propagation, pr-gates),
+// and the changelog records gain 4.26.0. Only response bodies differ: no
 // status, header or redirect moves. Remove these entries once production
-// serves b6773ac.
-const PIN_B6773AC = {
+// serves b25c9aa.
+const PIN_B25C9AA = {
   allow: ["body"],
-  why: "Registry pin 0d17818 (v4.18.0) to b6773ac (v4.20.0, mzizi-registry#602): skills 0.15.0, attestation provenance and the trust-model descriptions (#593), and the v4.19.0 and v4.20.0 changelog records. Only response bodies differ.",
+  why: "Registry pin c3e6e87 (v4.25.0) to b25c9aa (v4.26.0, mzizi-registry#617): the skills bundle goes from 9 to 12 skills at @nyuchi/mzizi-skills 0.18.0 (descriptions, bodies and meta.version 0.16.0 to 0.18.0; the unknown-skill 404 lists ship-release, registry-propagation and pr-gates), and the changelog gains 4.26.0. Only response bodies differ.",
 };
-const PIN_B6773AC_REQUESTS = [
+const PIN_B25C9AA_REQUESTS = [
   "GET /api/v1/changelog",
-  "GET /api/v1/search?q=x",
   "GET /api/v1/skills",
-  "GET /api/v1/ui?node=3",
   "GET /v1/changelog",
   "GET /v1/skills",
   "GET /v1/skills/digital-hygiene",
   "GET /v1/skills/discoverability",
   "GET /v1/skills/does-not-exist",
+  "GET /v1/skills/mukoko-design",
+  "GET /v1/skills/mzizi-architecture",
   "GET /v1/skills/mzizi-backend",
   "GET /v1/skills/mzizi-design",
   "GET /v1/skills/mzizi-language",
   "GET /v1/skills/mzizi-roots",
   "GET /v1/skills/progress-report",
   "GET /v1/skills/summary",
-  "GET /v1/ui",
-  "GET /v1/ui/app-tier-status",
-  "GET /v1/ui/mzizi-trust-tier-data",
-  "GET /v1/ui/mzizi-verified-badge",
-  "GET /v1/ui?limit=abc",
-  "GET /v1/ui?node=-1",
-  "GET /v1/ui?owner=mzizi",
-  "GET /v1/ui?owner=nyuchi",
-  "GET /v1/ui?type=registry%3Alib",
-  "GET /v1/ui?type=registry%3Aui",
 ];
 const EXPECTED = {
-  ...Object.fromEntries(PIN_B6773AC_REQUESTS.map((r) => [r, PIN_B6773AC])),
+  ...Object.fromEntries(PIN_B25C9AA_REQUESTS.map((r) => [r, PIN_B25C9AA])),
+  // A trailing `/*` matches every path under that prefix: one 200 per component
+  // that has a Rust build.
+  "GET /v1/rs/*": {
+    allow: ["body"],
+    status: 200,
+    only: "body $.target:",
+    why: 'Dioxus removal (mzizi-registry#635): /v1/rs/{name} no longer carries `target: "dioxus"`. Nothing replaces it; the API names no Rust rendering target. Only that field differs. Remove this entry once production serves the change.',
+  },
 };
 
 // ── Build the request list ─────────────────────────────────────────────────
