@@ -21,6 +21,12 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed
+
+- **Dev and runtime dependencies move to their latest minor and patch releases**: `hono` 4.13.14 to
+  4.13.16, `@cloudflare/workers-types` 5.20261025.1 to 5.20261102.1 and `wrangler` 4.152.0 to 4.156.1. No
+  route, response or header change for a caller of the API.
+
 ### Removed — Dioxus from `/v1/rs/{name}` (mzizi-registry#635)
 
 - **`target: "dioxus"` is gone from every 200 body of `/v1/rs/{name}`** (the 55
