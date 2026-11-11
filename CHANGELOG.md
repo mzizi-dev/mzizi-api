@@ -21,6 +21,19 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — registry pin b25c9aa (v4.26.0) to f673a91 (v4.28.0)
+
+- **The API serves registry v4.28.0** (mzizi-registry#644, which carries 4.27.0 too). `/v1/ui` goes from 675 to 690 components and node 2 from 394 to 409: fifteen new `react-*` items (`react-alert` to `react-tooltip`, #640), the React builds `@bundu/ui` ships. Existing items of the same names are untouched.
+- **Dioxus is gone from served prose** (#636): node, brand, ecosystem and AI-instruction text. **Breaking** only for a caller matching `"dioxus"` in `rust.descriptors`, which is no longer listed.
+- **Component sources and descriptions move** with the registry's spacing-floor and `-text` token fixes (#631, #634). `/v1/changelog` gains 4.27.0 and 4.28.0.
+- Parity against production: 1598 requests, 0 unexplained, 0 contract failures. The 128 intentional differences are all response bodies, recorded in `EXPECTED` (`PIN_F673A91`). No status, header or redirect moves.
+
+### Changed — dependency bumps (hono, workers-types, wrangler)
+
+- **Dev and runtime dependencies move to their latest minor and patch releases**: `hono` 4.13.14 to
+  4.13.16, `@cloudflare/workers-types` 5.20261025.1 to 5.20261102.1 and `wrangler` 4.152.0 to 4.156.1. No
+  route, response or header change for a caller of the API.
+
 ### Removed — Dioxus from `/v1/rs/{name}` (mzizi-registry#635)
 
 - **`target: "dioxus"` is gone from every 200 body of `/v1/rs/{name}`** (the 55
