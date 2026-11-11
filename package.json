@@ -21,14 +21,14 @@
     "ci:prepare": "npm run build:data"
   },
   "dependencies": {
-    "hono": ">=4.13.14"
+    "hono": ">=4.13.16"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": ">=5.20261025.1",
+    "@cloudflare/workers-types": ">=5.20261102.1",
     "esbuild": ">=0.28.2",
     "typescript": ">=7.0.2",
     "vite-plus": ">=1.4.0",
-    "wrangler": ">=4.152.0"
+    "wrangler": ">=4.156.1"
   },
   "overrides": {
     "undici@<7.30.1": ">=7.30.1"
