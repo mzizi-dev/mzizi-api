@@ -21,6 +21,12 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — registry pin f673a91 (v4.28.0) to a64e57f (v4.29.0): skills 0.19.0
+
+- **`/v1/skills` serves `@nyuchi/mzizi-skills` 0.19.0** (was 0.18.0): the same twelve skills, with facts corrected in the release skills (`ship-release`, `pr-gates`, `registry-propagation`) and in `mzizi-language` and `mzizi-roots` (mzizi-registry#645). Skill bodies and some descriptions change, and `meta.version` reads 0.19.0 on every `/v1/skills/*` response. No skill is added or removed.
+- **`/v1/changelog` gains 4.29.0.** The component count is unchanged (690).
+- Parity against production: 1630 requests, 0 unexplained, 0 contract failures; the 17 intentional differences are response bodies only, recorded in `EXPECTED` (`PIN_A64E57F`). The test that pins the skills version now expects 0.19.0.
+
 ### Changed — registry pin b25c9aa (v4.26.0) to f673a91 (v4.28.0)
 
 - **The API serves registry v4.28.0** (mzizi-registry#644, which carries 4.27.0 too). `/v1/ui` goes from 675 to 690 components and node 2 from 394 to 409: fifteen new `react-*` items (`react-alert` to `react-tooltip`, #640), the React builds `@bundu/ui` ships. Existing items of the same names are untouched.
