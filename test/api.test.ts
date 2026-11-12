@@ -811,7 +811,7 @@ describe("/v1/skills serves the pinned skills bundle", () => {
       meta: { count: number; version: string };
       data: Array<{ name: string }>;
     };
-    expect(body.meta).toMatchObject({ count: 12, version: "0.19.0" });
+    expect(body.meta).toMatchObject({ count: 12, version: "0.20.0" });
     expect(body.data).toHaveLength(12);
     const names = body.data.map((s) => s.name);
     for (const added of ["ship-release", "registry-propagation", "pr-gates"]) {

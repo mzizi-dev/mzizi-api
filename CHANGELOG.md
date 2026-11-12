@@ -21,6 +21,17 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — registry pin a64e57f (v4.29.0) to f94666b (v4.36.0): the pointer-aware Bundu floor
+
+- **The Bundu floor is now two tiers** (mzizi-registry#666, owner decision 2026-11-12). Touch is unchanged: a 49px hit region and 17px body. On a desktop with a fine pointer at 64rem and up the hit region is 28px and body text is 15px (body-large 17px, native fields 36px, captions 14px; the spacing floor, contrast and APCA are unchanged). **This API does not project the new fields:** `/v1/brand` is byte-identical to before (its `minTouchTarget` stays 49, the touch value). The two tiers are in the served token files (`/v1/ui/mzizi-tokens-globals`, `mzizi-tokens-rust` and `mzizi-tokens-typescript`), the `/v1/architecture` implementation rules, and the doctrine and AI-instruction text (`/v1/ai/instructions/*`).
+- **`/v1/ui` serves 693 components, up from 690** (node 2 from 409 to 412): `device-code` (RFC 8628 device pairing, Astro, with a Rust build), `device-code-format` and one more new item. `app-bar-chart` documents nullable values (BarChart 1.2.0, withheld counts).
+- **`/v1/skills` serves `@nyuchi/mzizi-skills` 0.20.0** (was 0.19.0): the same twelve skills, with `meta.version` 0.20.0 on every `/v1/skills/*` response. **`/v1/changelog` gains 4.30.0 to 4.36.0.**
+- Parity against production: 1631 requests, 0 unexplained, 0 contract failures; the 67 intentional differences are response bodies only, recorded in `EXPECTED` (`PIN_F94666B`). The test that pins the skills version now expects 0.20.0.
+
+### Changed — the agent guides state the owner's release rule (2026-11-12, [mzizi-dev/mzizi-registry#661](https://github.com/mzizi-dev/mzizi-registry/issues/661))
+
+- `AGENTS.md` and `CONTRIBUTING.md` state the owner's release rule: the owner approves major releases only; minor and patch releases (the `staging` → `main` release PR, its tag and the sync-back into `staging`) and merges of green PRs that have passed review are done by agents following the repo's playbook, without asking the owner (owner, 2026-11-02). The "Releases" bullets, "the owner's release pull request" for a pin bump, and the progress-report line (report ticks never publish, release, merge or deploy without the owner's approval) now state it. Merge method, the merge gate, auto-merge and the changelog rules are unchanged. Nothing served or published changes.
+
 ### Changed — registry pin f673a91 (v4.28.0) to a64e57f (v4.29.0): skills 0.19.0
 
 - **`/v1/skills` serves `@nyuchi/mzizi-skills` 0.19.0** (was 0.18.0): the same twelve skills, with facts corrected in the release skills (`ship-release`, `pr-gates`, `registry-propagation`) and in `mzizi-language` and `mzizi-roots` (mzizi-registry#645). Skill bodies and some descriptions change, and `meta.version` reads 0.19.0 on every `/v1/skills/*` response. No skill is added or removed.
