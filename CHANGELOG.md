@@ -21,6 +21,10 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — the agent guides state the owner's release rule (2026-11-12, [mzizi-dev/mzizi-registry#661](https://github.com/mzizi-dev/mzizi-registry/issues/661))
+
+- `AGENTS.md` and `CONTRIBUTING.md` state the owner's release rule: the owner approves major releases only; minor and patch releases (the `staging` → `main` release PR, its tag and the sync-back into `staging`) and merges of green PRs that have passed review are done by agents following the repo's playbook, without asking the owner (owner, 2026-11-02). The "Releases" bullets, "the owner's release pull request" for a pin bump, and the progress-report line (report ticks never publish, release, merge or deploy without the owner's approval) now state it. Merge method, the merge gate, auto-merge and the changelog rules are unchanged. Nothing served or published changes.
+
 ### Changed — registry pin f673a91 (v4.28.0) to a64e57f (v4.29.0): skills 0.19.0
 
 - **`/v1/skills` serves `@nyuchi/mzizi-skills` 0.19.0** (was 0.18.0): the same twelve skills, with facts corrected in the release skills (`ship-release`, `pr-gates`, `registry-propagation`) and in `mzizi-language` and `mzizi-roots` (mzizi-registry#645). Skill bodies and some descriptions change, and `meta.version` reads 0.19.0 on every `/v1/skills/*` response. No skill is added or removed.
