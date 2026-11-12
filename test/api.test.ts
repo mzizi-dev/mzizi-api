@@ -804,14 +804,14 @@ describe("/v1/ui/{name} resolves every name /v1/ui lists", () => {
 });
 
 describe("/v1/skills serves the pinned skills bundle", () => {
-  it("lists the 12 skills of @nyuchi/mzizi-skills 0.18.0, including the three added at 4.26.0", async () => {
+  it("lists the 12 skills of @nyuchi/mzizi-skills 0.19.0, including the three added at 4.26.0", async () => {
     const res = await get("/v1/skills");
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       meta: { count: number; version: string };
       data: Array<{ name: string }>;
     };
-    expect(body.meta).toMatchObject({ count: 12, version: "0.18.0" });
+    expect(body.meta).toMatchObject({ count: 12, version: "0.19.0" });
     expect(body.data).toHaveLength(12);
     const names = body.data.map((s) => s.name);
     for (const added of ["ship-release", "registry-propagation", "pr-gates"]) {
