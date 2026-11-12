@@ -107,7 +107,7 @@ record each intended difference in `EXPECTED` in `scripts/parity.mjs` (README,
 
 - **A pull request that moves the pin needs a changelog entry**, like any
   other change to a served response.
-- **The bump reaches `main` with the owner's release pull request**, not by a
+- **The bump reaches `main` with the next release pull request**, not by a
   separate merge to `main`.
 - **`--strict` parity ignores `EXPECTED`** on any pull request that doesn't edit
   `scripts/parity.mjs`. After a pin move deploys, its `EXPECTED` entries are
@@ -163,10 +163,11 @@ are the authority if this drifts.
   it is met.
 - **One issue line per PR.** Put one `Refs #n`, `Closes #n` or `No issue:`
   line in every PR body, for the "issue attached" check.
-- **Releases.** A merge into `main` deploys `api.mzizi.dev`. Minor and patch
-  releases go out automatically; only a major needs the owner's go-ahead
-  (owner, 2-3 November 2026: "we are about a 1000 minor releases away from
-  deciding v1"). A release is a `release/` branch made of `main` plus
+- **Releases.** A merge into `main` deploys `api.mzizi.dev`. The owner approves
+  major releases only. Minor and patch releases (the `staging` → `main` release
+  PR, its tag, and the sync-back into `staging`), and merges of green PRs that
+  have passed review, are done by agents following the repo's playbook,
+  without asking the owner (owner, 2026-11-02). A release is a `release/` branch made of `main` plus
   `staging`'s exact tree, squashed into `main`. Before cutting one,
   forward-port any commit that is only on `main` to
   `staging`, or the release-version-check gate on `main` fails.
@@ -257,7 +258,10 @@ Load the Mzizi **dev skills** before starting work:
   another agent's.
 - **Progress reports.** All dev work runs on a 10-minute progress-report loop
   (`progress-report` skill): measured bars, what changed, and a final "Needs
-  you:" line. Report ticks never publish, release, merge or deploy without the
-  owner's approval.
+  you:" line. Report ticks never release a major without the owner's go-ahead.
+  The owner approves major releases only. Minor and patch releases (the
+  `staging` → `main` release PR, its tag, and the sync-back into `staging`),
+  and merges of green PRs that have passed review, are done by agents
+  following the repo's playbook, without asking the owner (owner, 2026-11-02).
 - **Merge gate.** Merge only when the work is complete, CI is green, it's
   verified at runtime, and `/code-review` has run with findings resolved.

@@ -122,9 +122,11 @@ Before merging anything:
   runtime, and code review has run with its findings resolved.
 - **Enqueue only past the gate.** `--auto` adds the PR to the merge queue,
   and is how PRs land, so pass it only once the gate above is met.
-- **Releases.** A merge into `main` deploys `api.mzizi.dev`. Minor and patch
-  releases go out automatically; only a major needs the owner's go-ahead. A
-  release is a `release/` branch made of `main` plus `staging`'s exact tree,
+- **Releases.** A merge into `main` deploys `api.mzizi.dev`. The owner approves
+  major releases only. Minor and patch releases (the `staging` → `main` release
+  PR, its tag, and the sync-back into `staging`), and merges of green PRs that
+  have passed review, are done by agents following the repo's playbook,
+  without asking the owner (owner, 2026-11-02). A release is a `release/` branch made of `main` plus `staging`'s exact tree,
   squashed, then synced back into `staging` (a branch off `staging` with
   `main` merged in, squashed) so the trees match again. Forward-port commits
   that are only on `main` to `staging` first, or the
