@@ -109,89 +109,26 @@ const HEADERS = [
 // 404-message entry (`GET /v1/rs/*`) were pruned once production served them
 // (they are in #100 and #76). A trailing `/*` key still matches every path
 // under that prefix.
-// Production serves registry f673a91 (v4.28.0), so only the pin below is
-// intentionally different. The registry pin moves from f673a91 to a64e57f, the
-// v4.29.0 release (mzizi-registry#646): the skills bundle goes from
-// @nyuchi/mzizi-skills 0.18.0 to 0.19.0 (same twelve skills, facts corrected in
-// the release skills and two language and component skills, mzizi-registry#645),
-// so skill bodies, some descriptions and `meta.version` change, and the
-// changelog records gain 4.29.0. Only response bodies differ: no status, header
-// or redirect moves. Remove these entries once production serves a64e57f.
-const PIN_F94666B = {
+// Production serves registry f94666b (v4.36.0), so only the pin below is
+// intentionally different. The registry pin moves from f94666b to 7c6449a, the
+// v4.37.0 release (mzizi-registry#676): `/v1/brand` `accessibility` gains
+// `minTouchTargetPointerFine` 28 and `bodyPxPointerFine` 15 beside the unchanged
+// `minTouchTarget` 49 (mzizi-registry#675), and the changelog records gain 4.37.0.
+// Only response bodies differ: no status, header or redirect moves. Remove these
+// entries once production serves 7c6449a. The entries for the earlier pins were
+// pruned, because production already serves them.
+const PIN_7C6449A = {
   allow: ["body"],
-  why: "Registry pin a64e57f (v4.29.0) to f94666b (v4.36.0, mzizi-registry main 2026-11-12): @nyuchi/mzizi-skills 0.19.0 to 0.20.0 (twelve skills; bodies and meta.version); 693 components, up from 690 (device-code, device-code-format and a third new item, in the listings, search, stats and /v1 counts); node 2 409 to 412; the pointer-aware Bundu floor (mzizi-registry#666: touch keeps the 49px hit region and 17px body; a desktop with a fine pointer gets a 28px hit region and 15px body) in the generated token files, the architecture rules and the doctrine and AI-instruction text (/v1/brand is unchanged); a new changelog entry; the BarChart 1.2.0 docs (nullable values). Response bodies only: status, headers and the contract hold.",
+  why: "Registry pin f94666b (v4.36.0) to 7c6449a (v4.37.0, mzizi-registry main 2026-11-13): /v1/brand `accessibility` gains `minTouchTargetPointerFine` 28 and `bodyPxPointerFine` 15 beside the unchanged `minTouchTarget` 49, so tools that read the brand data show the desktop tier of the pointer-aware Bundu floor (mzizi-registry#675); the changelog records gain 4.37.0. Response bodies only: status, headers and the contract hold.",
 };
-const PIN_F94666B_REQUESTS = [
-  "GET /api/v1",
-  "GET /api/v1/ai/instructions/github-copilot",
-  "GET /api/v1/architecture",
+const PIN_7C6449A_REQUESTS = [
+  "GET /api/v1/brand",
   "GET /api/v1/changelog",
-  "GET /api/v1/search?layer=2",
-  "GET /api/v1/search?q=x",
-  "GET /api/v1/skills",
-  "GET /api/v1/stats",
-  "GET /api/v1/ui?node=3",
-  "GET /v1",
-  "GET /v1/ai/instructions/mcp-server",
-  "GET /v1/ai/instructions/nyuchi-mcp-system-prompt",
-  "GET /v1/architecture",
-  "GET /v1/architecture/nodes/2",
+  "GET /v1/brand",
   "GET /v1/changelog",
-  "GET /v1/ecosystem",
-  "GET /v1/rs/alert",
-  "GET /v1/rs/card",
-  "GET /v1/rs/markdown-renderer",
-  "GET /v1/rs/mzizi-tokens-rust",
-  "GET /v1/search?category=primitives",
-  "GET /v1/search?layer=2",
-  "GET /v1/search?layer=3&node=2",
-  "GET /v1/search?node=2",
-  "GET /v1/skills",
-  "GET /v1/skills/digital-hygiene",
-  "GET /v1/skills/discoverability",
-  "GET /v1/skills/mukoko-design",
-  "GET /v1/skills/mzizi-architecture",
-  "GET /v1/skills/mzizi-backend",
-  "GET /v1/skills/mzizi-design",
-  "GET /v1/skills/mzizi-language",
-  "GET /v1/skills/mzizi-roots",
-  "GET /v1/skills/pr-gates",
-  "GET /v1/skills/progress-report",
-  "GET /v1/skills/registry-propagation",
-  "GET /v1/skills/ship-release",
-  "GET /v1/skills/summary",
-  "GET /v1/stats",
-  "GET /v1/stats?days=500",
-  "GET /v1/stats?days=7",
-  "GET /v1/stats?days=abc",
-  "GET /v1/ui",
-  "GET /v1/ui/app-bar-chart",
-  "GET /v1/ui/mzizi-tokens-globals",
-  "GET /v1/ui/mzizi-tokens-rust",
-  "GET /v1/ui/mzizi-tokens-typescript",
-  "GET /v1/ui?collection=components",
-  "GET /v1/ui?collection=documentation",
-  "GET /v1/ui?collection=primitives",
-  "GET /v1/ui?limit=0",
-  "GET /v1/ui?limit=abc",
-  "GET /v1/ui?node=-1",
-  "GET /v1/ui?node=2",
-  "GET /v1/ui?node=2&limit=5&offset=3",
-  "GET /v1/ui?node=999",
-  "GET /v1/ui?offset=570",
-  "GET /v1/ui?owner=framework",
-  "GET /v1/ui?owner=mzizi",
-  "GET /v1/ui?owner=nyuchi",
-  "GET /v1/ui?type=registry%3Abase",
-  "GET /v1/ui?type=registry%3Ablock",
-  "GET /v1/ui?type=registry%3Ahook",
-  "GET /v1/ui?type=registry%3Aitem",
-  "GET /v1/ui?type=registry%3Alib",
-  "GET /v1/ui?type=registry%3Atheme",
-  "GET /v1/ui?type=registry%3Aui",
 ];
 const EXPECTED = {
-  ...Object.fromEntries(PIN_F94666B_REQUESTS.map((r) => [r, PIN_F94666B])),
+  ...Object.fromEntries(PIN_7C6449A_REQUESTS.map((r) => [r, PIN_7C6449A])),
   // A trailing `/*` matches every path under that prefix: one 200 per component
   // that has a Rust build.
   "GET /v1/rs/*": {
