@@ -21,6 +21,12 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — registry pin f94666b (v4.36.0) to 7c6449a (v4.37.0): the desktop tier in `/v1/brand`
+
+- **`/v1/brand` `accessibility` carries the pointer-aware floor.** It gains `minTouchTargetPointerFine` 28 and `bodyPxPointerFine` 15 beside the unchanged `minTouchTarget` 49 (mzizi-registry#675). Until now only `/v1/architecture`, the token files and the doctrine stated the desktop tier, so a tool that read the brand data listed 49px as the only hit region. Touch is unchanged: a 49px hit region and 17px body. Existing fields keep their values; the response only gains two keys.
+- **`/v1/changelog` gains 4.37.0.** Nothing else in the registry moved: still 693 components, the same skills bundle (`@nyuchi/mzizi-skills` 0.20.0).
+- Parity against production: 1644 requests, 0 unexplained, 0 contract failures; the 4 intentional differences are response bodies only, recorded in `EXPECTED` (`PIN_7C6449A`). The entries for the earlier pin were pruned, because production already serves them.
+
 ### Changed — registry pin a64e57f (v4.29.0) to f94666b (v4.36.0): the pointer-aware Bundu floor
 
 - **The Bundu floor is now two tiers** (mzizi-registry#666, owner decision 2026-11-12). Touch is unchanged: a 49px hit region and 17px body. On a desktop with a fine pointer at 64rem and up the hit region is 28px and body text is 15px (body-large 17px, native fields 36px, captions 14px; the spacing floor, contrast and APCA are unchanged). **This API does not project the new fields:** `/v1/brand` is byte-identical to before (its `minTouchTarget` stays 49, the touch value). The two tiers are in the served token files (`/v1/ui/mzizi-tokens-globals`, `mzizi-tokens-rust` and `mzizi-tokens-typescript`), the `/v1/architecture` implementation rules, and the doctrine and AI-instruction text (`/v1/ai/instructions/*`).
