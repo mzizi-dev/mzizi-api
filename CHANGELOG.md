@@ -21,6 +21,13 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — Dependabot proposes no semver-major updates (2026-11-14)
+
+No issue: records the CI change already on `staging` (`1a16293`), so the release that carries it has notes.
+
+- `.github/dependabot.yml` ignores `version-update:semver-major` for both the `github-actions` and the `npm` ecosystems, so a major bump arrives only when someone chooses it (owner, 2026-11-12). The ignore rule never blocks security updates. Dependabot reads its configuration from `main`, so the rule takes effect once this release lands.
+- Nothing served changes: no route, response or header moves.
+
 ### Changed — registry pin f94666b (v4.36.0) to 7c6449a (v4.37.0): the desktop tier in `/v1/brand`
 
 - **`/v1/brand` `accessibility` carries the pointer-aware floor.** It gains `minTouchTargetPointerFine` 28 and `bodyPxPointerFine` 15 beside the unchanged `minTouchTarget` 49 (mzizi-registry#675). Until now only `/v1/architecture`, the token files and the doctrine stated the desktop tier, so a tool that read the brand data listed 49px as the only hit region. Touch is unchanged: a 49px hit region and 17px body. Existing fields keep their values; the response only gains two keys.
