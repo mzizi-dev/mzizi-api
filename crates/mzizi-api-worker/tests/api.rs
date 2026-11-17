@@ -988,3 +988,13 @@ fn lists_the_pinned_skills_bundle() {
         assert!(names.contains(&added), "{added}");
     }
 }
+
+#[test]
+fn keeps_a_signed_escape_literal_as_hono_does() {
+    let res = get("/v1/ui/%+A");
+    assert_eq!(res.status, 404);
+    assert_eq!(
+        body(&res)["error"],
+        "Component \"%+A\" not found in registry"
+    );
+}

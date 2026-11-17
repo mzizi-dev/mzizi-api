@@ -110,8 +110,10 @@ pub fn ui_index(c: &Ctx) -> Reply {
 /// app/api/v1/ui/[name]/docs/route.ts.
 pub fn ui_docs(c: &Ctx) -> Reply {
     let name = c.param(0);
-    let found = data::read_component(name)
-        .and_then(|component| Some((component, data::component_docs().get(&component.name)?)));
+    let found = data::read_component(name).and_then(|component| {
+        let docs = data::read_component_docs(&component.name)?;
+        Some((component, docs))
+    });
     let Some((component, with_docs)) = found else {
         return json(&projections::docs_not_found(name), 404, CORS);
     };
@@ -209,7 +211,7 @@ pub fn ui_item(c: &Ctx) -> Reply {
             icon_library: if_truthy(&component.icon_library),
             base_color: if_truthy(&component.base_color),
             tailwind: if_truthy(&component.tailwind),
-            ..item_head(component)
+            ..item_head(&component)
         };
         return json(&body, 200, CORS_CACHE);
     }
@@ -218,11 +220,11 @@ pub fn ui_item(c: &Ctx) -> Reply {
     let source = data::read_source(name, SourceKind::Primary);
     // A binary-only item (PNG icons): its files ship as base64 with their MIME type.
     if source.is_none()
-        && let Some(files) = data::binary().get(&component.name)
+        && let Some(files) = data::read_binary(&component.name)
     {
         let body = RegistryItemBody {
             files: Some(files.clone()),
-            ..item_head(component)
+            ..item_head(&component)
         };
         return json(&body, 200, CORS_CACHE);
     }
@@ -261,7 +263,7 @@ pub fn ui_item(c: &Ctx) -> Reply {
         .collect();
     let body = RegistryItemBody {
         files: Some(files),
-        ..item_head(component)
+        ..item_head(&component)
     };
     json(&body, 200, CORS_CACHE)
 }
@@ -286,7 +288,7 @@ pub fn rs_item(c: &Ctx) -> Reply {
         krate: CrateRef {
             name: krate.clone(),
             registry: "crates.io".into(),
-            git: data::meta().crate_git.clone(),
+            git: data::CRATE_GIT.into(),
         },
         files: vec![RsFile {
             path: component
@@ -310,7 +312,7 @@ pub fn astro_index(_: &Ctx) -> Reply {
         components: names
             .iter()
             .map(|name| AstroIndexEntry {
-                name: name.clone(),
+                name: (*name).to_owned(),
                 url: format!("https://api.mzizi.dev/v1/astro/{name}"),
             })
             .collect(),
@@ -323,7 +325,7 @@ pub fn astro_item(c: &Ctx) -> Reply {
     let Some(component) = data::read_component(name) else {
         return json(&projections::astro_not_found(name), 404, CORS);
     };
-    let Some(doc) = data::astro().get(&component.name) else {
+    let Some(doc) = data::read_astro(&component.name) else {
         return json(&projections::astro_no_astro(&component.name), 404, CORS);
     };
     // `{ $schema, ...doc, title, description }`: the document's own `$schema` wins.

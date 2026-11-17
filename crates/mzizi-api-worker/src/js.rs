@@ -209,7 +209,12 @@ const URI_RESERVED: &str = ";/?:@&=+$,#";
 fn decode(s: &str, reserved: &str) -> Result<String, ()> {
     let b = s.as_bytes();
     let hex = |i: usize| -> Result<u8, ()> {
+        // Two hex digits exactly: `from_str_radix` alone would also take a
+        // sign (`%+A`), which JS's decoders reject.
         let h = b.get(i + 1..i + 3).ok_or(())?;
+        if !h.iter().all(u8::is_ascii_hexdigit) {
+            return Err(());
+        }
         let h = std::str::from_utf8(h).map_err(|_| ())?;
         u8::from_str_radix(h, 16).map_err(|_| ())
     };
@@ -392,6 +397,10 @@ mod tests {
         assert_eq!(decode_param("%FF%20x"), "%FF%20x");
         assert_eq!(decode_param("%FF-%20x"), "%FF- x");
         assert_eq!(decode_param("caf%C3%A9"), "café");
+        // A sign is not a hex digit: kept literally, as Hono keeps it.
+        assert_eq!(decode_param("%+F"), "%+F");
+        assert_eq!(decode_param("%-1"), "%-1");
+        assert_eq!(hono_path("/v1/ui/%+A"), "/v1/ui/%+A");
     }
 
     #[test]

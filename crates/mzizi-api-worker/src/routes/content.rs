@@ -18,7 +18,7 @@ use crate::{data, js, projections};
 
 pub fn discovery(_: &Ctx) -> Reply {
     json(
-        &projections::discovery_document(data::components().len()),
+        &projections::discovery_document(data::COMPONENT_COUNT),
         200,
         CORS_CACHE,
     )
@@ -233,7 +233,7 @@ pub fn brand(_: &Ctx) -> Reply {
 }
 
 pub fn changelog(_: &Ctx) -> Reply {
-    let entries = &data::changelog().entries;
+    let entries = data::changelog_entries();
     let body = ChangelogBody {
         data: entries.clone(),
         meta: TotalMeta {
@@ -245,10 +245,7 @@ pub fn changelog(_: &Ctx) -> Reply {
 
 pub fn changelog_version(c: &Ctx) -> Reply {
     let version = c.param(0);
-    let entries = data::changelog()
-        .by_version
-        .get(version)
-        .filter(|e| !e.is_empty());
+    let entries = data::read_changelog_version(version).filter(|e| !e.is_empty());
     let Some(entries) = entries else {
         return json(
             &ErrorBody {
@@ -265,11 +262,11 @@ pub fn changelog_version(c: &Ctx) -> Reply {
     entry.shift_remove("meta");
     let body = ChangelogVersionBody {
         entry,
-        data: entries.clone(),
         meta: ChangelogVersionMeta {
             version: version.to_owned(),
             entries: entries.len(),
         },
+        data: entries,
     };
     json(&body, 200, CORS_CACHE)
 }
@@ -307,7 +304,7 @@ pub fn skill(c: &Ctx) -> Reply {
         );
     }
     let skills = data::skills();
-    match skills.by_name.get(name).filter(|s| js::truthy(Some(s))) {
+    match data::read_skill(name).filter(|s| js::truthy(Some(s))) {
         None => json(
             &SkillNotFound {
                 error: "Skill not found".into(),
@@ -319,7 +316,7 @@ pub fn skill(c: &Ctx) -> Reply {
         ),
         Some(skill) => json(
             &SkillBody {
-                data: skill.clone(),
+                data: skill,
                 meta: VersionMeta {
                     version: skills.version.clone(),
                 },

@@ -178,18 +178,18 @@ const OPENAPI_CACHE: &[(&str, &str)] = &[
 ];
 
 fn openapi(c: &Ctx) -> Reply {
-    let yaml = &data::meta().openapi_yaml;
+    let yaml = data::OPENAPI_YAML;
     if c.query("format").as_deref() == Some("json") {
         let body = OpenApiJson {
             message: "Use ?format=yaml (default) or fetch the raw YAML.".into(),
-            yaml: yaml.clone(),
+            yaml: yaml.to_owned(),
         };
         return json(&body, 200, OPENAPI_CACHE);
     }
     let mut headers = vec![("Content-Type", "application/yaml; charset=utf-8")];
     headers.extend_from_slice(OPENAPI_CACHE);
     headers.push(("X-OpenAPI-Version", "3.1.0"));
-    Reply::text(200, yaml.clone(), &headers)
+    Reply::text(200, yaml, &headers)
 }
 
 fn openapi_options(_: &Ctx) -> Reply {
@@ -272,7 +272,12 @@ fn dispatch(method: &str, url: &Url, raw_path: &str, clock: &Clock) -> Reply {
 /// Answers one request. `url` is the request URL as the runtime gives it.
 pub fn handle(method: &str, url: &str, clock: &Clock) -> Reply {
     let Ok(url) = Url::parse(url) else {
-        return internal_error();
+        let mut reply = internal_error();
+        for (n, v) in SECURITY_HEADERS {
+            reply.headers.set(n, v);
+        }
+        reply.headers.set("X-Mzizi-Source", data::source_header());
+        return reply;
     };
     let pathname = url.path();
     let search = match url.query() {
@@ -347,7 +352,7 @@ pub fn renamed_component_path(pathname: &str) -> Option<String> {
             continue;
         };
         let (segment, tail) = rest.find('/').map_or((rest, ""), |i| rest.split_at(i));
-        let renamed = data::meta().renames.get(segment)?;
+        let renamed = data::renamed(segment)?;
         return Some(format!("{prefix}/{renamed}{tail}"));
     }
     None
