@@ -78,7 +78,9 @@ always changes (it records the ref).
 ### The `routes` block owns `api.mzizi.dev`
 
 `wrangler.jsonc` declares `api.mzizi.dev` as this Worker's custom domain
-(README, "Cutover"). Every production deploy reasserts it. Removing it doesn't
+(README, "Cutover"). Every production deploy reasserts it. Since 2026-11-17 it builds
+the Rust Worker; `wrangler.ts.jsonc` is the TypeScript config for rollback and must
+declare the same route. Removing it doesn't
 detach the domain by itself, but it does mean a deploy of another Worker that
 claims the hostname can take it.
 
