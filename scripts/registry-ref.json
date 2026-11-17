@@ -1,6 +1,6 @@
 {
   "repository": "https://github.com/mzizi-dev/mzizi-registry",
-  "ref": "7c6449a1e5a1f16d15e10d6c90cb15dd5bd7ee8a",
-  "pinned": "2026-11-13",
-  "note": "mzizi-registry main at 7c6449a (v4.37.0) on 2026-11-13, pinned by hand through staging."
+  "ref": "03bc1e1275a16a01859695c51b084dc8461df94e",
+  "pinned": "2026-11-17",
+  "note": "mzizi-registry tag v4.44.0 (commit 03bc1e1) on 2026-11-17, pinned by hand through staging. Was 7c6449a (v4.37.0)."
 }
