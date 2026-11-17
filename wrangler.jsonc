@@ -1,21 +1,21 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "mzizi-api-gateway",
-  "main": "src/index.ts",
+  // The Rust (workers-rs) Worker, the production api.mzizi.dev since the cutover
+  // (mzizi-api#156). The TypeScript Worker it replaced is kept in wrangler.ts.jsonc,
+  // for rollback and parity; see README "Cutover" and "Rollback".
+  "main": "crates/mzizi-api-worker/build/index.js",
   "compatibility_date": "2026-05-22",
   "account_id": "125a2dfbc21f76a25c980609609e8218",
 
-  // Hono on Workers needs no Node built-ins, so no `nodejs_compat`.
-  //
-  // The data every route serves is generated here, from mzizi-registry's files
-  // at the ref pinned in scripts/registry-ref.json, and bundled into the Worker
-  // as JSON modules (src/data/, gitignored). Running it as wrangler's custom
-  // build means `wrangler dev`, `wrangler deploy` and Cloudflare Workers Builds
-  // all produce the same bundle from the same pin with no extra step — as long
-  // as `npm ci` ran first, which Workers Builds does on its own when it sees
-  // package-lock.json.
+  // scripts/build-rust.sh does the whole build: the registry data (src/data/, bundled
+  // into the wasm module), a Rust toolchain if the build image has none (rustup,
+  // non-interactive), the wasm32 target, and worker-build 0.9.0. It is idempotent and
+  // reads its toolchain version from rust-toolchain.toml. `wrangler dev` watches the
+  // crate sources so an edit rebuilds.
   "build": {
-    "command": "node scripts/build-data.mjs",
+    "command": "bash scripts/build-rust.sh",
+    "watch_dir": ["crates/mzizi-api-worker/src", "crates/mzizi-api-types/src"],
   },
 
   // api.mzizi.dev is this Worker's custom domain. The owner moved it here from

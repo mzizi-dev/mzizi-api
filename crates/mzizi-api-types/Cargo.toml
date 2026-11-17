@@ -1,0 +1,22 @@
+[package]
+name = "mzizi-api-types"
+version = "0.1.0"
+description = "Serde types for every response body of the Mzizi registry API (api.mzizi.dev) and the registry data it serves."
+readme = "README.md"
+keywords = ["mzizi", "design-system", "registry", "api", "serde"]
+categories = ["api-bindings", "data-structures", "web-programming"]
+documentation = "https://docs.rs/mzizi-api-types"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+authors.workspace = true
+
+[dependencies]
+indexmap = { version = "2", features = ["serde"] }
+serde.workspace = true
+serde_json.workspace = true
+
+[lints]
+workspace = true
