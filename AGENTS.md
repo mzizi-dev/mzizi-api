@@ -11,8 +11,10 @@ the package name and the `X-Mzizi-Source` header still say `mzizi-api-gateway`; 
 is a deploy decision, not part of the rename. It is the Mzizi API, one of the four API
 gateways (see README, "The four API gateways"). Only this one is the registry API.
 
-A **Hono (TypeScript) Cloudflare Worker** serving `api.mzizi.dev`, the
-Mzizi registry API. **Owner decision, 2026-09-28:** the API Worker is Hono,
+A **Rust (workers-rs) Cloudflare Worker** serving `api.mzizi.dev`, the
+Mzizi registry API. It is production since 2026-11-17 (owner approval, mzizi-api#156).
+The TypeScript (Hono) Worker it replaced stays in `src/` and `wrangler.ts.jsonc`, for
+rollback and parity. **Owner decision, 2026-09-28:** the API Worker is Hono,
 running its own API, and nothing touches Supabase except the Mzizi console. That
 replaces this repo's earlier "pure-Rust `workers-rs`" position. The Rust proxy is
 retired and its sources are gone.
@@ -20,11 +22,12 @@ retired and its sources are gone.
 **Owner decision, 2026-11-17: Mzizi is Rust-first, and the API moves to Rust**
 (mzizi-api#156). The runtime is being ported to `workers-rs` in
 `crates/mzizi-api-worker`, with every response body typed in
-`crates/mzizi-api-types` (published to crates.io for mzizi-cli). Until the
-cutover pull request, the Hono Worker in `src/` still serves production
-(`wrangler.jsonc`), and the Rust Worker runs beside it from `wrangler.rust.jsonc`
-(never deployed). A route change lands in both, in the same pull request, and
-the CI `rust` job runs parity between them. Both serve the same `src/data/*.json`.
+`crates/mzizi-api-types` (published to crates.io for mzizi-cli). `wrangler.jsonc`
+builds the Rust Worker through `scripts/build-rust.sh`; `wrangler.rust.jsonc` is the
+same build with no route, for side-by-side runs; `wrangler.ts.jsonc` is the TypeScript
+Worker, for rollback and parity. A route change lands in every config that declares
+one, in the same pull request, and the CI `rust` job runs parity between the two
+Workers. All of them serve the same `src/data/*.json`.
 
 Every route answers from JSON generated at build time out of
 `mzizi-dev/mzizi-registry`'s repository files, at the commit pinned in
@@ -42,16 +45,19 @@ npm run build:data      # checkout the pinned registry ref → src/data/*.json
 npm run typecheck
 npm test                # offline route tests
 npm run check           # vp check: format, lint, type check (vp fmt to fix)
-npm run dev             # wrangler dev, http://localhost:8787
+npm run dev             # wrangler dev (wrangler.jsonc: the Rust Worker), http://localhost:8787
 npm run parity          # live api.mzizi.dev vs local; must report 0 unexplained
-npx wrangler deploy --dry-run --outdir=.wrangler/dryrun
+npx wrangler deploy --dry-run -c wrangler.ts.jsonc --outdir=.wrangler/dryrun
 
-# The Rust port (needs build:data first; worker-build: cargo install worker-build)
+# The Rust Worker (production). scripts/build-rust.sh does the data step, the toolchain
+# (rustup if cargo is missing; rust-toolchain.toml pins it) and worker-build.
+bash scripts/build-rust.sh
 cargo fmt --all --check
 cargo clippy --all-targets -- -D warnings
 cargo test
-npx wrangler dev -c wrangler.rust.jsonc --port 8788
-node scripts/parity.mjs --baseline http://localhost:8787 --candidate http://localhost:8788
+npx wrangler dev --port 8789                        # wrangler.jsonc, the production build
+npx wrangler dev -c wrangler.ts.jsonc --port 8787   # the TypeScript Worker (rollback)
+node scripts/parity.mjs --baseline http://localhost:8787 --candidate http://localhost:8789
 ```
 
 `src/data/` and `.registry/` are generated and gitignored. Never commit them, and
@@ -101,8 +107,11 @@ restart forever.
 
 Cloudflare Workers Builds, on push to `main`, deploys to `api.mzizi.dev`.
 **`wrangler.jsonc` declares that custom domain** (moved here from the registry
-Worker on 2026-09-29). Keep it a **bare hostname**, with no `/*` and no
-`zone_name` (the three-field form broke `mzizi-mcp` and the console):
+Worker on 2026-09-29) and builds the Rust Worker (cutover 2026-11-17, `build.command`
+`bash scripts/build-rust.sh`). Do not point it back at `src/index.ts` except as a
+deliberate rollback: `wrangler.ts.jsonc` is the TypeScript config for that. Keep the
+route a **bare hostname**, with no `/*` and no `zone_name` (the three-field form broke
+`mzizi-mcp` and the console):
 
 ```jsonc
 "routes": [{ "pattern": "api.mzizi.dev", "custom_domain": true }],

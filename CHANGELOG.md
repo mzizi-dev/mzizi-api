@@ -29,7 +29,19 @@ Refs #156 (Phase A). Owner decision, 2026-11-17: Mzizi is Rust-first.
 - **`crates/mzizi-api-types`: a serde type for every response body** and for the registry data shapes (`RegistryItem`, `AstroDocument` and the rest), with field order as served, so mzizi-cli and other clients compile against the API's contract. Publishable to crates.io (Apache-2.0); not published yet.
 - **`wrangler.rust.jsonc`** builds the Rust Worker with `worker-build` under its own name, with no account, routes or workers.dev subdomain, so both Workers run side by side under `wrangler dev`. The CI `rust` job runs `cargo fmt`, `clippy` (native and wasm32), `cargo test` (the port of `test/api.test.ts`), `cargo publish --dry-run`, a dry-run bundle, and parity between the two Workers.
 - **Cold isolates parse only what a request reads.** `build.rs` packs the bundled data: a keyed lookup (one component, its source, a skill, a changelog version) parses that one value, and `/v1/ui` and `/v1/search` read a slim index of the items. A first `/v1/ui/{name}` on a fresh isolate no longer parses `sources.json` (4 MB) and `components.json` (1 MB) inside the request. That parsing made the preview answer a few requests in a burst with Cloudflare error pages.
-- Nothing served changes: production is still the Hono Worker in `wrangler.jsonc`, whose config, route and custom domain are untouched. The cutover is a later pull request.
+- Nothing served changes in this entry. The cutover that makes this Worker production is the next entry, `Changed — api.mzizi.dev is served by the Rust Worker`.
+
+### Changed — api.mzizi.dev is served by the Rust Worker (2026-11-17)
+
+Refs #156. Owner approval, 2026-11-17: the cutover to the Rust port, and the domain
+switch that goes with it.
+
+- **`wrangler.jsonc` now builds and runs the Rust Worker** (`crates/mzizi-api-worker`, `main` `crates/mzizi-api-worker/build/index.js`). The Worker keeps its name `mzizi-api-gateway`, its account, the `api.mzizi.dev` custom-domain route, `workers_dev`, observability and the compatibility date. The build is `scripts/build-rust.sh`: the registry data, a Rust toolchain if the build image has none (rustup, non-interactive), the `wasm32-unknown-unknown` target, and `worker-build` 0.9.0.
+- **The toolchain is pinned:** `rust-toolchain.toml` names `1.97.0`, the stable release the CI `rust` job used, with `rustfmt`, `clippy` and the wasm32 target.
+- **The TypeScript Worker is kept for rollback and parity** as `wrangler.ts.jsonc`: the same name, account and route, `main` `src/index.ts`. `npx wrangler deploy -c wrangler.ts.jsonc` redeploys it to `api.mzizi.dev`. The TypeScript source and its tests stay in the repository.
+- **Parity evidence (2026-11-17).** Strict parity (`node scripts/parity.mjs --strict`) of the Rust Worker against `https://api.mzizi.dev`: 1645 requests, 1645 identical, 0 unexplained, and the same on a second run. The owner's edge-preview runs of the deployed Rust preview against production were 1645/1645, twice. Covers all 693 component slugs.
+- **Rollback:** revert this pull request (the merge redeploys the TypeScript Worker), or run `npx wrangler deploy -c wrangler.ts.jsonc`, then revert so the next merge does not bring the Rust Worker back.
+- The CI `worker` job dry-runs `wrangler.ts.jsonc`; the `rust` job dry-runs `wrangler.rust.jsonc` and `wrangler.jsonc` and runs parity between the TypeScript Worker (port 8787) and the Rust Worker (port 8788).
 
 ### Changed — Dependabot proposes no semver-major updates (2026-11-14)
 
