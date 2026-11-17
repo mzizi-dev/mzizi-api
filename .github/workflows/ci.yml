@@ -116,12 +116,12 @@ jobs:
       # every request parity makes must answer the same from each. The TypeScript
       # Worker is wrangler.ts.jsonc (port 8787), the Rust Worker wrangler.rust.jsonc
       # (port 8788). One after the other: both configs run a data build as their
-      # custom build, and two copies writing src/data/ at once can hand one
-      # of them a half-written file.
+      # custom build (scripts/build-rust.sh), and two copies writing src/data/ at once
+      # can hand one of them a half-written file.
       - name: Start both Workers
         run: |
           wait_for() {
-            for _ in $(seq 1 120); do
+            for _ in $(seq 1 300); do
               curl -sf -o /dev/null "http://localhost:$1/v1/health" && return 0
               sleep 2
             done

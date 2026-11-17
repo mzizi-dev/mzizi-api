@@ -14,10 +14,10 @@ name: Parity
 #   staging is ahead of production until the next release, so EXPECTED
 #   legitimately excuses the differences a newer pin brings. Strictness is
 #   restored at the release into main.
-# - By hand (workflow_dispatch), against any two URLs. Before the cutover:
-#   baseline https://api.mzizi.dev, candidate blank (this commit under
-#   `wrangler dev`) or this Worker's workers.dev URL. To compare the TypeScript
-#   Worker (wrangler.ts.jsonc) with production, run it by hand on its own port.
+# - By hand (workflow_dispatch), against any two URLs. A blank candidate is this
+#   commit's Rust Worker under `wrangler dev`, as on a pull request. To compare the
+#   TypeScript Worker (wrangler.ts.jsonc) with production, run it by hand on its own
+#   port (see AGENTS.md).
 #
 # Read-only requests; the report is the job summary.
 on:
@@ -80,11 +80,19 @@ jobs:
 
       - run: npm run build:data
 
+      # The Rust Worker's build runs as its own step, so the wait below only covers
+      # wrangler dev starting. wrangler dev runs the same build.command again; the
+      # script is idempotent, so that second run is quick.
+      - name: Build the Rust Worker
+        if: github.event_name == 'pull_request' || inputs.candidate == ''
+        run: bash scripts/build-rust.sh
+
       - name: Start wrangler dev
         if: github.event_name == 'pull_request' || inputs.candidate == ''
         run: |
           npx wrangler dev --port 8787 > wrangler-dev.log 2>&1 &
-          for _ in $(seq 1 60); do
+          # 10 minutes: a cold worker-build took 2m39s to install and 44s to build in CI.
+          for _ in $(seq 1 300); do
             curl -sf -o /dev/null http://localhost:8787/v1/health && exit 0
             sleep 2
           done
