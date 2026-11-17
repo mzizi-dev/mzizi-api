@@ -15,7 +15,16 @@ A **Hono (TypeScript) Cloudflare Worker** serving `api.mzizi.dev`, the
 Mzizi registry API. **Owner decision, 2026-09-28:** the API Worker is Hono,
 running its own API, and nothing touches Supabase except the Mzizi console. That
 replaces this repo's earlier "pure-Rust `workers-rs`" position. The Rust proxy is
-retired and its sources are gone; don't bring `workers-rs` back.
+retired and its sources are gone.
+
+**Owner decision, 2026-11-17: Mzizi is Rust-first, and the API moves to Rust**
+(mzizi-api#156). The runtime is being ported to `workers-rs` in
+`crates/mzizi-api-worker`, with every response body typed in
+`crates/mzizi-api-types` (published to crates.io for mzizi-cli). Until the
+cutover pull request, the Hono Worker in `src/` still serves production
+(`wrangler.jsonc`), and the Rust Worker runs beside it from `wrangler.rust.jsonc`
+(never deployed). A route change lands in both, in the same pull request, and
+the CI `rust` job runs parity between them. Both serve the same `src/data/*.json`.
 
 Every route answers from JSON generated at build time out of
 `mzizi-dev/mzizi-registry`'s repository files, at the commit pinned in
@@ -36,6 +45,13 @@ npm run check           # vp check: format, lint, type check (vp fmt to fix)
 npm run dev             # wrangler dev, http://localhost:8787
 npm run parity          # live api.mzizi.dev vs local; must report 0 unexplained
 npx wrangler deploy --dry-run --outdir=.wrangler/dryrun
+
+# The Rust port (needs build:data first; worker-build: cargo install worker-build)
+cargo fmt --all --check
+cargo clippy --all-targets -- -D warnings
+cargo test
+npx wrangler dev -c wrangler.rust.jsonc --port 8788
+node scripts/parity.mjs --baseline http://localhost:8787 --candidate http://localhost:8788
 ```
 
 `src/data/` and `.registry/` are generated and gitignored. Never commit them, and

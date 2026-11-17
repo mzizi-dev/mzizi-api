@@ -1,0 +1,29 @@
+[package]
+name = "mzizi-api-worker"
+version = "0.1.0"
+description = "api.mzizi.dev, the Mzizi registry API, as a workers-rs Cloudflare Worker."
+edition.workspace = true
+rust-version = "1.91"
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+authors.workspace = true
+# Serves bundled registry data; never published.
+publish = false
+
+[lib]
+# cdylib for the Worker (wasm32), rlib so `cargo test` runs the router natively.
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+mzizi-api-types = { version = "0.1.0", path = "../mzizi-api-types" }
+indexmap = "2"
+serde.workspace = true
+serde_json.workspace = true
+url = "2"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+worker = "0.9"
+
+[lints]
+workspace = true

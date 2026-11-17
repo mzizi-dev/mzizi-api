@@ -29,6 +29,13 @@ this repository. The Rust proxy that stood here (a strangler fig forwarding to
 the registry's Next.js handlers) is retired. This Worker implements the whole
 public `/v1` API itself, from files.
 
+**Update, owner decision 2026-11-17: Mzizi is Rust-first** (mzizi-api#156). The
+runtime is being ported to Rust (`workers-rs`), serving the same bundled data:
+`crates/mzizi-api-worker` is the Worker and `crates/mzizi-api-types` holds a
+serde type for every response body, for mzizi-cli and other clients. Phase A
+runs the Rust Worker beside this one (`wrangler.rust.jsonc`, not deployed) and
+holds it to parity; the cutover to it is a separate pull request.
+
 ## Status
 
 **Live on `api.mzizi.dev` since 2026-09-29.**
@@ -278,6 +285,15 @@ npm run parity         # live api.mzizi.dev vs the local Worker
 
 `REGISTRY_DIR=/path/to/mzizi-registry` reuses an existing checkout, but it must
 be at the pinned commit.
+
+The Rust Worker (Phase A of mzizi-api#156) builds from the same `src/data/`:
+
+```bash
+cargo install worker-build --version 0.9.0 --locked
+cargo test                                          # the router, natively
+npx wrangler dev -c wrangler.rust.jsonc --port 8788 # the Rust Worker
+node scripts/parity.mjs --baseline http://localhost:8787 --candidate http://localhost:8788
+```
 
 ## Parity
 

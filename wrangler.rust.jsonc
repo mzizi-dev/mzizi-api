@@ -1,0 +1,26 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // The Rust (workers-rs) port of api.mzizi.dev, mzizi-api#156 Phase A. It
+  // runs BESIDE the TypeScript Worker in wrangler.jsonc so parity can compare
+  // the two; it is not deployed and has no route. The cutover, a later and
+  // separate pull request, moves this build into wrangler.jsonc.
+  //
+  //   npx wrangler dev -c wrangler.rust.jsonc --port 8788
+  //   node scripts/parity.mjs --candidate http://localhost:8788
+  //
+  // A distinct name, no account, no routes and no workers.dev subdomain, so
+  // nothing here can touch the production Worker or its custom domain.
+  "name": "mzizi-api-rust",
+  "main": "crates/mzizi-api-worker/build/index.js",
+  "compatibility_date": "2026-05-22",
+
+  // Same data step as the TypeScript Worker (src/data/*.json from the pinned
+  // registry), then worker-build compiles the crate to wasm and embeds it.
+  "build": {
+    "command": "node scripts/build-data.mjs && cargo install -q worker-build --version ^0.9 && worker-build --release crates/mzizi-api-worker",
+    "watch_dir": ["crates/mzizi-api-worker/src", "crates/mzizi-api-types/src"],
+  },
+
+  "workers_dev": false,
+  "observability": { "enabled": true, "head_sampling_rate": 1 },
+}

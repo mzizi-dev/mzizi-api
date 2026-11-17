@@ -21,6 +21,15 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Added — the Rust (workers-rs) port of the API runtime, beside the TypeScript Worker (2026-11-17)
+
+Refs #156 (Phase A). Owner decision, 2026-11-17: Mzizi is Rust-first.
+
+- **`crates/mzizi-api-worker`: api.mzizi.dev's runtime in Rust.** A `workers-rs` Worker that reproduces every route, method, status code, body and header of the Hono Worker (CORS, the security headers, cache headers, `X-Mzizi-Source`), the 308 redirect order (repeated slashes, then a trailing slash, then renamed components) and Hono's path and query decoding. It serves the same `src/data/*.json` that `npm run build:data` generates, embedded in the wasm module. Parity against production and against the TypeScript Worker: 1645 requests, 1645 identical, 0 unexplained differences.
+- **`crates/mzizi-api-types`: a serde type for every response body** and for the registry data shapes (`RegistryItem`, `AstroDocument` and the rest), with field order as served, so mzizi-cli and other clients compile against the API's contract. Publishable to crates.io (Apache-2.0); not published yet.
+- **`wrangler.rust.jsonc`** builds the Rust Worker with `worker-build` under its own name, with no account, routes or workers.dev subdomain, so both Workers run side by side under `wrangler dev`. The CI `rust` job runs `cargo fmt`, `clippy` (native and wasm32), `cargo test` (the port of `test/api.test.ts`), `cargo publish --dry-run`, a dry-run bundle, and parity between the two Workers.
+- Nothing served changes: production is still the Hono Worker in `wrangler.jsonc`, whose config, route and custom domain are untouched. The cutover is a later pull request.
+
 ### Changed — Dependabot proposes no semver-major updates (2026-11-14)
 
 No issue: records the CI change already on `staging` (`1a16293`), so the release that carries it has notes.
