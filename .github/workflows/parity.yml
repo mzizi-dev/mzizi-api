@@ -5,19 +5,20 @@ name: Parity
 # - Every pull request that moves the registry pin (scripts/registry-ref.json)
 #   or that changes parity itself (scripts/parity.mjs, scripts/parity-body.mjs or this file).
 #   Baseline is production, https://api.mzizi.dev; candidate is
-#   the pull request under `wrangler dev`. Any unexplained difference fails the check. When the pull request doesn't
-#   touch scripts/parity.mjs, and the pull request targets main, the run is
-#   `--strict`: EXPECTED then holds only an earlier bump's reasons, which
+#   the pull request under `wrangler dev` (wrangler.jsonc, the Rust Worker since
+#   the cutover; its build installs the Rust toolchain when the runner lacks
+#   one). Any unexplained difference fails the check. When the pull request
+#   doesn't touch scripts/parity.mjs, and the pull request targets main, the
+#   run is `--strict`: EXPECTED then holds only an earlier bump's reasons, which
 #   production already serves, so nothing in it may excuse a difference.
 #   Pull requests (and merge queues) into staging run WITHOUT --strict:
 #   staging is ahead of production until the next release, so EXPECTED
 #   legitimately excuses the differences a newer pin brings. Strictness is
 #   restored at the release into main.
-# - By hand (workflow_dispatch), against any two URLs. Before the cutover:
-#   baseline https://api.mzizi.dev (the registry Worker), candidate blank (this
-#   commit under `wrangler dev`) or this Worker's workers.dev URL. After it:
-#   baseline https://mzizi-registry.nyuchi.workers.dev, candidate
-#   https://api.mzizi.dev.
+# - By hand (workflow_dispatch), against any two URLs. A blank candidate is this
+#   commit's Rust Worker under `wrangler dev`, as on a pull request. To compare the
+#   TypeScript Worker (wrangler.ts.jsonc) with production, run it by hand on its own
+#   port (see AGENTS.md).
 #
 # Read-only requests; the report is the job summary.
 on:
@@ -63,7 +64,9 @@ jobs:
       github.event.merge_group.base_ref == 'refs/heads/main' ||
       github.event.merge_group.base_ref == 'refs/heads/staging'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # The first run on a runner builds the Rust Worker from scratch (worker-build,
+    # wasm-bindgen), which takes several minutes.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -78,11 +81,19 @@ jobs:
 
       - run: npm run build:data
 
+      # The Rust Worker's build runs as its own step, so the wait below only covers
+      # wrangler dev starting. wrangler dev runs the same build.command again; the
+      # script is idempotent, so that second run is quick.
+      - name: Build the Rust Worker
+        if: github.event_name == 'pull_request' || inputs.candidate == ''
+        run: bash scripts/build-rust.sh
+
       - name: Start wrangler dev
         if: github.event_name == 'pull_request' || inputs.candidate == ''
         run: |
           npx wrangler dev --port 8787 > wrangler-dev.log 2>&1 &
-          for _ in $(seq 1 60); do
+          # 10 minutes: a cold worker-build took 2m39s to install and 44s to build in CI.
+          for _ in $(seq 1 300); do
             curl -sf -o /dev/null http://localhost:8787/v1/health && exit 0
             sleep 2
           done

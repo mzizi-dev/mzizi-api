@@ -49,16 +49,17 @@ jobs:
 
       - run: npm test
 
-      # The real artefact: wrangler's own bundle of the Worker, the same step
-      # Cloudflare Workers Builds runs (including the custom build in
-      # wrangler.jsonc). Fails here if the bundle is over the size limit or the
-      # config is invalid — except routes, which a dry run does not validate.
-      - name: wrangler deploy --dry-run
-        run: npx wrangler deploy --dry-run --outdir=.wrangler/dryrun
+      # The TypeScript Worker's own bundle, from wrangler.ts.jsonc (the rollback
+      # config; wrangler.jsonc now builds the Rust Worker, see the rust job). Fails
+      # here if the bundle is over the size limit or the config is invalid — except
+      # routes, which a dry run does not validate.
+      - name: wrangler deploy --dry-run (TypeScript)
+        run: npx wrangler deploy --dry-run -c wrangler.ts.jsonc --outdir=.wrangler/dryrun
 
-  # The Rust port (mzizi-api#156, Phase A): crates/mzizi-api-types and
-  # crates/mzizi-api-worker. It serves the same src/data/*.json as the
-  # TypeScript Worker above, so it needs the same data step first.
+  # The Rust Worker (mzizi-api#156): crates/mzizi-api-types and
+  # crates/mzizi-api-worker. It is production (wrangler.jsonc) since the cutover,
+  # and serves the same src/data/*.json as the TypeScript Worker (wrangler.ts.jsonc),
+  # which the parity step below compares it against. It needs the data step first.
   rust:
     name: rust
     runs-on: ubuntu-latest
@@ -75,13 +76,15 @@ jobs:
 
       - run: npm run build:data
 
-      # The runner's rustup, so no third-party toolchain action to pin.
-      - name: Rust toolchain
+      # The toolchain is pinned by rust-toolchain.toml: `rustup show` installs it
+      # with its components and target on the runner's rustup, so no third-party
+      # toolchain action is needed and CI builds with the same compiler as Workers Builds.
+      - name: Rust toolchain (rust-toolchain.toml)
         run: |
-          rustup update stable --no-self-update
-          rustup default stable
+          rustup show active-toolchain
           rustup target add wasm32-unknown-unknown
           rustup component add rustfmt clippy
+          cargo --version
 
       - run: cargo fmt --all --check
 
@@ -103,22 +106,29 @@ jobs:
       - name: wrangler deploy --dry-run (Rust)
         run: npx wrangler deploy --dry-run -c wrangler.rust.jsonc --outdir=.wrangler/dryrun-rust
 
+      # The production config itself (wrangler.jsonc: the route, the account and the
+      # Rust build). A dry run does not validate the route, which only the production
+      # deploy does; see AGENTS.md.
+      - name: wrangler deploy --dry-run (production, wrangler.jsonc)
+        run: npx wrangler deploy --dry-run --outdir=.wrangler/dryrun-prod
+
       # Both Workers side by side under wrangler dev, and parity between them:
-      # every request parity makes must answer the same from each.
-      # One after the other: both configs run scripts/build-data.mjs as their
-      # custom build, and two copies writing src/data/ at once can hand one
-      # of them a half-written file.
+      # every request parity makes must answer the same from each. The TypeScript
+      # Worker is wrangler.ts.jsonc (port 8787), the Rust Worker wrangler.rust.jsonc
+      # (port 8788). One after the other: both configs run a data build as their
+      # custom build (scripts/build-rust.sh), and two copies writing src/data/ at once
+      # can hand one of them a half-written file.
       - name: Start both Workers
         run: |
           wait_for() {
-            for _ in $(seq 1 120); do
+            for _ in $(seq 1 300); do
               curl -sf -o /dev/null "http://localhost:$1/v1/health" && return 0
               sleep 2
             done
             cat "$2"
             return 1
           }
-          npx wrangler dev --port 8787 > wrangler-dev-ts.log 2>&1 &
+          npx wrangler dev -c wrangler.ts.jsonc --port 8787 > wrangler-dev-ts.log 2>&1 &
           wait_for 8787 wrangler-dev-ts.log
           npx wrangler dev -c wrangler.rust.jsonc --port 8788 > wrangler-dev-rust.log 2>&1 &
           wait_for 8788 wrangler-dev-rust.log
