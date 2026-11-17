@@ -6,9 +6,10 @@ name: Parity
 #   or that changes parity itself (scripts/parity.mjs, scripts/parity-body.mjs or this file).
 #   Baseline is production, https://api.mzizi.dev; candidate is
 #   the pull request under `wrangler dev` (wrangler.jsonc, the Rust Worker since
-#   the cutover; its build installs the Rust toolchain when the runner lacks one). Any unexplained difference fails the check. When the pull request doesn't
-#   touch scripts/parity.mjs, and the pull request targets main, the run is
-#   `--strict`: EXPECTED then holds only an earlier bump's reasons, which
+#   the cutover; its build installs the Rust toolchain when the runner lacks
+#   one). Any unexplained difference fails the check. When the pull request
+#   doesn't touch scripts/parity.mjs, and the pull request targets main, the
+#   run is `--strict`: EXPECTED then holds only an earlier bump's reasons, which
 #   production already serves, so nothing in it may excuse a difference.
 #   Pull requests (and merge queues) into staging run WITHOUT --strict:
 #   staging is ahead of production until the next release, so EXPECTED
