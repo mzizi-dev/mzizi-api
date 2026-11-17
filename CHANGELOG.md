@@ -21,6 +21,15 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — registry data pinned to mzizi-registry 4.44.0 (2026-11-17)
+
+The registry pin in `scripts/registry-ref.json` moves from `7c6449a` (v4.37.0) to `03bc1e1`, the commit the annotated tag `v4.44.0` points at. Every route still answers the same shape and status; the data it serves is the registry's.
+
+- **`/v1/changelog`** and **`/v1/changelog/{version}`** now include the 4.38.0 to 4.44.0 releases; the newest entry is 4.44.0.
+- **`/v1/rs/{name}`**: `alert`, `badge`, `card`, `chart`, `markdown-renderer`, `progress`, `safe-area-frame` and `separator` now report crate `mzizi-roots` (not `mzizi-ui`), and `button`, `mzizi-seo` and `mzizi-tokens-rust` carry the new Rust sources.
+- **`/v1/ui`** and **`/v1/ui/{name}`**: `button` documents its new contract and its dependencies are `radix-ui` only. The React primitives `chat-input`, `inline-edit`, `note-editor`, `prompt-input`, `search-bar`, `tag-input` and `ui-variants` (new) are rebuilt without `class-variance-authority`.
+- **Doctrine data** gains seven engineering constraints (the `genetic-code-engineering-constraints` set) under the Ubuntu doctrine.
+
 ### Added — the Rust (workers-rs) port of the API runtime, beside the TypeScript Worker (2026-11-17)
 
 Refs #156 (Phase A). Owner decision, 2026-11-17: Mzizi is Rust-first.
