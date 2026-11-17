@@ -105,17 +105,23 @@ jobs:
 
       # Both Workers side by side under wrangler dev, and parity between them:
       # every request parity makes must answer the same from each.
+      # One after the other: both configs run scripts/build-data.mjs as their
+      # custom build, and two copies writing src/data/ at once can hand one
+      # of them a half-written file.
       - name: Start both Workers
         run: |
+          wait_for() {
+            for _ in $(seq 1 120); do
+              curl -sf -o /dev/null "http://localhost:$1/v1/health" && return 0
+              sleep 2
+            done
+            cat "$2"
+            return 1
+          }
           npx wrangler dev --port 8787 > wrangler-dev-ts.log 2>&1 &
+          wait_for 8787 wrangler-dev-ts.log
           npx wrangler dev -c wrangler.rust.jsonc --port 8788 > wrangler-dev-rust.log 2>&1 &
-          for _ in $(seq 1 90); do
-            curl -sf -o /dev/null http://localhost:8787/v1/health &&
-              curl -sf -o /dev/null http://localhost:8788/v1/health && exit 0
-            sleep 2
-          done
-          cat wrangler-dev-ts.log wrangler-dev-rust.log
-          exit 1
+          wait_for 8788 wrangler-dev-rust.log
 
       - name: Parity, TypeScript vs Rust
         run: |
