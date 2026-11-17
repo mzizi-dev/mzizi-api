@@ -32,6 +32,18 @@ Refs #156 (Phase A). Owner decision, 2026-11-17: Mzizi is Rust-first.
 - **The Rust Worker routes on the raw request path, as Hono does.** Paths with `.` or `..` segments (literal or `%2e`), backslashes or `^` now get production's answers (`/v1/ui/./button` is a 405, `/v1/ui/a\b` a component 404, `/nope/x^` echoes `/nope/x%5E`); the redirect and header rules still read the resolved path. `scripts/parity.mjs` sends 18 such paths as-is (×3 methods) when both targets are deployed; a literal `.` or `..` segment compares only between custom domains, because workers.dev and `wrangler dev` resolve it before the Worker.
 - Nothing served changes in this entry. The cutover that makes this Worker production is the next entry, `Changed — api.mzizi.dev is served by the Rust Worker`.
 
+### Added — crates.io publishing for `mzizi-api-types` (2026-11-17)
+
+Refs #156. The owner confirmed `CARGO_REGISTRY_TOKEN` is an org-level secret that works across repositories.
+
+- **`.github/workflows/publish-crates.yml` publishes `mzizi-api-types` to crates.io**, modelled on the mzizi-registry crates workflow. It runs on a push to `main` that touches the crates, and on manual dispatch with `dry_run` defaulting to true. A run with nothing new to publish is a no-op.
+- **Gate on the exact commit:** format, clippy with `-D warnings`, tests and `cargo package` of `mzizi-api-types` run again before anything is uploaded. The worker needs the generated `src/data/` and is not part of this gate.
+- **Version policy:** the version is checked by the org's shared `next-version` action (nyuchi/.github#80), pinned to the same commit as mzizi-registry, with the tag prefix `mzizi-api-types-v`. A version already on crates.io is skipped, never re-uploaded; a missing `CARGO_REGISTRY_TOKEN` fails the run only when there is something to publish.
+- **Changelog gate:** a version with no `CHANGELOG.md` entry since the previous crate tag fails before anything is built or uploaded.
+- **Tag and release:** after the crate is on crates.io, the run tags `mzizi-api-types-vX.Y.Z` and creates the GitHub release with its changelog notes, using `RELEASE_BUMP_TOKEN`.
+- **Publishable set:** the workflow fails if any crate other than `mzizi-api-types` becomes publishable, or if `mzizi-api-types` depends on a path crate. `crates/mzizi-api-worker` stays `publish = false`.
+- **The crate's manifest is publishable as it is:** description, Apache-2.0 licence (the repository's `LICENSE`), repository, homepage, README, keywords, categories, `rust-version` and version `0.1.0`. `cargo publish --dry-run -p mzizi-api-types --locked` passes. Nothing is published by this entry; the first upload happens when the workflow runs on `main`.
+
 ### Changed — api.mzizi.dev is served by the Rust Worker (2026-11-17)
 
 Refs #156. Owner approval, 2026-11-17: the cutover to the Rust port, and the domain

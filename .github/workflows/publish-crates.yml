@@ -1,0 +1,258 @@
+name: Publish crates
+
+# Publishes mzizi-api-types (the serde types of api.mzizi.dev) to crates.io.
+#
+# Runs on every merge to main that touches the Rust crates, and on manual dispatch.
+# A run that finds nothing new is a no-op: the crate's version is looked up on
+# crates.io first, and a version that is already there is skipped. So a release is
+# a version bump in crates/mzizi-api-types/Cargo.toml, merged to main.
+#
+# A published version is permanent: it can be yanked but never re-uploaded. That is
+# why this job runs the gate again, on the exact commit it publishes, rather than
+# trusting that CI passed on the pull request.
+#
+# The one secret it needs is CARGO_REGISTRY_TOKEN, a crates.io API token with the
+# publish-new and publish-update scopes. A run that has something to publish and
+# no token fails loudly; a run with nothing to publish does not need one.
+#
+# The version follows the org versioning policy (nyuchi/.github#80), through the
+# shared next-version action: a release is the next MINOR above the highest
+# `mzizi-api-types-v` tag, and a MAJOR is only released by hand (dispatch with
+# bump: major). The action refuses any other version before anything is uploaded.
+#
+# Once the crate is on crates.io at its version, the run tags that version
+# `mzizi-api-types-vX.Y.Z` and creates a GitHub release for it, unless the tag
+# already exists. That uses RELEASE_BUMP_TOKEN (mzizi-dev org secret), so the tag
+# and release can start other workflows; nobody pushes a tag by hand.
+#
+# The workspace's worker crate (crates/mzizi-api-worker) is `publish = false` and
+# is never uploaded; the publishable-set check below fails if that changes.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "crates/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "rust-toolchain.toml"
+      - ".github/scripts/release_notes.py"
+      - ".github/scripts/publish-release.sh"
+      - ".github/workflows/publish-crates.yml"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Package and verify the crate, but upload nothing"
+        type: boolean
+        default: true
+      bump:
+        description: "Override the release bump (major is manual only)"
+        type: choice
+        options: [minor, patch, major]
+        default: minor
+
+concurrency:
+  group: publish-crates
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Publish to crates.io
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      # No credential is kept: the build scripts of every dependency run in this
+      # job. Only the tag step below gets RELEASE_BUMP_TOKEN.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Full history and tags: the release notes diff CHANGELOG.md against
+          # the previous crates tag.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+
+      - name: Read the crate version
+        id: crate
+        run: |
+          set -euo pipefail
+          version=$(grep -m1 '^version' crates/mzizi-api-types/Cargo.toml | cut -d'"' -f2)
+          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::crates/mzizi-api-types/Cargo.toml has no plain x.y.z version (got '$version')."
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Check the crate version against the versioning policy
+        id: policy
+        uses: nyuchi/.github/.github/actions/next-version@925d067322defd676dacd90f2c2b0540cb10f644  # main, 2026-10-19
+        with:
+          channel: main
+          bump: ${{ inputs.bump || '' }}
+          manual: ${{ github.event_name == 'workflow_dispatch' }}
+          proposed: ${{ steps.crate.outputs.version }}
+          tag-prefix: mzizi-api-types-v
+
+      # A crates.io version can never be taken back, so a version with no
+      # CHANGELOG.md entry since the previous crate tag must not reach crates.io.
+      # This fails before anything is built or uploaded.
+      - name: Require changelog notes for this version
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
+        env:
+          VERSION: ${{ steps.crate.outputs.version }}
+        run: |
+          set -euo pipefail
+          tag="mzizi-api-types-v${VERSION}"
+          if git rev-parse --verify --quiet "refs/tags/${tag}" >/dev/null; then
+            echo "$tag is already tagged; its release notes were made then."
+            exit 0
+          fi
+          prev="$(git tag -l 'mzizi-api-types-v*' | sort -V | tail -n 1)"
+          # Exits 1 when no CHANGELOG.md entry was added since the previous crate tag.
+          python3 .github/scripts/release_notes.py "$prev" HEAD >/dev/null
+
+      # The toolchain is pinned by rust-toolchain.toml (1.97.0): rustup reads it, so
+      # this job builds with the same compiler as CI and the other Rust jobs.
+      - name: Rust toolchain (rust-toolchain.toml)
+        run: |
+          rustup show active-toolchain
+          rustup component add rustfmt clippy
+          cargo --version
+
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+
+      - name: Format
+        run: cargo fmt --all --check
+
+      # Only the published crate is gated here. The worker needs the generated
+      # src/data/ (npm run build:data), which CI builds; it is never published.
+      - name: Clippy
+        run: cargo clippy -p mzizi-api-types --all-targets --locked -- -D warnings
+
+      - name: Tests
+        run: cargo test -p mzizi-api-types --locked
+
+      - name: Package the crate
+        run: cargo package -p mzizi-api-types --locked
+
+      # The crate set must be exactly the publishable members, and the published
+      # crate must not depend on a path (an unpublished crate).
+      - name: Check the publishable set
+        run: |
+          set -euo pipefail
+          metadata=$(cargo metadata --locked --no-deps --format-version 1)
+          members=$(jq -r '.packages[] | select(.publish != []) | .name' <<<"$metadata" | sort)
+          if [ "$members" != "mzizi-api-types" ]; then
+            echo "::error::Publishable workspace members are '$(tr '\n' ' ' <<<"$members")', expected 'mzizi-api-types'."
+            exit 1
+          fi
+          paths=$(jq -r '.packages[] | select(.name == "mzizi-api-types") | .dependencies[] | select(.path != null) | .name' <<<"$metadata")
+          if [ -n "$paths" ]; then
+            echo "::error::mzizi-api-types depends on path crates: $paths"
+            exit 1
+          fi
+
+      - name: Publish a new version
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+          VERSION: ${{ steps.crate.outputs.version }}
+        run: |
+          set -euo pipefail
+          crate=mzizi-api-types
+          version="$VERSION"
+          agent="mzizi-api publish-crates workflow (https://github.com/mzizi-dev/mzizi-api)"
+          status=$(curl -sS -o /dev/null -w '%{http_code}' -A "$agent" \
+            "https://crates.io/api/v1/crates/$crate/$version")
+          if [ "$status" = "200" ]; then
+            echo "$crate@$version is already on crates.io, skipping."
+            exit 0
+          fi
+          if [ "$status" != "404" ]; then
+            echo "::error::crates.io answered $status for $crate@$version; not publishing blind."
+            exit 1
+          fi
+
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "Dry run: $crate@$version would be published."
+            exit 0
+          fi
+          if [ -z "${CARGO_REGISTRY_TOKEN:-}" ]; then
+            echo "::error::$crate@$version needs publishing and the CARGO_REGISTRY_TOKEN secret is not set."
+            exit 1
+          fi
+
+          # crates.io can answer 429 to a publish. Wait and retry; a version that did
+          # land is found by the lookup above on any re-run.
+          for attempt in 1 2 3 4 5 6; do
+            if out=$(cargo publish --locked -p "$crate" 2>&1); then
+              echo "$out"
+              echo "Published $crate@$version."
+              break
+            fi
+            echo "$out"
+            if grep -q "429" <<<"$out" && [ "$attempt" -lt 6 ]; then
+              echo "Rate limited publishing $crate; waiting 11 minutes (attempt $attempt of 6)."
+              sleep 660
+              continue
+            fi
+            echo "::error::Publishing $crate@$version failed."
+            exit 1
+          done
+
+      # The tag names the crate version. A tag that exists from a run that died before
+      # its release was made keeps the tag and still gets its release
+      # (publish-release.sh is idempotent); one with a published release has nothing to do.
+      - name: Tag and release the crate version
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_BUMP_TOKEN }}
+          VERSION: ${{ steps.crate.outputs.version }}
+        run: |
+          set -euo pipefail
+          tag="mzizi-api-types-v$VERSION"
+          if git ls-remote --tags --refs origin "refs/tags/$tag" | grep -q .; then
+            if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+              echo "$tag is already tagged and released; nothing to do."
+              exit 0
+            fi
+            tag_exists=true
+            ref="$tag"
+          else
+            tag_exists=false
+            ref=HEAD
+          fi
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "::error::RELEASE_BUMP_TOKEN is not visible to this repository; cannot tag $tag."
+            exit 1
+          fi
+          # Notes first, so a release with no changelog entries fails before the tag is
+          # pushed: the crate list, the CHANGELOG.md entries added since the previous
+          # crate tag, and a compare link.
+          prev="$(git tag -l 'mzizi-api-types-v*' | sort -V | grep -Fvx "$tag" | tail -n 1 || true)"
+          if [ -n "$prev" ]; then
+            compare="https://github.com/${GITHUB_REPOSITORY}/compare/${prev}...${tag}"
+          else
+            compare="https://github.com/${GITHUB_REPOSITORY}/commits/${tag}"
+          fi
+          {
+            echo "The mzizi-api-types crate at $VERSION on crates.io:"
+            echo
+            echo "- [\`mzizi-api-types\` $VERSION](https://crates.io/crates/mzizi-api-types/$VERSION)"
+            echo
+            CHANGELOG_URL="https://github.com/${GITHUB_REPOSITORY}/blob/${tag}/CHANGELOG.md" COMPARE_URL="$compare" \
+              python3 .github/scripts/release_notes.py "$prev" "$ref"
+          } > notes.md
+          if [ "$tag_exists" = false ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag -a "$tag" -m "mzizi-api-types crate $VERSION"
+            git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "refs/tags/$tag"
+          fi
+          # Draft with the notes, then published once; never edited afterwards.
+          GH_REPO="$GITHUB_REPOSITORY" bash .github/scripts/publish-release.sh "$tag" "mzizi-api-types $VERSION" notes.md plain
