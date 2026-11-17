@@ -29,6 +29,8 @@
  * serves, and they must not excuse a new difference on the same route.
  */
 import { readFileSync, writeFileSync } from "node:fs";
+import http from "node:http";
+import https from "node:https";
 import { compareBodies, normaliseBody } from "./parity-body.mjs";
 
 const args = Object.fromEntries(
@@ -285,6 +287,50 @@ const paths = [
   "/.well-known/security.txt",
 ];
 
+// Paths sent exactly as written, with no client-side resolution: `fetch`
+// would resolve the dot segments and turn `\` into `/` before sending. Hono
+// routes on the raw request URL while the redirect and header rules read the
+// resolved pathname, so `/v1/ui/./button` is a 405 and `/v1/ui/a\b` a
+// component 404, not a 200 and a route 404. `^` is percent-encoded in the
+// resolved pathname. `wrangler dev` resolves the path before the Worker sees
+// it, so these are compared only when neither target is local. A workers.dev
+// host also resolves LITERAL `.` and `..` segments before the Worker (the TS
+// Worker's own preview answers `/v1/ui/./button` with 200 where
+// api.mzizi.dev answers 405), so those compare only between custom domains.
+const RAW_PATHS = [
+  "/v1/ui/./button",
+  "/v1/ui/../ui/button",
+  "/v1/ui/%2e%2e/ui/button",
+  "/v1/ui/%2E/button",
+  "/./v1/ui",
+  "/api/../v1/ui/button",
+  "/v1/ui/x/%2e%2e/button/docs",
+  "/v1/ui/nyuchi-footer/../button",
+  "/v1\\ui\\button",
+  "/v1/ui/a\\b",
+  "/nope/x^",
+  "/v1/ui/x^/",
+  "/v1/ui/x^",
+  "/v1/ui/button/.",
+  "/v1/ui/..",
+  "/v1/./ui?x=1",
+  "/v1/ui/nyuchi-a11y/./docs",
+  "/api/v1/./health",
+];
+const isLocal = (base) =>
+  ["localhost", "127.0.0.1", "[::1]"].includes(new URL(base).hostname);
+const isWorkersDev = (base) => new URL(base).hostname.endsWith(".workers.dev");
+const RAW_COMPARABLE = !isLocal(LIVE) && !isLocal(LOCAL);
+const DOTS_COMPARABLE =
+  RAW_COMPARABLE && !isWorkersDev(LIVE) && !isWorkersDev(LOCAL);
+/** A literal `.` or `..` segment, which a workers.dev host resolves. */
+const hasDotSegment = (p) =>
+  p
+    .split("?")[0]
+    .split(/[/\\]/)
+    .some((s) => s === "." || s === "..");
+const rawPaths = RAW_PATHS.filter((p) => DOTS_COMPARABLE || !hasDotSegment(p));
+
 const requests = [
   ...paths.map((p) => ({ method: "GET", path: p })),
   ...[
@@ -300,13 +346,49 @@ const requests = [
     { method: "POST", path: p },
     { method: "HEAD", path: p },
   ]),
+  ...(RAW_COMPARABLE
+    ? rawPaths.flatMap((p) =>
+        ["GET", "HEAD", "OPTIONS"].map((method) => ({
+          method,
+          path: p,
+          raw: true,
+        })),
+      )
+    : []),
 ];
 
+/** One request with the path on the wire exactly as given. */
+function rawRequest(base, method, path) {
+  const url = new URL(base);
+  const client = url.protocol === "https:" ? https : http;
+  return new Promise((resolve, reject) => {
+    const req = client.request(
+      { host: url.hostname, port: url.port || undefined, method, path },
+      (res) => {
+        let text = "";
+        res.setEncoding("utf8");
+        res.on("data", (c) => (text += c));
+        res.on("end", () =>
+          resolve({
+            status: res.statusCode,
+            headers: { get: (h) => res.headers[h] ?? null },
+            text: async () => text,
+          }),
+        );
+      },
+    );
+    req.on("error", reject);
+    req.end();
+  });
+}
+
 // ── Run ─────────────────────────────────────────────────────────────────────
-async function hit(base, { method, path }) {
+async function hit(base, { method, path, raw }) {
   for (let attempt = 0; ; attempt++) {
     try {
-      const res = await fetch(base + path, { method, redirect: "manual" });
+      const res = raw
+        ? await rawRequest(base, method, path)
+        : await fetch(base + path, { method, redirect: "manual" });
       const text = await res.text();
       const headers = Object.fromEntries(
         HEADERS.map((h) => [h, res.headers.get(h)]),
@@ -461,6 +543,13 @@ const lines = [
   `| **Unexplained differences** | **${failed.length}** |`,
   `| Names only the candidate lists, checked against the contract | ${newNames.length} |`,
   `| **Of those, failing the contract** | **${newFailures.length}** |`,
+  ``,
+  RAW_COMPARABLE
+    ? `Includes ${rawPaths.length * 3} requests with the path sent as-is (dot segments, backslashes, \`^\`)` +
+      (DOTS_COMPARABLE
+        ? "."
+        : `; skipped ${(RAW_PATHS.length - rawPaths.length) * 3} with a literal \`.\` or \`..\` segment, which a workers.dev host resolves before the Worker.`)
+    : `Skipped ${RAW_PATHS.length * 3} requests with the path sent as-is: a local \`wrangler dev\` resolves the path before the Worker sees it, so they compare only between deployed Workers.`,
   ``,
   `Identical by status: ${Object.entries(byStatus)
     .map(([s, n]) => `${s} × ${n}`)
