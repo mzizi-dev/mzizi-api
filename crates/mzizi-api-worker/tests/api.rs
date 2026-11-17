@@ -998,3 +998,137 @@ fn keeps_a_signed_escape_literal_as_hono_does() {
         "Component \"%+A\" not found in registry"
     );
 }
+
+// ── Raw request paths (dot segments, backslashes, ^) ───────────────────────
+
+/// Recorded from https://api.mzizi.dev (the Hono Worker) with each path sent
+/// as-is: `(method, path, status, Location, body)`, `""` for none.
+const RAW_PATH_CASES: &[(&str, &str, u16, &str, &str)] = &[
+    ("GET", "/v1/ui/./button", 405, "", ""),
+    ("GET", "/v1/ui/../ui/button", 405, "", ""),
+    ("GET", "/v1/ui/%2e%2e/ui/button", 405, "", ""),
+    ("GET", "/v1/ui/%2E/button", 405, "", ""),
+    ("GET", "/./v1/ui", 405, "", ""),
+    ("GET", "/api/../v1/ui/button", 405, "", ""),
+    ("GET", "/v1/ui/x/%2e%2e/button/docs", 405, "", ""),
+    ("GET", "/v1/ui/nyuchi-footer/../button", 405, "", ""),
+    ("GET", "/v1\\ui\\button", 405, "", ""),
+    (
+        "GET",
+        "/v1/ui/a\\b",
+        404,
+        "",
+        "{\"error\":\"Component \\\"a\\\\b\\\" not found in registry\"}",
+    ),
+    (
+        "GET",
+        "/nope/x^",
+        404,
+        "",
+        "{\"error\":\"Not found\",\"path\":\"/nope/x%5E\"}",
+    ),
+    ("GET", "/v1/ui/x^/", 308, "/v1/ui/x%5E", ""),
+    (
+        "GET",
+        "/v1/ui/x^",
+        404,
+        "",
+        "{\"error\":\"Component \\\"x^\\\" not found in registry\"}",
+    ),
+    ("GET", "/v1/ui/button/.", 308, "/v1/ui/button", ""),
+    ("GET", "/v1/ui/..", 308, "/v1", ""),
+    ("GET", "/v1/./ui?x=1", 405, "", ""),
+    (
+        "GET",
+        "/v1/ui/nyuchi-a11y/./docs",
+        308,
+        "/v1/ui/mzizi-a11y/docs",
+        "",
+    ),
+    ("GET", "/api/v1/./health", 405, "", ""),
+    ("HEAD", "/v1/ui/./button", 405, "", ""),
+    ("HEAD", "/v1/ui/../ui/button", 405, "", ""),
+    ("HEAD", "/v1/ui/%2e%2e/ui/button", 405, "", ""),
+    ("HEAD", "/v1/ui/%2E/button", 405, "", ""),
+    ("HEAD", "/./v1/ui", 405, "", ""),
+    ("HEAD", "/api/../v1/ui/button", 405, "", ""),
+    ("HEAD", "/v1/ui/x/%2e%2e/button/docs", 405, "", ""),
+    ("HEAD", "/v1/ui/nyuchi-footer/../button", 405, "", ""),
+    ("HEAD", "/v1\\ui\\button", 405, "", ""),
+    ("HEAD", "/v1/ui/a\\b", 404, "", ""),
+    ("HEAD", "/nope/x^", 404, "", ""),
+    ("HEAD", "/v1/ui/x^/", 308, "/v1/ui/x%5E", ""),
+    ("HEAD", "/v1/ui/x^", 404, "", ""),
+    ("HEAD", "/v1/ui/button/.", 308, "/v1/ui/button", ""),
+    ("HEAD", "/v1/ui/..", 308, "/v1", ""),
+    ("HEAD", "/v1/./ui?x=1", 405, "", ""),
+    (
+        "HEAD",
+        "/v1/ui/nyuchi-a11y/./docs",
+        308,
+        "/v1/ui/mzizi-a11y/docs",
+        "",
+    ),
+    ("HEAD", "/api/v1/./health", 405, "", ""),
+    ("OPTIONS", "/v1/ui/./button", 204, "", ""),
+    ("OPTIONS", "/v1/ui/../ui/button", 204, "", ""),
+    ("OPTIONS", "/v1/ui/%2e%2e/ui/button", 204, "", ""),
+    ("OPTIONS", "/v1/ui/%2E/button", 204, "", ""),
+    ("OPTIONS", "/./v1/ui", 204, "", ""),
+    ("OPTIONS", "/api/../v1/ui/button", 204, "", ""),
+    ("OPTIONS", "/v1/ui/x/%2e%2e/button/docs", 204, "", ""),
+    ("OPTIONS", "/v1/ui/nyuchi-footer/../button", 204, "", ""),
+    ("OPTIONS", "/v1\\ui\\button", 204, "", ""),
+    (
+        "OPTIONS",
+        "/v1/ui/a\\b",
+        404,
+        "",
+        "{\"error\":\"Not found\",\"path\":\"/v1/ui/a/b\"}",
+    ),
+    (
+        "OPTIONS",
+        "/nope/x^",
+        404,
+        "",
+        "{\"error\":\"Not found\",\"path\":\"/nope/x%5E\"}",
+    ),
+    ("OPTIONS", "/v1/ui/x^/", 308, "/v1/ui/x%5E", ""),
+    ("OPTIONS", "/v1/ui/x^", 204, "", ""),
+    ("OPTIONS", "/v1/ui/button/.", 308, "/v1/ui/button", ""),
+    ("OPTIONS", "/v1/ui/..", 308, "/v1", ""),
+    ("OPTIONS", "/v1/./ui?x=1", 204, "", ""),
+    (
+        "OPTIONS",
+        "/v1/ui/nyuchi-a11y/./docs",
+        308,
+        "/v1/ui/mzizi-a11y/docs",
+        "",
+    ),
+    ("OPTIONS", "/api/v1/./health", 204, "", ""),
+];
+
+/// Hono routes on the path sliced from the raw request URL, while the
+/// redirect rules, header rules and 404 body read the resolved pathname.
+#[test]
+fn routes_on_the_raw_request_path_as_hono_does() {
+    for (method, path, status, location, want_body) in RAW_PATH_CASES {
+        let res = request(method, &format!("https://api.mzizi.dev{path}"));
+        assert_eq!(res.status, *status, "{method} {path}");
+        assert_eq!(
+            header(&res, "location").unwrap_or(""),
+            *location,
+            "{method} {path}"
+        );
+        assert_eq!(res.body_text(), *want_body, "{method} {path}");
+    }
+}
+
+#[test]
+fn slices_the_raw_path_like_hono_get_path() {
+    use mzizi_api_worker::app::hono_raw_path;
+    assert_eq!(hono_raw_path("https://h/v1/ui/./x?y=1#z"), "/v1/ui/./x");
+    assert_eq!(hono_raw_path("http://h/v1\\ui\\b"), "/v1\\ui\\b");
+    assert_eq!(hono_raw_path("http://h/a#b?c"), "/a");
+    assert_eq!(hono_raw_path("http://h"), "");
+}

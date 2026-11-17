@@ -224,8 +224,13 @@ fn security_txt(c: &Ctx) -> Reply {
 }
 
 /// Routing and method handling (steps 2 and 3).
-fn dispatch(method: &str, url: &Url, raw_path: &str, clock: &Clock) -> Reply {
-    let path = js::hono_path(raw_path);
+///
+/// Hono routes on the path sliced from the RAW request URL (`getPath`): dot
+/// segments, backslashes and `^` exactly as the client sent them. Everything
+/// else src/index.ts does reads `new URL(c.req.url).pathname`, which resolves
+/// and re-encodes them; that is `pathname` here.
+fn dispatch(method: &str, url: &Url, raw_url: &str, pathname: &str, clock: &Clock) -> Reply {
+    let path = js::hono_path(hono_raw_path(raw_url));
     let method = if method == "HEAD" { "GET" } else { method };
     let found = match method {
         "GET" => find(V1_GET, true, &path).or_else(|| find(APP_GET, false, &path)),
@@ -252,7 +257,7 @@ fn dispatch(method: &str, url: &Url, raw_path: &str, clock: &Clock) -> Reply {
         return handler(&ctx);
     }
     // app.notFound
-    if has_get_route(raw_path) {
+    if has_get_route(pathname) {
         return if method == "OPTIONS" {
             Reply::empty(204, &[("Allow", "GET, HEAD, OPTIONS")])
         } else {
@@ -262,7 +267,7 @@ fn dispatch(method: &str, url: &Url, raw_path: &str, clock: &Clock) -> Reply {
     json(
         &RouteNotFound {
             error: "Not found".into(),
-            path: raw_path.to_owned(),
+            path: pathname.to_owned(),
         },
         404,
         CORS,
@@ -270,7 +275,8 @@ fn dispatch(method: &str, url: &Url, raw_path: &str, clock: &Clock) -> Reply {
 }
 
 /// Answers one request. `url` is the request URL as the runtime gives it.
-pub fn handle(method: &str, url: &str, clock: &Clock) -> Reply {
+pub fn handle(method: &str, raw_url: &str, clock: &Clock) -> Reply {
+    let url = raw_url;
     let Ok(url) = Url::parse(url) else {
         let mut reply = internal_error();
         for (n, v) in SECURITY_HEADERS {
@@ -279,7 +285,8 @@ pub fn handle(method: &str, url: &str, clock: &Clock) -> Reply {
         reply.headers.set("X-Mzizi-Source", data::source_header());
         return reply;
     };
-    let pathname = url.path();
+    let pathname = js_pathname(&url);
+    let pathname = pathname.as_str();
     let search = match url.query() {
         Some(q) if !q.is_empty() => format!("?{q}"),
         _ => String::new(),
@@ -306,7 +313,7 @@ pub fn handle(method: &str, url: &str, clock: &Clock) -> Reply {
     } else if let Some(renamed) = renamed_component_path(pathname) {
         redirect(renamed + &search)
     } else {
-        let mut reply = dispatch(method, &url, pathname, clock);
+        let mut reply = dispatch(method, &url, raw_url, pathname, clock);
         for (n, v) in SECURITY_HEADERS {
             reply.headers.set(n, v);
         }
@@ -329,6 +336,30 @@ pub fn handle(method: &str, url: &str, clock: &Clock) -> Reply {
         reply.body = None;
     }
     reply
+}
+
+/// Hono's `getPath` slice of the raw request URL: from the first `/` after the
+/// scheme's `://` up to the first `?` or `#`, untouched.
+pub fn hono_raw_path(url: &str) -> &str {
+    let from = url.find(':').map_or(3, |i| i + 4);
+    let Some(start) = url
+        .get(from..)
+        .and_then(|rest| rest.find('/'))
+        .map(|i| i + from)
+    else {
+        return "";
+    };
+    let rest = &url[start..];
+    let end = rest.find(['?', '#']).unwrap_or(rest.len());
+    &rest[..end]
+}
+
+/// `new URL(url).pathname` as the Workers runtime computes it. The url crate
+/// follows the same WHATWG parser, except that the runtime also
+/// percent-encodes `^` in a path (production answers `/nope/x^` with
+/// `"path":"/nope/x%5E"`).
+pub fn js_pathname(url: &Url) -> String {
+    url.path().replace('^', "%5E")
 }
 
 /// Prefixes whose next segment is a registry item name: the API-host subset

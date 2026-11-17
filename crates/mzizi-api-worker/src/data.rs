@@ -215,6 +215,57 @@ pub fn source_header() -> &'static str {
 mod tests {
     use super::*;
 
+    /// `Packed::get` panics on a value that does not deserialise, and a panic
+    /// aborts the isolate (a headerless Cloudflare 1101). Every key of every
+    /// table, and every whole file, must parse into the type it is read as.
+    #[test]
+    fn every_bundled_value_deserialises_into_its_type() {
+        fn all<T: DeserializeOwned>(table: &Packed, what: &str) -> usize {
+            let mut n = 0;
+            for key in table.keys() {
+                let raw = table.raw(key).unwrap();
+                if let Err(e) = serde_json::from_str::<T>(raw) {
+                    panic!("{what}[{key}]: {e}");
+                }
+                n += 1;
+            }
+            n
+        }
+        assert_eq!(
+            all::<RegistryItem>(&bundle::ITEMS, "items"),
+            COMPONENT_COUNT
+        );
+        assert!(all::<SourcePair>(&bundle::SOURCES, "sources") > 0);
+        assert!(all::<Vec<ItemFile>>(&bundle::BINARY, "binary") > 0);
+        assert!(all::<AstroDocument>(&bundle::ASTRO, "astro") > 0);
+        assert!(all::<ComponentDocs>(&bundle::COMPONENT_DOCS, "component-docs") > 0);
+        assert!(all::<Vec<Value>>(&bundle::CHANGELOG_VERSIONS, "changelog versions") > 0);
+        assert!(all::<Value>(&bundle::SKILLS, "skills") > 0);
+        // The whole files, through the same lazy readers the routes use.
+        components();
+        helix();
+        changelog_entries();
+        doctrine();
+        skills();
+        samples();
+        brand();
+        ai_instruction_index();
+        // The tables are sorted, so the binary search finds every key.
+        for table in [
+            &bundle::ITEMS,
+            &bundle::SOURCES,
+            &bundle::BINARY,
+            &bundle::ASTRO,
+            &bundle::COMPONENT_DOCS,
+            &bundle::CHANGELOG_VERSIONS,
+            &bundle::SKILLS,
+        ] {
+            assert!(table.index.windows(2).all(|w| w[0].0 < w[1].0));
+            assert!(table.keys().all(|k| table.raw(k).is_some()));
+        }
+        assert!(bundle::RENAMES.windows(2).all(|w| w[0].0 < w[1].0));
+    }
+
     #[test]
     fn packed_lookups_match_the_index() {
         assert_eq!(components().len(), COMPONENT_COUNT);
