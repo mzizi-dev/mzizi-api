@@ -21,13 +21,18 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
-### Changed — registry data pinned to mzizi-registry 4.44.0 (2026-11-17)
+### Changed — registry data pinned to mzizi-registry 4.45.0 (2026-11-20)
 
-The registry pin in `scripts/registry-ref.json` moves from `7c6449a` (v4.37.0) to `03bc1e1`, the commit the annotated tag `v4.44.0` points at. Every route still answers the same shape and status; the data it serves is the registry's.
+The registry pin in `scripts/registry-ref.json` moves from `7c6449a` (v4.37.0) to `4b488a2`, the commit the annotated tag `v4.45.0` points at. Every route still answers the same shape and status; the data it serves is the registry's.
 
-- **`/v1/changelog`** and **`/v1/changelog/{version}`** now include the 4.38.0 to 4.44.0 releases; the newest entry is 4.44.0.
-- **`/v1/rs/{name}`**: `alert`, `badge`, `card`, `chart`, `markdown-renderer`, `progress`, `safe-area-frame` and `separator` now report crate `mzizi-roots` (not `mzizi-ui`), and `button`, `mzizi-seo` and `mzizi-tokens-rust` carry the new Rust sources.
-- **`/v1/ui`** and **`/v1/ui/{name}`**: `button` documents its new contract and its dependencies are `radix-ui` only. The React primitives `chat-input`, `inline-edit`, `note-editor`, `prompt-input`, `search-bar`, `tag-input` and `ui-variants` (new) are rebuilt without `class-variance-authority`.
+- **Bundu floor, 4.45.0 (owner, 2026-11-19).** The hit area is 45px on touch and 24px on a desktop (was 49px and 28px), and the gap between adjacent controls is 9px (was 7px). `/v1/brand` (`componentSpecs`, `accessibility`: `minTouchTarget`, `defaultTouchTarget`, `minTouchTargetPointerFine` 24, `minControlGap` 9), `/v1/architecture`, `/v1/ecosystem` and the AI instructions state the new values.
+- **Spacing tokens.** The generated token files (`/v1/ui/mzizi-tokens-*`, `mzizi-tokens-globals`) gain the per-layer spacing tokens (`--space-page-x`, `--space-card-gap`, `--space-control-between`, and their `-dense` steps) and the new control heights. `/v1/ui/mzizi-a11y-audit` and `/v1/rs/mzizi-a11y-audit` check touch targets against 45px.
+- **`/v1/changelog`** and **`/v1/changelog/{version}`** now include the 4.38.0 to 4.45.0 releases; the newest entry is 4.45.0 and `meta.total` is 110 (was 101).
+- **`/v1/ui`** and **`/v1/ui/{name}`**: `button` sets no styling class (pattern: unstyled, #708), its dependencies are `radix-ui` only, and it depends on the new `ui-variants` item. `class-variance-authority` is gone from the dependency lists of `/v1/ui` and its filtered variants. The docs of `button` carry the new sizes.
+- **`/v1/rs/{name}`**: `alert`, `badge`, `card`, `chart`, `markdown-renderer`, `progress`, `safe-area-frame` and `separator` now report crate `mzizi-roots` (not `mzizi-ui`). `button`, `mzizi-seo` and `mzizi-tokens-rust` carry the new Rust sources, and `mzizi-tokens-rust` gains the per-family record.
+- **React sources.** `chat-input`, `prompt-input`, `inline-edit`, `note-editor`, `search-bar` and `tag-input` carry the new code (IME composition guards on Enter); `ui-variants` is new; the app and discover components use the `gap-control-between` and `p-container-dense` tokens.
+- **Text.** The `markdown-renderer` description and docs (`/v1/ui/markdown-renderer`, `/v1/search`, `/v1/rs/markdown-renderer`) name `mzizi-roots` and the unstyled Roots API.
+- **Parity.** Against production, 1645 requests: 1579 identical, 66 intentional differences, all bodies, each listed in `scripts/parity.mjs` `EXPECTED` under the 4.45.0 pin with its reason; 0 unexplained. The production baseline at 7c6449a is unchanged, so the earlier pin's entries are pruned.
 - **Doctrine data** gains seven engineering constraints (the `genetic-code-engineering-constraints` set) under the Ubuntu doctrine.
 
 ### Added — the Rust (workers-rs) port of the API runtime, beside the TypeScript Worker (2026-11-17)

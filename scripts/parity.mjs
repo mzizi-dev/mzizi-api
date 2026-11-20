@@ -111,26 +111,109 @@ const HEADERS = [
 // 404-message entry (`GET /v1/rs/*`) were pruned once production served them
 // (they are in #100 and #76). A trailing `/*` key still matches every path
 // under that prefix.
-// Production serves registry f94666b (v4.36.0), so only the pin below is
-// intentionally different. The registry pin moves from f94666b to 7c6449a, the
-// v4.37.0 release (mzizi-registry#676): `/v1/brand` `accessibility` gains
-// `minTouchTargetPointerFine` 28 and `bodyPxPointerFine` 15 beside the unchanged
-// `minTouchTarget` 49 (mzizi-registry#675), and the changelog records gain 4.37.0.
-// Only response bodies differ: no status, header or redirect moves. Remove these
-// entries once production serves 7c6449a. The entries for the earlier pins were
-// pruned, because production already serves them.
-const PIN_7C6449A = {
-  allow: ["body"],
-  why: "Registry pin f94666b (v4.36.0) to 7c6449a (v4.37.0, mzizi-registry main 2026-11-13): /v1/brand `accessibility` gains `minTouchTargetPointerFine` 28 and `bodyPxPointerFine` 15 beside the unchanged `minTouchTarget` 49, so tools that read the brand data show the desktop tier of the pointer-aware Bundu floor (mzizi-registry#675); the changelog records gain 4.37.0. Response bodies only: status, headers and the contract hold.",
+// Production serves registry 7c6449a (v4.37.0), so the entries that bridged
+// f94666b to 7c6449a were pruned. The entries for this bump are REG_4_45_0 below.
+// Pin 7c6449a (v4.37.0, what production serves) to 4b488a2 (v4.45.0), owner
+// approval 2026-11-20 (mzizi-api#163). Each entry is one intended consequence of
+// the registry diff 7c6449a...4b488a2:
+// the Bundu floor (hit area 45px on touch and 24px on a desktop, control gap 9px,
+// the per-layer spacing tokens), the unstyled Mzizi Roots components and their
+// sources, the mzizi-roots crate name, the dependency lists, the changelog and
+// the markdown-renderer text. Bodies only; status, headers and shapes are unchanged.
+const REG_4_45_0 = {
+  floor:
+    "Bundu floor v4.45.0 (owner 2026-11-19): hit area 45px on touch and 24px on a desktop (was 49 and 28), gap between controls 9px (was 7), per-layer spacing tokens added. The brand specs, architecture rules, ecosystem text, AI instructions and generated token files state those values.",
+  changelog:
+    "Changelog gains the 4.38.0 to 4.45.0 releases (newest 4.45.0; 110 entries, was 101).",
+  deps: "Dependency lists from the v4.45.0 registry: button depends on radix-ui only and on the ui-variants registry item (class-variance-authority is gone). The markdown-renderer description now names mzizi-roots.",
+  crate:
+    "Mzizi Roots: the Rust component moved from the mzizi-ui crate to mzizi-roots (crate.name), with its unstyled source and the Roots description.",
+  sources:
+    "Registry v4.45.0 source change: unstyled Mzizi Roots and React primitives (button sets no class, gap-control-between and p-container-dense tokens, IME composition guards, ui-variants), mzizi-tokens-rust per-family record, mzizi-seo doc text, or the button docs at the new floor.",
+  text: "Registry v4.45.0 text change: the markdown-renderer description and docs name mzizi-roots and the unstyled Roots API (RenderProps, render, MarkdownLinks).",
 };
-const PIN_7C6449A_REQUESTS = [
-  "GET /api/v1/brand",
-  "GET /api/v1/changelog",
-  "GET /v1/brand",
-  "GET /v1/changelog",
-];
+const expectFor = (why, paths) =>
+  Object.fromEntries(paths.map((p) => [`GET ${p}`, { allow: ["body"], why }]));
+const REG_4_45_0_ENTRIES = {
+  ...expectFor(REG_4_45_0.floor, [
+    "/api/v1/brand",
+    "/v1/brand",
+    "/api/v1/architecture",
+    "/v1/architecture",
+    "/v1/architecture/nodes/2",
+    "/v1/ecosystem",
+    "/api/v1/ai/instructions/github-copilot",
+    "/v1/ai/instructions/mcp-server",
+    "/v1/ai/instructions/nyuchi-mcp-system-prompt",
+    "/v1/ui/mzizi-tokens-arkts",
+    "/v1/ui/mzizi-tokens-globals",
+    "/v1/ui/mzizi-tokens-kotlin",
+    "/v1/ui/mzizi-tokens-python",
+    "/v1/ui/mzizi-tokens-react-native",
+    "/v1/ui/mzizi-tokens-swift",
+    "/v1/ui/mzizi-tokens-typescript",
+    "/v1/ui/mzizi-a11y-audit",
+    "/v1/rs/mzizi-a11y-audit",
+  ]),
+  ...expectFor(REG_4_45_0.changelog, ["/api/v1/changelog", "/v1/changelog"]),
+  ...expectFor(REG_4_45_0.deps, [
+    "/v1/ui",
+    "/v1/ui?collection=components",
+    "/v1/ui?limit=abc",
+    "/v1/ui?node=-1",
+    "/v1/ui?node=2",
+    "/v1/ui?owner=framework",
+    "/v1/ui?type=registry%3Aui",
+    "/v1/ui/button",
+    "/api/v1/ui/button",
+  ]),
+  ...expectFor(REG_4_45_0.crate, [
+    "/v1/rs/alert",
+    "/v1/rs/badge",
+    "/v1/rs/card",
+    "/v1/rs/chart",
+    "/v1/rs/markdown-renderer",
+    "/v1/rs/progress",
+    "/v1/rs/safe-area-frame",
+    "/v1/rs/separator",
+  ]),
+  ...expectFor(REG_4_45_0.sources, [
+    "/v1/rs/button",
+    "/v1/rs/mzizi-seo",
+    "/v1/rs/mzizi-tokens-rust",
+    "/v1/ui/mzizi-tokens-rust",
+    "/v1/ui/app-command-palette",
+    "/v1/ui/app-confirm-action",
+    "/v1/ui/app-detail-panel",
+    "/v1/ui/app-page-header",
+    "/v1/ui/app-shell",
+    "/v1/ui/button/docs",
+    "/api/v1/ui/button/docs",
+    "/v1/ui/chat-input",
+    "/v1/ui/discover-card",
+    "/v1/ui/discover-detail-actions",
+    "/v1/ui/inline-edit",
+    "/v1/ui/note-editor",
+    "/v1/ui/prompt-input",
+    "/v1/ui/search-bar",
+    "/v1/ui/tag-input",
+    "/v1/ui/ui-variants",
+  ]),
+  ...expectFor(REG_4_45_0.text, [
+    "/v1/ui/markdown-renderer",
+    "/v1/ui?collection=primitives",
+    "/v1/ui?owner=mzizi",
+    "/v1/search?category=primitives",
+    "/v1/search?layer=2",
+    "/v1/search?layer=3&node=2",
+    "/v1/search?node=2",
+    "/api/v1/search?layer=2",
+    "/api/v1/search?q=x",
+  ]),
+};
+
 const EXPECTED = {
-  ...Object.fromEntries(PIN_7C6449A_REQUESTS.map((r) => [r, PIN_7C6449A])),
+  ...REG_4_45_0_ENTRIES,
   // A trailing `/*` matches every path under that prefix: one 200 per component
   // that has a Rust build.
   "GET /v1/rs/*": {
