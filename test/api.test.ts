@@ -480,16 +480,17 @@ describe("architecture and content", () => {
     ).toBe(21);
   });
 
-  // Spacing floor, registry v4.24.0 (mzizi-registry#617): BUNDU_FLOOR.spacing
-  // = insetPx 14, controlGapPx/labelGapPx/itemGapPx 7, leadingBody 1.5. Typed
-  // out from the issue, not read back from src/data.
+  // Spacing floor, registry v4.45.0 (owner 2026-11-19): BUNDU_FLOOR.spacing
+  // = insetPx 14, controlGapPx 9, labelGapPx/itemGapPx 7, leadingBody 1.5
+  // (controlGapPx was 7 before v4.45.0). Typed out from the owner's floor,
+  // not read back from src/data.
   it("serves the spacing floor on /v1/brand's accessibility block", async () => {
     const body = (await (await get("/v1/brand")).json()) as {
       accessibility: Record<string, unknown>;
     };
     expect(body.accessibility).toMatchObject({
       minInset: 14,
-      minControlGap: 7,
+      minControlGap: 9,
       minLabelGap: 7,
       minItemGap: 7,
       minBodyLeading: 1.5,
