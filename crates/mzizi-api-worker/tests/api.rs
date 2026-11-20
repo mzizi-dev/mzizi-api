@@ -573,7 +573,7 @@ fn serves_21_colour_families_on_v1_brand() {
 fn serves_the_spacing_floor_on_v1_brand_accessibility() {
     let a = &brand()["accessibility"];
     assert_eq!(a["minInset"], 14);
-    assert_eq!(a["minControlGap"], 7);
+    assert_eq!(a["minControlGap"], 9);
     assert_eq!(a["minLabelGap"], 7);
     assert_eq!(a["minItemGap"], 7);
     assert_eq!(a["minBodyLeading"], 1.5);
