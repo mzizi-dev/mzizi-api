@@ -4,7 +4,6 @@ version: 2
 updates:
   - package-ecosystem: github-actions
     directory: /
-    target-branch: staging
     # Majors arrive only when someone chooses them (owner, 2026-11-12);
     # ignore never blocks security updates.
     ignore:
@@ -22,7 +21,6 @@ updates:
         patterns: ["*"]
   - package-ecosystem: npm
     directory: /
-    target-branch: staging
     # Majors arrive only when someone chooses them (owner, 2026-11-12);
     # ignore never blocks security updates.
     ignore:

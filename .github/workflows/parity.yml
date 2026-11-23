@@ -23,7 +23,7 @@ name: Parity
 # Read-only requests; the report is the job summary.
 on:
   pull_request:
-    branches: [main, staging]
+    branches: [main]
     paths:
       - scripts/registry-ref.json
       # And a change to parity itself (the script, or the body comparison it
