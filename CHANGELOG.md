@@ -21,6 +21,10 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — registry data pinned to mzizi-registry 4.49.0 (2026-11-23)
+
+The API data is generated from the published 4.49.0 registry commit. This updates the Bundu Floor guidance, DiscoverShell contract, Rust token sources and the registry changelog served by the gateway.
+
 ### Changed — registry data pinned to mzizi-registry 4.45.0 (2026-11-20)
 
 The registry pin in `scripts/registry-ref.json` moves from `7c6449a` (v4.37.0) to `4b488a2`, the commit the annotated tag `v4.45.0` points at. Every route still answers the same shape and status; the data it serves is the registry's.
