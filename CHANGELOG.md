@@ -21,6 +21,16 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — brand wordmarks take an initial capital (mzizi-registry#752, 2026-11-23)
+
+The registry pin moves on from 4.49.0 (`66aea7e`) to `93600f0`, the merge of mzizi-registry#752. `GET /v1/brand` changes for callers:
+
+- `voiceAndTone.doList[0]` now says to write every brand wordmark with an initial capital (Mukoko, Nyuchi, Shamwari, Bundu, Mzizi, Kweli), and `dontList[0]` not to write them in lowercase or in capitals. Before, the API said the opposite: "Use lowercase for all brand wordmarks".
+- `ecosystem[shamwari].role` is "AI companion with open weights". It was "Sovereign AI companion".
+- The `bundu` row names pillars, initiatives, projects and the Mukoko apps. There are no "sister brands" any more.
+
+Registry item titles are capitalised the same way, for example "Mzizi Listing Card". The doctrine served by the API follows the same rulings. Code identifiers (item names, slugs, package names) are unchanged.
+
 ### Changed — registry data pinned to mzizi-registry 4.49.0 (2026-11-23)
 
 The API data is generated from the published 4.49.0 registry commit. This updates the Bundu Floor guidance, DiscoverShell contract, Rust token sources and the registry changelog served by the gateway.

@@ -1,6 +1,6 @@
 {
   "repository": "https://github.com/mzizi-dev/mzizi-registry",
-  "ref": "66aea7e56bcc48db89d95605666a6b6cc2ff9f86",
+  "ref": "93600f03c48a44ff3a4b09f644293bc379f73eb2",
   "pinned": "2026-11-23",
-  "note": "mzizi-registry v4.49.0; previous pin was v4.45.0 (4b488a2)."
+  "note": "mzizi-registry main at the merge of #752 (wordmarks with an initial capital), on top of v4.49.0 (66aea7e); previous pin was v4.45.0 (4b488a2)."
 }
