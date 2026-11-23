@@ -21,6 +21,10 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — docs say `mz add`, not `mzizi add` (mzizi-api#174, 2026-11-24)
+
+The CLI is one binary, `mz`, built in mzizi-dev/mzizi-cli; `mzizi` is a deprecated alias. The README row for `GET /v1/astro/{name}` and a source comment now say `mz add --target astro`. No behaviour change. The `npx @nyuchi/mzizi-cli add` hint in responses still works and is unchanged.
+
 ### Changed — brand wordmarks take an initial capital (mzizi-registry#752, 2026-11-23)
 
 The registry pin moves on from 4.49.0 (`66aea7e`) to `93600f0`, the merge of mzizi-registry#752. `GET /v1/brand` changes for callers:
