@@ -91,7 +91,7 @@ jobs:
 
       - name: Check the crate version against the versioning policy
         id: policy
-        uses: nyuchi/.github/.github/actions/next-version@925d067322defd676dacd90f2c2b0540cb10f644  # main, 2026-10-19
+        uses: nyuchi/.github/.github/actions/next-version@0e026639ad69fef58704e114e1db4401a1c5f0ba  # main, 2026-10-19
         with:
           channel: main
           bump: ${{ inputs.bump || '' }}
@@ -125,7 +125,7 @@ jobs:
           rustup component add rustfmt clippy
           cargo --version
 
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
 
       - name: Format
         run: cargo fmt --all --check
