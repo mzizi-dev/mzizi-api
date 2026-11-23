@@ -69,7 +69,7 @@ base paths answer: `/v1/...` (canonical) and `/api/v1/...`.
 | `GET /v1/ui/{name}/docs`                                                                                      | The item's `meta` block in `registry.json`                                               |
 | `GET /v1/rs/{name}`                                                                                           | The Rust (`.rs`) source, where one exists                                                |
 | `GET /v1/astro`                                                                                               | Every name with an Astro implementation                                                  |
-| `GET /v1/astro/{name}`                                                                                        | The pure `.astro` (or framework-free `.ts`) document `mz add --target astro` installs |
+| `GET /v1/astro/{name}`                                                                                        | The pure `.astro` (or framework-free `.ts`) document `mz add --target astro` installs    |
 | `GET /v1/search` (`q`, `node`, `category`; `layer` is a deprecated alias of `node`)                           | `registry.json`                                                                          |
 | `GET /v1/brand`                                                                                               | `lib/tokens`: 21 colour families, and the rest                                           |
 | `GET /v1/architecture` · `/v1/architecture/nodes/{n}`                                                         | The DNA double helix: 8 nodes, 4 rungs, 6 strands                                        |
