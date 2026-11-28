@@ -21,6 +21,10 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — the registry pin moves to the skills 0.25.0 regeneration (2026-11-28, #184)
+
+Closes #184. `scripts/registry-ref.json` moves from 93600f0 (#752) to 5a9c960, mzizi-registry main at the merge of #763. `/v1/skills` now serves `@nyuchi/mzizi-skills` 0.25.0, whose text says `mz add` and `mz floor` where it said `mzizi add` and `mzizi check`; its `meta.version` is 0.25.0. The test that names the skills version follows.
+
 ### Changed — staging wording removed from comments (2026-11-28)
 
 Comments in the release and Dependabot workflows no longer describe a `staging` branch; the repo is trunk-based. No behaviour changes.
