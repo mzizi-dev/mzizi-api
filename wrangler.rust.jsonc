@@ -1,0 +1,25 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // The Rust (workers-rs) Worker, built beside the TypeScript one (wrangler.ts.jsonc)
+  // for side-by-side runs and parity. It is the production build now: wrangler.jsonc
+  // deploys the same main and build command to api.mzizi.dev. This file has no route
+  // and no workers.dev subdomain, so it cannot touch the production Worker or its
+  // custom domain.
+  //
+  //   npx wrangler dev -c wrangler.rust.jsonc --port 8788
+  //   node scripts/parity.mjs --candidate http://localhost:8788
+  //
+  "name": "mzizi-api-rust",
+  "main": "crates/mzizi-api-worker/build/index.js",
+  "compatibility_date": "2026-05-22",
+
+  // The same build as wrangler.jsonc: scripts/build-rust.sh (registry data, toolchain,
+  // worker-build), so the two configs cannot drift.
+  "build": {
+    "command": "bash scripts/build-rust.sh",
+    "watch_dir": ["crates/mzizi-api-worker/src", "crates/mzizi-api-types/src"],
+  },
+
+  "workers_dev": false,
+  "observability": { "enabled": true, "head_sampling_rate": 1 },
+}

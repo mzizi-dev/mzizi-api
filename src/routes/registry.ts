@@ -263,7 +263,7 @@ export function registerRegistry(v1: Hono) {
 
   // The Astro target (mzizi-registry#397): a component's pure `.astro`, or a
   // framework-free `.ts` module the `.astro` files import, as a registry
-  // document `mzizi add --target astro` installs into src/components/mzizi/.
+  // document `mz add --target astro` installs into src/components/mzizi/.
   // Its registryDependencies are absolute /v1/astro/ URLs, derived from the
   // source's flat imports by the registry's own reader (lib/astro.ts).
   v1.get("/astro", (c) =>

@@ -1,0 +1,36 @@
+# The Rust port of api.mzizi.dev (mzizi-api#156, Phase A).
+#
+# - crates/mzizi-api-types: serde types for every response body and the
+#   bundled data shapes, published to crates.io for mzizi-cli and other clients.
+# - crates/mzizi-api-worker: the workers-rs Worker. It serves the same
+#   src/data/*.json that scripts/build-data.mjs generates for the TypeScript
+#   Worker, so `npm run build:data` must run before it builds.
+[workspace]
+resolver = "3"
+members = ["crates/mzizi-api-types", "crates/mzizi-api-worker"]
+
+[workspace.package]
+edition = "2024"
+rust-version = "1.85"
+license = "Apache-2.0"
+repository = "https://github.com/mzizi-dev/mzizi-api"
+homepage = "https://api.mzizi.dev/v1"
+authors = ["Mzizi contributors"]
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+
+# Size matters more than speed for a Worker: the wasm module ships with the
+# bundled registry data inside it.
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"

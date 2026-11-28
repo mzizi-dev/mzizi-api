@@ -1,6 +1,6 @@
 # Mzizi API
 
-> `api.mzizi.dev`: the Mzizi registry API as a **Hono Cloudflare Worker**, served from registry data bundled at build time. No origin, no database, no Supabase.
+> `api.mzizi.dev`: the Mzizi registry API as a **Rust (workers-rs) Cloudflare Worker**, served from registry data bundled at build time. No origin, no database, no Supabase. The TypeScript (Hono) Worker it replaced is kept for rollback.
 
 [![CI](https://github.com/mzizi-dev/mzizi-api/actions/workflows/ci.yml/badge.svg)](https://github.com/mzizi-dev/mzizi-api/actions/workflows/ci.yml)
 [![Lint](https://github.com/mzizi-dev/mzizi-api/actions/workflows/lint.yml/badge.svg)](https://github.com/mzizi-dev/mzizi-api/actions/workflows/lint.yml)
@@ -29,18 +29,30 @@ this repository. The Rust proxy that stood here (a strangler fig forwarding to
 the registry's Next.js handlers) is retired. This Worker implements the whole
 public `/v1` API itself, from files.
 
+**Update, owner decision 2026-11-17: Mzizi is Rust-first** (mzizi-api#156). The
+runtime is ported to Rust (`workers-rs`), serving the same bundled data:
+`crates/mzizi-api-worker` is the Worker and `crates/mzizi-api-types` holds a
+serde type for every response body, for mzizi-cli and other clients. **The Rust
+Worker serves `api.mzizi.dev` from 2026-11-17** (see [Cutover](#cutover)). The
+TypeScript Worker stays in the repository (`wrangler.ts.jsonc`) for rollback and
+parity.
+
 ## Status
 
-**Live on `api.mzizi.dev` since 2026-09-29.**
+**Live on `api.mzizi.dev` since 2026-09-29, the Rust Worker since 2026-11-17.**
 
 The owner moved the custom domain from the `mzizi-registry` Worker (the
 registry's Next.js app on OpenNext) to this Worker on 2026-09-29, and
-`wrangler.jsonc` now declares it, so every production deploy keeps it. See
-[Cutover](#cutover) for how it was done, and [Rollback](#rollback) for undoing
-a bad deploy (the move itself can no longer be reversed).
+`wrangler.jsonc` declares it, so every production deploy keeps it. On
+2026-11-17 the owner approved the cutover: `wrangler.jsonc` now builds and runs
+the Rust Worker (`crates/mzizi-api-worker`) on the same name, account and route.
+See [Cutover](#cutover) for both steps, and [Rollback](#rollback) for undoing a
+bad deploy.
 
-You can tell which Worker answered: every response from this one carries
-`X-Mzizi-Source: mzizi-api-gateway; registry=<commit>`.
+You can tell which Worker answered: every response carries
+`X-Mzizi-Source: mzizi-api-gateway; registry=<commit>`. The Rust Worker serves
+the same headers, the same bytes and the same `X-Mzizi-Source` as the
+TypeScript one (parity below).
 
 ## What it serves
 
@@ -48,27 +60,27 @@ The same contract `api.mzizi.dev` serves today: the same paths, methods, query
 parameters, status codes, response bodies, CORS headers and cache headers. Both
 base paths answer: `/v1/...` (canonical) and `/api/v1/...`.
 
-| Route                                                                                                         | Data                                                                                     |
-| ------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `GET /v1` · `/api/v1`                                                                                         | Discovery document                                                                       |
-| `GET /v1/health`                                                                                              | This Worker's liveness                                                                   |
-| `GET /v1/ui` (`node`, `owner`, `collection`, `type`, `limit`, `offset`)                                       | `registry.json` joined to the files on disk                                              |
-| `GET /v1/ui/{name}`: the shadcn install endpoint                                                              | Item plus its source file                                                                |
-| `GET /v1/ui/{name}/docs`                                                                                      | The item's `meta` block in `registry.json`                                               |
-| `GET /v1/rs/{name}`                                                                                           | The Rust (`.rs`) source, where one exists                                                |
-| `GET /v1/astro`                                                                                               | Every name with an Astro implementation                                                  |
-| `GET /v1/astro/{name}`                                                                                        | The pure `.astro` (or framework-free `.ts`) document `mzizi add --target astro` installs |
-| `GET /v1/search` (`q`, `node`, `category`; `layer` is a deprecated alias of `node`)                           | `registry.json`                                                                          |
-| `GET /v1/brand`                                                                                               | `lib/tokens`: 21 colour families, and the rest                                           |
-| `GET /v1/architecture` · `/v1/architecture/nodes/{n}`                                                         | The DNA double helix: 8 nodes, 4 rungs, 6 strands                                        |
-| `GET /v1/data-layer` · `/ecosystem` · `/pipeline` · `/sovereignty` · `/ubuntu/pillars` · `/ubuntu/principles` | `content/doctrine/**`                                                                    |
-| `GET /v1/ai/instructions` · `/v1/ai/instructions/{name}`                                                      | `content/doctrine/**`                                                                    |
-| `GET /v1/changelog` · `/v1/changelog/{version}`                                                               | `lib/changelog.generated.ts`                                                             |
-| `GET /v1/skills` · `/v1/skills/summary` · `/v1/skills/{name}`                                                 | `lib/skills.generated.ts`                                                                |
-| `GET /v1/samples` · `/v1/samples/{type}`                                                                      | `lib/samples/data.ts`                                                                    |
-| `GET /v1/stats`                                                                                               | Zeroed usage figures plus real per-node counts                                           |
-| `GET /openapi` · `/api/openapi`                                                                               | `lib/openapi.generated.ts`                                                               |
-| `GET /.well-known/security.txt`                                                                               | Contact `security@nyuchi.com`                                                            |
+| Route                                                                                                         | Data                                                                                  |
+| ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `GET /v1` · `/api/v1`                                                                                         | Discovery document                                                                    |
+| `GET /v1/health`                                                                                              | This Worker's liveness                                                                |
+| `GET /v1/ui` (`node`, `owner`, `collection`, `type`, `limit`, `offset`)                                       | `registry.json` joined to the files on disk                                           |
+| `GET /v1/ui/{name}`: the shadcn install endpoint                                                              | Item plus its source file                                                             |
+| `GET /v1/ui/{name}/docs`                                                                                      | The item's `meta` block in `registry.json`                                            |
+| `GET /v1/rs/{name}`                                                                                           | The Rust (`.rs`) source, where one exists                                             |
+| `GET /v1/astro`                                                                                               | Every name with an Astro implementation                                               |
+| `GET /v1/astro/{name}`                                                                                        | The pure `.astro` (or framework-free `.ts`) document `mz add --target astro` installs |
+| `GET /v1/search` (`q`, `node`, `category`; `layer` is a deprecated alias of `node`)                           | `registry.json`                                                                       |
+| `GET /v1/brand`                                                                                               | `lib/tokens`: 21 colour families, and the rest                                        |
+| `GET /v1/architecture` · `/v1/architecture/nodes/{n}`                                                         | The DNA double helix: 8 nodes, 4 rungs, 6 strands                                     |
+| `GET /v1/data-layer` · `/ecosystem` · `/pipeline` · `/sovereignty` · `/ubuntu/pillars` · `/ubuntu/principles` | `content/doctrine/**`                                                                 |
+| `GET /v1/ai/instructions` · `/v1/ai/instructions/{name}`                                                      | `content/doctrine/**`                                                                 |
+| `GET /v1/changelog` · `/v1/changelog/{version}`                                                               | `lib/changelog.generated.ts`                                                          |
+| `GET /v1/skills` · `/v1/skills/summary` · `/v1/skills/{name}`                                                 | `lib/skills.generated.ts`                                                             |
+| `GET /v1/samples` · `/v1/samples/{type}`                                                                      | `lib/samples/data.ts`                                                                 |
+| `GET /v1/stats`                                                                                               | Zeroed usage figures plus real per-node counts                                        |
+| `GET /openapi` · `/api/openapi`                                                                               | `lib/openapi.generated.ts`                                                            |
+| `GET /.well-known/security.txt`                                                                               | Contact `security@nyuchi.com`                                                         |
 
 Also answered, as they are today:
 
@@ -270,7 +282,7 @@ What that means for this API:
 ```bash
 npm ci
 npm run build:data     # clone the pinned registry ref, generate src/data/
-npm run dev            # wrangler dev on http://localhost:8787
+npm run dev            # wrangler dev (the Rust Worker, wrangler.jsonc) on http://localhost:8787
 npm test               # offline route tests (vitest)
 npm run typecheck
 npm run parity         # live api.mzizi.dev vs the local Worker
@@ -278,6 +290,18 @@ npm run parity         # live api.mzizi.dev vs the local Worker
 
 `REGISTRY_DIR=/path/to/mzizi-registry` reuses an existing checkout, but it must
 be at the pinned commit.
+
+The Rust Worker (mzizi-api#156) is the production build. It builds from the same
+`src/data/` through `scripts/build-rust.sh`, which installs the toolchain it needs
+when the machine has none, and `rust-toolchain.toml` pins the compiler:
+
+```bash
+npx wrangler dev --port 8789                        # the Rust Worker (wrangler.jsonc)
+npx wrangler dev -c wrangler.rust.jsonc --port 8788 # the same build, side by side
+cargo test                                          # the router, natively
+npx wrangler dev -c wrangler.ts.jsonc --port 8787   # the TypeScript Worker (rollback)
+node scripts/parity.mjs --baseline http://localhost:8787 --candidate http://localhost:8788
+```
 
 ## Parity
 
@@ -304,7 +328,21 @@ ignores `EXPECTED`, so every difference counts as unexplained (see
 
 ## Cutover
 
-**Done 2026-09-29.** Parity before the move, against the deployed Worker on
+**Rust Worker, 2026-11-17 (mzizi-api#156).** Owner approval, 2026-11-17. The
+production build became the Rust Worker: `wrangler.jsonc` has `main`
+`crates/mzizi-api-worker/build/index.js` and the build `bash scripts/build-rust.sh`.
+Name, account, route, `workers_dev`, observability and compatibility date are
+unchanged. The TypeScript Worker is `wrangler.ts.jsonc`.
+
+Parity before the switch, strict (`--strict`): 1645 requests, 1645 identical, 0
+unexplained, for the Rust Worker under `wrangler dev` against `https://api.mzizi.dev`,
+run twice on 2026-11-17. The owner's edge-preview runs of the deployed Rust preview
+against production were also 1645/1645, twice. The switch itself is the deploy of
+the merge to `main`. After it, confirm `https://api.mzizi.dev/v1/health` and
+`X-Mzizi-Source` on a response, and run the Parity workflow by hand with baseline
+`https://api.mzizi.dev` and the Rust Worker's workers.dev URL.
+
+**Domain move, 2026-09-29.** Parity before the move, against the deployed Worker on
 `workers.dev`: 1359 requests, 0 unexplained differences. The steps are kept
 here as the record.
 
@@ -329,12 +367,18 @@ here as the record.
 
 ### Rollback
 
-There is no older Worker to move `api.mzizi.dev` back to. To undo a bad
-change, revert it in a pull request; the merge redeploys. To undo a bad deploy
-faster than that, roll this Worker back to its previous deployment
-(`wrangler rollback`, or _Workers & Pages → `mzizi-api-gateway` → Deployments_
-in the Cloudflare dashboard), then revert on `main` so the next deploy does not
-bring the change back.
+To return `api.mzizi.dev` to the TypeScript Worker, which is still in the
+repository, revert the cutover pull request in `main`. The merge redeploys the
+TypeScript Worker, because `wrangler.jsonc` then names `src/index.ts` again. To do
+it faster, redeploy that config directly: `npx wrangler deploy -c wrangler.ts.jsonc`
+(it declares the same name, account and route), then revert on `main` so the next
+deploy does not bring the Rust Worker back. To undo a bad deploy of either Worker
+without a new build, use `wrangler rollback`, or _Workers & Pages →
+`mzizi-api-gateway` → Deployments_ in the Cloudflare dashboard, then revert on
+`main` as above.
+
+There is no path back to the registry Worker that served `api.mzizi.dev` before
+2026-09-29: that move cannot be reversed (see [Cutover](#cutover)).
 
 ## The four API gateways
 

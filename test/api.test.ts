@@ -480,16 +480,17 @@ describe("architecture and content", () => {
     ).toBe(21);
   });
 
-  // Spacing floor, registry v4.24.0 (mzizi-registry#617): BUNDU_FLOOR.spacing
-  // = insetPx 14, controlGapPx/labelGapPx/itemGapPx 7, leadingBody 1.5. Typed
-  // out from the issue, not read back from src/data.
+  // Spacing floor, registry v4.45.0 (owner 2026-11-19): BUNDU_FLOOR.spacing
+  // = insetPx 14, controlGapPx 9, labelGapPx/itemGapPx 7, leadingBody 1.5
+  // (controlGapPx was 7 before v4.45.0). Typed out from the owner's floor,
+  // not read back from src/data.
   it("serves the spacing floor on /v1/brand's accessibility block", async () => {
     const body = (await (await get("/v1/brand")).json()) as {
       accessibility: Record<string, unknown>;
     };
     expect(body.accessibility).toMatchObject({
       minInset: 14,
-      minControlGap: 7,
+      minControlGap: 9,
       minLabelGap: 7,
       minItemGap: 7,
       minBodyLeading: 1.5,
@@ -804,14 +805,14 @@ describe("/v1/ui/{name} resolves every name /v1/ui lists", () => {
 });
 
 describe("/v1/skills serves the pinned skills bundle", () => {
-  it("lists the 12 skills of @nyuchi/mzizi-skills 0.19.0, including the three added at 4.26.0", async () => {
+  it("lists the 12 skills of @nyuchi/mzizi-skills 0.25.0, including the three added at 4.26.0", async () => {
     const res = await get("/v1/skills");
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       meta: { count: number; version: string };
       data: Array<{ name: string }>;
     };
-    expect(body.meta).toMatchObject({ count: 12, version: "0.20.0" });
+    expect(body.meta).toMatchObject({ count: 12, version: "0.25.0" });
     expect(body.data).toHaveLength(12);
     const names = body.data.map((s) => s.name);
     for (const added of ["ship-release", "registry-propagation", "pr-gates"]) {

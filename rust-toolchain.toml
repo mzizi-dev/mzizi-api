@@ -1,0 +1,10 @@
+# The Rust toolchain for this repository. rustup reads it, so cargo, CI, Cloudflare
+# Workers Builds (through scripts/build-rust.sh) and a developer machine all build
+# with the same compiler. It is the stable release the CI `rust` job used when
+# this file was added (rustc 1.97.0, 2026-11-17); move it deliberately, in a pull
+# request, with the CI and Workers Builds results to show for it.
+[toolchain]
+channel = "1.97.0"
+profile = "minimal"
+components = ["rustfmt", "clippy"]
+targets = ["wasm32-unknown-unknown"]

@@ -10,3 +10,7 @@ node_modules/
 # Registry checkout and generated data (scripts/build-data.mjs)
 /.registry/
 /src/data/
+
+# Rust (cargo, worker-build)
+/target/
+/crates/*/build/

@@ -21,6 +21,86 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — the registry pin moves to the skills 0.25.0 regeneration (2026-11-28, #184)
+
+Closes #184. `scripts/registry-ref.json` moves from 93600f0 (#752) to 5a9c960, mzizi-registry main at the merge of #763. `/v1/skills` now serves `@nyuchi/mzizi-skills` 0.25.0, whose text says `mz add` and `mz floor` where it said `mzizi add` and `mzizi check`; its `meta.version` is 0.25.0. The test that names the skills version follows.
+
+### Changed — staging wording removed from comments (2026-11-28)
+
+Comments in the release and Dependabot workflows no longer describe a `staging` branch; the repo is trunk-based. No behaviour changes.
+
+### Security — parity report escapes backslashes (2026-11-28, #180)
+
+`scripts/parity.mjs` escapes backslash before pipe when it writes Markdown table cells (CodeQL js/incomplete-sanitization). A development script only: no change to any API response.
+
+### Changed — docs say `mz add`, not `mzizi add` (mzizi-api#174, 2026-11-24)
+
+The CLI is one binary, `mz`, built in mzizi-dev/mzizi-cli; `mzizi` is a deprecated alias. The README row for `GET /v1/astro/{name}` and a source comment now say `mz add --target astro`. No behaviour change. The `npx @nyuchi/mzizi-cli add` hint in responses still works and is unchanged.
+
+### Changed — brand wordmarks take an initial capital (mzizi-registry#752, 2026-11-23)
+
+The registry pin moves on from 4.49.0 (`66aea7e`) to `93600f0`, the merge of mzizi-registry#752. `GET /v1/brand` changes for callers:
+
+- `voiceAndTone.doList[0]` now says to write every brand wordmark with an initial capital (Mukoko, Nyuchi, Shamwari, Bundu, Mzizi, Kweli), and `dontList[0]` not to write them in lowercase or in capitals. Before, the API said the opposite: "Use lowercase for all brand wordmarks".
+- `ecosystem[shamwari].role` is "AI companion with open weights". It was "Sovereign AI companion".
+- The `bundu` row names pillars, initiatives, projects and the Mukoko apps. There are no "sister brands" any more.
+
+Registry item titles are capitalised the same way, for example "Mzizi Listing Card". The doctrine served by the API follows the same rulings. Code identifiers (item names, slugs, package names) are unchanged.
+
+### Changed — registry data pinned to mzizi-registry 4.49.0 (2026-11-23)
+
+The API data is generated from the published 4.49.0 registry commit. This updates the Bundu Floor guidance, DiscoverShell contract, Rust token sources and the registry changelog served by the gateway.
+
+### Changed — registry data pinned to mzizi-registry 4.45.0 (2026-11-20)
+
+The registry pin in `scripts/registry-ref.json` moves from `7c6449a` (v4.37.0) to `4b488a2`, the commit the annotated tag `v4.45.0` points at. Every route still answers the same shape and status; the data it serves is the registry's.
+
+- **Bundu floor, 4.45.0 (owner, 2026-11-19).** The hit area is 45px on touch and 24px on a desktop (was 49px and 28px), and the gap between adjacent controls is 9px (was 7px). `/v1/brand` (`componentSpecs`, `accessibility`: `minTouchTarget`, `defaultTouchTarget`, `minTouchTargetPointerFine` 24, `minControlGap` 9), `/v1/architecture`, `/v1/ecosystem` and the AI instructions state the new values.
+- **Spacing tokens.** The generated token files (`/v1/ui/mzizi-tokens-*`, `mzizi-tokens-globals`) gain the per-layer spacing tokens (`--space-page-x`, `--space-card-gap`, `--space-control-between`, and their `-dense` steps) and the new control heights. `/v1/ui/mzizi-a11y-audit` and `/v1/rs/mzizi-a11y-audit` check touch targets against 45px.
+- **`/v1/changelog`** and **`/v1/changelog/{version}`** now include the 4.38.0 to 4.45.0 releases; the newest entry is 4.45.0 and `meta.total` is 110 (was 101).
+- **`/v1/ui`** and **`/v1/ui/{name}`**: `button` sets no styling class (pattern: unstyled, #708), its dependencies are `radix-ui` only, and it depends on the new `ui-variants` item. `class-variance-authority` is gone from the dependency lists of `/v1/ui` and its filtered variants. The docs of `button` carry the new sizes.
+- **`/v1/rs/{name}`**: `alert`, `badge`, `card`, `chart`, `markdown-renderer`, `progress`, `safe-area-frame` and `separator` now report crate `mzizi-roots` (not `mzizi-ui`). `button`, `mzizi-seo` and `mzizi-tokens-rust` carry the new Rust sources, and `mzizi-tokens-rust` gains the per-family record.
+- **React sources.** `chat-input`, `prompt-input`, `inline-edit`, `note-editor`, `search-bar` and `tag-input` carry the new code (IME composition guards on Enter); `ui-variants` is new; the app and discover components use the `gap-control-between` and `p-container-dense` tokens.
+- **Text.** The `markdown-renderer` description and docs (`/v1/ui/markdown-renderer`, `/v1/search`, `/v1/rs/markdown-renderer`) name `mzizi-roots` and the unstyled Roots API.
+- **Parity.** Against production, 1645 requests: 1579 identical, 66 intentional differences, all bodies, each listed in `scripts/parity.mjs` `EXPECTED` under the 4.45.0 pin with its reason; 0 unexplained. The production baseline at 7c6449a is unchanged, so the earlier pin's entries are pruned.
+- **Doctrine data** gains seven engineering constraints (the `genetic-code-engineering-constraints` set) under the Ubuntu doctrine.
+
+### Added — the Rust (workers-rs) port of the API runtime, beside the TypeScript Worker (2026-11-17)
+
+Refs #156 (Phase A). Owner decision, 2026-11-17: Mzizi is Rust-first.
+
+- **`crates/mzizi-api-worker`: api.mzizi.dev's runtime in Rust.** A `workers-rs` Worker that reproduces every route, method, status code, body and header of the Hono Worker (CORS, the security headers, cache headers, `X-Mzizi-Source`), the 308 redirect order (repeated slashes, then a trailing slash, then renamed components) and Hono's path and query decoding. It serves the same `src/data/*.json` that `npm run build:data` generates, embedded in the wasm module. Parity against production and against the TypeScript Worker: 1645 requests, 1645 identical, 0 unexplained differences.
+- **`crates/mzizi-api-types`: a serde type for every response body** and for the registry data shapes (`RegistryItem`, `AstroDocument` and the rest), with field order as served, so mzizi-cli and other clients compile against the API's contract. Publishable to crates.io (Apache-2.0); not published yet.
+- **`wrangler.rust.jsonc`** builds the Rust Worker with `worker-build` under its own name, with no account, routes or workers.dev subdomain, so both Workers run side by side under `wrangler dev`. The CI `rust` job runs `cargo fmt`, `clippy` (native and wasm32), `cargo test` (the port of `test/api.test.ts`), `cargo publish --dry-run`, a dry-run bundle, and parity between the two Workers.
+- **Cold isolates parse only what a request reads.** `build.rs` packs the bundled data: a keyed lookup (one component, its source, a skill, a changelog version) parses that one value, and `/v1/ui` and `/v1/search` read a slim index of the items. A first `/v1/ui/{name}` on a fresh isolate no longer parses `sources.json` (4 MB) and `components.json` (1 MB) inside the request. That parsing made the preview answer a few requests in a burst with Cloudflare error pages.
+- **The Rust Worker routes on the raw request path, as Hono does.** Paths with `.` or `..` segments (literal or `%2e`), backslashes or `^` now get production's answers (`/v1/ui/./button` is a 405, `/v1/ui/a\b` a component 404, `/nope/x^` echoes `/nope/x%5E`); the redirect and header rules still read the resolved path. `scripts/parity.mjs` sends 18 such paths as-is (×3 methods) when both targets are deployed; a literal `.` or `..` segment compares only between custom domains, because workers.dev and `wrangler dev` resolve it before the Worker.
+- Nothing served changes in this entry. The cutover that makes this Worker production is the next entry, `Changed — api.mzizi.dev is served by the Rust Worker`.
+
+### Added — crates.io publishing for `mzizi-api-types` (2026-11-17)
+
+Refs #156. The owner confirmed `CARGO_REGISTRY_TOKEN` is an org-level secret that works across repositories.
+
+- **`.github/workflows/publish-crates.yml` publishes `mzizi-api-types` to crates.io**, modelled on the mzizi-registry crates workflow. It runs on a push to `main` that touches the crates, and on manual dispatch with `dry_run` defaulting to true. A run with nothing new to publish is a no-op.
+- **Gate on the exact commit:** format, clippy with `-D warnings`, tests and `cargo package` of `mzizi-api-types` run again before anything is uploaded. The worker needs the generated `src/data/` and is not part of this gate.
+- **Version policy:** the version is checked by the org's shared `next-version` action (nyuchi/.github#80), pinned to the same commit as mzizi-registry, with the tag prefix `mzizi-api-types-v`. A version already on crates.io is skipped, never re-uploaded; a missing `CARGO_REGISTRY_TOKEN` fails the run only when there is something to publish.
+- **Changelog gate:** a version with no `CHANGELOG.md` entry since the previous crate tag fails before anything is built or uploaded.
+- **Tag and release:** after the crate is on crates.io, the run tags `mzizi-api-types-vX.Y.Z` and creates the GitHub release with its changelog notes, using `RELEASE_BUMP_TOKEN`.
+- **Off main is always a dry run:** a dispatch from any branch or tag other than `main` can only dry-run; publishing and tagging need the `main` ref. The publish step builds without running dependency build scripts while the token is set (`--no-verify`, after the gate has packaged the same commit).
+- **Publishable set:** the workflow fails if any crate other than `mzizi-api-types` becomes publishable, or if `mzizi-api-types` depends on a path crate. `crates/mzizi-api-worker` stays `publish = false`.
+- **The crate's manifest is publishable as it is:** description, Apache-2.0 licence (the repository's `LICENSE`), repository, homepage, README, keywords, categories, `rust-version` and version `0.1.0`. `cargo publish --dry-run -p mzizi-api-types --locked` passes. Nothing is published by this entry; the first upload happens when the workflow runs on `main`.
+
+### Changed — api.mzizi.dev is served by the Rust Worker (2026-11-17)
+
+Refs #156. Owner approval, 2026-11-17: the cutover to the Rust port, and the domain
+switch that goes with it.
+
+- **`wrangler.jsonc` now builds and runs the Rust Worker** (`crates/mzizi-api-worker`, `main` `crates/mzizi-api-worker/build/index.js`). The Worker keeps its name `mzizi-api-gateway`, its account, the `api.mzizi.dev` custom-domain route, `workers_dev`, observability and the compatibility date. The build is `scripts/build-rust.sh`: the registry data, a Rust toolchain if the build image has none (rustup, non-interactive), the `wasm32-unknown-unknown` target, and `worker-build` 0.9.0.
+- **The toolchain is pinned:** `rust-toolchain.toml` names `1.97.0`, the stable release the CI `rust` job used, with `rustfmt`, `clippy` and the wasm32 target.
+- **The TypeScript Worker is kept for rollback and parity** as `wrangler.ts.jsonc`: the same name, account and route, `main` `src/index.ts`. `npx wrangler deploy -c wrangler.ts.jsonc` redeploys it to `api.mzizi.dev`. The TypeScript source and its tests stay in the repository.
+- **Parity evidence (2026-11-17).** Strict parity (`node scripts/parity.mjs --strict`) of the Rust Worker against `https://api.mzizi.dev`: 1645 requests, 1645 identical, 0 unexplained, and the same on a second run. The owner's edge-preview runs of the deployed Rust preview against production were 1645/1645, twice. Covers all 693 component slugs.
+- **Rollback:** revert this pull request (the merge redeploys the TypeScript Worker), or run `npx wrangler deploy -c wrangler.ts.jsonc`, then revert so the next merge does not bring the Rust Worker back.
+- The CI `worker` job dry-runs `wrangler.ts.jsonc`; the `rust` job dry-runs `wrangler.rust.jsonc` and `wrangler.jsonc` and runs parity between the TypeScript Worker (port 8787) and the Rust Worker (port 8788).
+
 ### Changed — Dependabot proposes no semver-major updates (2026-11-14)
 
 No issue: records the CI change already on `staging` (`1a16293`), so the release that carries it has notes.

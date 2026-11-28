@@ -29,6 +29,8 @@
  * serves, and they must not excuse a new difference on the same route.
  */
 import { readFileSync, writeFileSync } from "node:fs";
+import http from "node:http";
+import https from "node:https";
 import { compareBodies, normaliseBody } from "./parity-body.mjs";
 
 const args = Object.fromEntries(
@@ -109,26 +111,365 @@ const HEADERS = [
 // 404-message entry (`GET /v1/rs/*`) were pruned once production served them
 // (they are in #100 and #76). A trailing `/*` key still matches every path
 // under that prefix.
-// Production serves registry f94666b (v4.36.0), so only the pin below is
-// intentionally different. The registry pin moves from f94666b to 7c6449a, the
-// v4.37.0 release (mzizi-registry#676): `/v1/brand` `accessibility` gains
-// `minTouchTargetPointerFine` 28 and `bodyPxPointerFine` 15 beside the unchanged
-// `minTouchTarget` 49 (mzizi-registry#675), and the changelog records gain 4.37.0.
-// Only response bodies differ: no status, header or redirect moves. Remove these
-// entries once production serves 7c6449a. The entries for the earlier pins were
-// pruned, because production already serves them.
-const PIN_7C6449A = {
-  allow: ["body"],
-  why: "Registry pin f94666b (v4.36.0) to 7c6449a (v4.37.0, mzizi-registry main 2026-11-13): /v1/brand `accessibility` gains `minTouchTargetPointerFine` 28 and `bodyPxPointerFine` 15 beside the unchanged `minTouchTarget` 49, so tools that read the brand data show the desktop tier of the pointer-aware Bundu floor (mzizi-registry#675); the changelog records gain 4.37.0. Response bodies only: status, headers and the contract hold.",
+// Production serves registry 4b488a2 (v4.45.0), so the entries that bridged
+// 7c6449a to 4b488a2 were pruned (they are in mzizi-api#163). The entries for this
+// bump are REG_93600F0 below.
+// Pin 4b488a2 (v4.45.0, what production serves) to 93600f0, the merge of
+// mzizi-registry#752 on top of v4.49.0 (66aea7e) (mzizi-api#166, #167). Each entry
+// is one intended consequence of the registry diff 4b488a2...93600f0. Bodies only;
+// every one of the 296 differences is 200 -> 200, and status, headers and shapes
+// are unchanged.
+const REG_93600F0 = {
+  titles:
+    'Wordmarks take an initial capital (owner 2026-11-23, mzizi-registry#752): generated item titles read "Mzizi Listing Card", not "mzizi Listing Card". Only the title differs; names and slugs are unchanged.',
+  brand:
+    "Brand rulings (owner 2026-11-23, mzizi-registry#752): voiceAndTone says to write wordmarks with an initial capital, Shamwari is an AI companion with open weights (not sovereign AI), the bundu row names pillars, initiatives, projects and the Mukoko apps (no sister brands), plus the v4.46 to v4.49 brand text.",
+  changelog: "Changelog gains the 4.46.0 to 4.49.0 releases (newest 4.49.0).",
+  data: "Registry v4.46.0 to v4.49.0 data and #752: component sources, docs, descriptions, the skills bundle, the architecture strands, AI instructions and the doctrine as the registry now ships them, with wordmarks capitalised in prose.",
 };
-const PIN_7C6449A_REQUESTS = [
-  "GET /api/v1/brand",
-  "GET /api/v1/changelog",
-  "GET /v1/brand",
-  "GET /v1/changelog",
-];
+const expectFor = (why, paths) =>
+  Object.fromEntries(paths.map((p) => [`GET ${p}`, { allow: ["body"], why }]));
+const REG_93600F0_ENTRIES = {
+  ...Object.fromEntries(
+    [
+      "/v1/ui/kweli-apple-touch-icon",
+      "/v1/ui/kweli-favicon",
+      "/v1/ui/kweli-icon-192",
+      "/v1/ui/kweli-icon-512",
+      "/v1/ui/kweli-icon-maskable-512",
+      "/v1/ui/kweli-mark-dark",
+      "/v1/ui/kweli-mark-light",
+      "/v1/ui/mzizi-a11y",
+      "/v1/ui/mzizi-a11y-audit",
+      "/v1/ui/mzizi-abr-content",
+      "/v1/ui/mzizi-action-sheet",
+      "/v1/ui/mzizi-ai-context",
+      "/v1/ui/mzizi-alert-banner",
+      "/v1/ui/mzizi-alert-engine",
+      "/v1/ui/mzizi-api-probe",
+      "/v1/ui/mzizi-application-tracker",
+      "/v1/ui/mzizi-article-card",
+      "/v1/ui/mzizi-auth-card",
+      "/v1/ui/mzizi-auth-layout",
+      "/v1/ui/mzizi-avatar-stack",
+      "/v1/ui/mzizi-badge-display",
+      "/v1/ui/mzizi-balance-display",
+      "/v1/ui/mzizi-base",
+      "/v1/ui/mzizi-bottom-nav",
+      "/v1/ui/mzizi-calendar",
+      "/v1/ui/mzizi-chain-gate",
+      "/v1/ui/mzizi-chain-resilience",
+      "/v1/ui/mzizi-changelog-renderer",
+      "/v1/ui/mzizi-chaos",
+      "/v1/ui/mzizi-command-palette",
+      "/v1/ui/mzizi-commute-card",
+      "/v1/ui/mzizi-conformity-check",
+      "/v1/ui/mzizi-connectivity-bar",
+      "/v1/ui/mzizi-content-composer",
+      "/v1/ui/mzizi-content-gate",
+      "/v1/ui/mzizi-conversation-row",
+      "/v1/ui/mzizi-cover-header",
+      "/v1/ui/mzizi-cover-wash-header",
+      "/v1/ui/mzizi-create-listing",
+      "/v1/ui/mzizi-create-page",
+      "/v1/ui/mzizi-credential-card",
+      "/v1/ui/mzizi-crypto-fallback",
+      "/v1/ui/mzizi-crypto-gate",
+      "/v1/ui/mzizi-dashboard-layout",
+      "/v1/ui/mzizi-data",
+      "/v1/ui/mzizi-deep-link-handler",
+      "/v1/ui/mzizi-degradation-chain",
+      "/v1/ui/mzizi-detail-layout",
+      "/v1/ui/mzizi-detail-page",
+      "/v1/ui/mzizi-did-gate",
+      "/v1/ui/mzizi-docs-api",
+      "/v1/ui/mzizi-docs-engine",
+      "/v1/ui/mzizi-dx",
+      "/v1/ui/mzizi-email-preview",
+      "/v1/ui/mzizi-empty-screen",
+      "/v1/ui/mzizi-empty-state",
+      "/v1/ui/mzizi-error-screen",
+      "/v1/ui/mzizi-error-set",
+      "/v1/ui/mzizi-error-tracker",
+      "/v1/ui/mzizi-escalation-card",
+      "/v1/ui/mzizi-event-card",
+      "/v1/ui/mzizi-feature-gate",
+      "/v1/ui/mzizi-featured-card",
+      "/v1/ui/mzizi-feed-page",
+      "/v1/ui/mzizi-footer",
+      "/v1/ui/mzizi-forecast-card",
+      "/v1/ui/mzizi-fundi",
+      "/v1/ui/mzizi-fundi-learning",
+      "/v1/ui/mzizi-fundi-reporter",
+      "/v1/ui/mzizi-gauge-card",
+      "/v1/ui/mzizi-geo-gate",
+      "/v1/ui/mzizi-grid",
+      "/v1/ui/mzizi-group-card",
+      "/v1/ui/mzizi-harness",
+      "/v1/ui/mzizi-harness-prewire",
+      "/v1/ui/mzizi-header",
+      "/v1/ui/mzizi-health-dashboard",
+      "/v1/ui/mzizi-hero-stat",
+      "/v1/ui/mzizi-icons",
+      "/v1/ui/mzizi-incident-manager",
+      "/v1/ui/mzizi-job-card",
+      "/v1/ui/mzizi-layout",
+      "/v1/ui/mzizi-leaderboard-row",
+      "/v1/ui/mzizi-lesson-card",
+      "/v1/ui/mzizi-listing-card",
+      "/v1/ui/mzizi-load-shedder",
+      "/v1/ui/mzizi-locale",
+      "/v1/ui/mzizi-mark-dark",
+      "/v1/ui/mzizi-mark-light",
+      "/v1/ui/mzizi-media",
+      "/v1/ui/mzizi-message-bubble",
+      "/v1/ui/mzizi-meta-tile",
+      "/v1/ui/mzizi-mini-app-runtime",
+      "/v1/ui/mzizi-mission-card",
+      "/v1/ui/mzizi-moderation-gate",
+      "/v1/ui/mzizi-motion",
+      "/v1/ui/mzizi-notification-center",
+      "/v1/ui/mzizi-notification-item",
+      "/v1/ui/mzizi-offer-card",
+      "/v1/ui/mzizi-offline-gate",
+      "/v1/ui/mzizi-onboarding-step",
+      "/v1/ui/mzizi-otel",
+      "/v1/ui/mzizi-page",
+      "/v1/ui/mzizi-payment-mandate-card",
+      "/v1/ui/mzizi-payment-summary",
+      "/v1/ui/mzizi-perf-probe",
+      "/v1/ui/mzizi-permission-gate",
+      "/v1/ui/mzizi-persistent-player",
+      "/v1/ui/mzizi-phrase-card",
+      "/v1/ui/mzizi-place-card",
+      "/v1/ui/mzizi-platform",
+      "/v1/ui/mzizi-platform-health",
+      "/v1/ui/mzizi-prefetch-boundary",
+      "/v1/ui/mzizi-product-card",
+      "/v1/ui/mzizi-product-results",
+      "/v1/ui/mzizi-profile-block",
+      "/v1/ui/mzizi-profile-header",
+      "/v1/ui/mzizi-profile-page",
+      "/v1/ui/mzizi-profile-page-layout",
+      "/v1/ui/mzizi-profile-settings",
+      "/v1/ui/mzizi-programme-item",
+      "/v1/ui/mzizi-provider-card",
+      "/v1/ui/mzizi-rate-gate",
+      "/v1/ui/mzizi-registration-card",
+      "/v1/ui/mzizi-resilience",
+      "/v1/ui/mzizi-review-card",
+      "/v1/ui/mzizi-root-layout",
+      "/v1/ui/mzizi-route-guard",
+      "/v1/ui/mzizi-route-planner",
+      "/v1/ui/mzizi-rsvp-button",
+      "/v1/ui/mzizi-rum",
+      "/v1/ui/mzizi-search-view",
+      "/v1/ui/mzizi-section",
+      "/v1/ui/mzizi-seo",
+      "/v1/ui/mzizi-settings-page",
+      "/v1/ui/mzizi-share-card",
+      "/v1/ui/mzizi-sidebar",
+      "/v1/ui/mzizi-sidebar-nav",
+      "/v1/ui/mzizi-skeleton-set",
+      "/v1/ui/mzizi-source-badge",
+      "/v1/ui/mzizi-splash-screen",
+      "/v1/ui/mzizi-stats-row",
+      "/v1/ui/mzizi-success-screen",
+      "/v1/ui/mzizi-suitability-card",
+      "/v1/ui/mzizi-sync-status",
+      "/v1/ui/mzizi-synthetic-probe",
+      "/v1/ui/mzizi-theme-provider",
+      "/v1/ui/mzizi-ticket-card",
+      "/v1/ui/mzizi-timeline",
+      "/v1/ui/mzizi-toast-provider",
+      "/v1/ui/mzizi-tokens",
+      "/v1/ui/mzizi-tokens-arkts",
+      "/v1/ui/mzizi-tokens-globals",
+      "/v1/ui/mzizi-tokens-kotlin",
+      "/v1/ui/mzizi-tokens-python",
+      "/v1/ui/mzizi-tokens-react-native",
+      "/v1/ui/mzizi-tokens-rust",
+      "/v1/ui/mzizi-tokens-swift",
+      "/v1/ui/mzizi-tokens-typescript",
+      "/v1/ui/mzizi-transaction-row",
+      "/v1/ui/mzizi-trust-gate",
+      "/v1/ui/mzizi-trust-meter",
+      "/v1/ui/mzizi-trust-tier-data",
+      "/v1/ui/mzizi-trust-tiers",
+      "/v1/ui/mzizi-update-prompt",
+      "/v1/ui/mzizi-user-card",
+      "/v1/ui/mzizi-user-menu",
+      "/v1/ui/mzizi-verified-badge",
+      "/v1/ui/mzizi-wallet-gate",
+      "/v1/ui/mzizi-washed-theme",
+    ].map((p) => [
+      `GET ${p}`,
+      { allow: ["body"], only: "body $.title:", why: REG_93600F0.titles },
+    ]),
+  ),
+  ...expectFor(REG_93600F0.brand, [
+    "/api/v1/brand",
+    "/v1/brand",
+    "/v1/ecosystem",
+  ]),
+  ...expectFor(REG_93600F0.changelog, ["/api/v1/changelog", "/v1/changelog"]),
+  ...expectFor(REG_93600F0.data, [
+    "/api/v1/architecture",
+    "/api/v1/search?layer=2",
+    "/api/v1/search?q=x",
+    "/api/v1/skills",
+    "/api/v1/ui?node=3",
+    "/v1/ai/instructions/mcp-server",
+    "/v1/ai/instructions/nyuchi-mcp-system-prompt",
+    "/v1/architecture",
+    "/v1/rs/input",
+    "/v1/rs/mzizi-ai-context",
+    "/v1/rs/mzizi-alert-banner",
+    "/v1/rs/mzizi-connectivity-bar",
+    "/v1/rs/mzizi-docs-engine",
+    "/v1/rs/mzizi-notification-center",
+    "/v1/rs/mzizi-success-screen",
+    "/v1/rs/mzizi-tokens-rust",
+    "/v1/search?category=primitives",
+    "/v1/search?layer=2",
+    "/v1/search?layer=3&node=2",
+    "/v1/search?node=2",
+    "/v1/search?q=button",
+    "/v1/skills",
+    "/v1/skills/digital-hygiene",
+    "/v1/skills/discoverability",
+    "/v1/skills/mukoko-design",
+    "/v1/skills/mzizi-architecture",
+    "/v1/skills/mzizi-backend",
+    "/v1/skills/mzizi-design",
+    "/v1/skills/mzizi-language",
+    "/v1/skills/mzizi-roots",
+    "/v1/skills/pr-gates",
+    "/v1/skills/progress-report",
+    "/v1/skills/registry-propagation",
+    "/v1/skills/ship-release",
+    "/v1/skills/summary",
+    "/v1/ui",
+    "/v1/ui/address-code",
+    "/v1/ui/address-private-row",
+    "/v1/ui/address-selector",
+    "/v1/ui/address-share-card",
+    "/v1/ui/admin-page",
+    "/v1/ui/api-explorer-page",
+    "/v1/ui/app-account-menu",
+    "/v1/ui/app-bar-chart",
+    "/v1/ui/app-button",
+    "/v1/ui/app-command-palette",
+    "/v1/ui/app-data-table",
+    "/v1/ui/app-detail-panel",
+    "/v1/ui/app-info-tip",
+    "/v1/ui/app-page-header",
+    "/v1/ui/app-pagination",
+    "/v1/ui/app-quick-search",
+    "/v1/ui/app-shell",
+    "/v1/ui/app-side-nav",
+    "/v1/ui/app-switcher",
+    "/v1/ui/app-tier-status",
+    "/v1/ui/app-toast",
+    "/v1/ui/app-toolbar",
+    "/v1/ui/app-toolbar-menu",
+    "/v1/ui/app-top-bar-action",
+    "/v1/ui/app-workspace-switcher",
+    "/v1/ui/assignee-picker",
+    "/v1/ui/audio-player",
+    "/v1/ui/booking-confirmation",
+    "/v1/ui/caption-editor",
+    "/v1/ui/checklist",
+    "/v1/ui/comment-on-paragraph",
+    "/v1/ui/data-explorer-page",
+    "/v1/ui/dialog",
+    "/v1/ui/discover-breadcrumb",
+    "/v1/ui/discover-category-chip",
+    "/v1/ui/discover-meta-list",
+    "/v1/ui/discover-shell",
+    "/v1/ui/env-editor",
+    "/v1/ui/feature-flag-toggle",
+    "/v1/ui/filter-bar",
+    "/v1/ui/font-settings-panel",
+    "/v1/ui/inline-edit",
+    "/v1/ui/input",
+    "/v1/ui/invite-link",
+    "/v1/ui/logs-page",
+    "/v1/ui/member-list",
+    "/v1/ui/music-selector",
+    "/v1/ui/note-editor",
+    "/v1/ui/number-input",
+    "/v1/ui/page-header",
+    "/v1/ui/preset-picker",
+    "/v1/ui/react-checkbox",
+    "/v1/ui/react-input",
+    "/v1/ui/react-switch",
+    "/v1/ui/react-tabs",
+    "/v1/ui/recurrence-picker",
+    "/v1/ui/segmented-control",
+    "/v1/ui/signup-05",
+    "/v1/ui/site-social-icon",
+    "/v1/ui/split-bill",
+    "/v1/ui/subscription-card",
+    "/v1/ui/symptom-checker",
+    "/v1/ui/tag-input",
+    "/v1/ui/time-picker",
+    "/v1/ui/time-slot-picker",
+    "/v1/ui/todo-item",
+    "/v1/ui/toggle",
+    "/v1/ui/transaction-receipt",
+    "/v1/ui/ui-variants",
+    "/v1/ui/vehicle-card",
+    "/v1/ui/video-trimmer",
+    "/v1/ui/vote-buttons",
+    "/v1/ui?collection=primitives",
+    "/v1/ui?limit=abc",
+    "/v1/ui?node=-1",
+    "/v1/ui?node=2",
+    "/v1/ui?node=2&limit=5&offset=3",
+    "/v1/ui?owner=mzizi",
+    "/v1/ui?owner=nyuchi",
+    "/v1/ui?type=registry%3Abase",
+    "/v1/ui?type=registry%3Ablock",
+    "/v1/ui?type=registry%3Aitem",
+    "/v1/ui?type=registry%3Alib",
+    "/v1/ui?type=registry%3Atheme",
+    "/v1/ui?type=registry%3Aui",
+  ]),
+};
+// Pin 5a9c960 (mzizi-registry#763): the skills come from @nyuchi/mzizi-skills 0.25.0, whose text
+// says `mz add` and `mz floor`, and the registry's 4.50.0 and 4.51.0 releases moved the changelog,
+// the MCP instructions and app-nav. Remove these entries once production serves the pin.
+const REG_5A9C960_ENTRIES = expectFor(
+  "mzizi-registry#763: skills regenerated from @nyuchi/mzizi-skills 0.25.0 (mz add, mz floor); registry 4.50.0 and 4.51.0 content. Production still serves the earlier pin.",
+  [
+    "/api/v1/changelog",
+    "/api/v1/skills",
+    "/v1/ai/instructions/mcp-server",
+    "/v1/ai/instructions/nyuchi-mcp-system-prompt",
+    "/v1/changelog",
+    "/v1/skills",
+    "/v1/ui/app-nav",
+    ...[
+      "digital-hygiene",
+      "discoverability",
+      "mukoko-design",
+      "mzizi-architecture",
+      "mzizi-backend",
+      "mzizi-design",
+      "mzizi-language",
+      "mzizi-roots",
+      "pr-gates",
+      "progress-report",
+      "registry-propagation",
+      "ship-release",
+      "summary",
+    ].map((n) => `/v1/skills/${n}`),
+  ],
+);
 const EXPECTED = {
-  ...Object.fromEntries(PIN_7C6449A_REQUESTS.map((r) => [r, PIN_7C6449A])),
+  ...REG_93600F0_ENTRIES,
+  ...REG_5A9C960_ENTRIES,
   // A trailing `/*` matches every path under that prefix: one 200 per component
   // that has a Rust build.
   "GET /v1/rs/*": {
@@ -285,6 +626,50 @@ const paths = [
   "/.well-known/security.txt",
 ];
 
+// Paths sent exactly as written, with no client-side resolution: `fetch`
+// would resolve the dot segments and turn `\` into `/` before sending. Hono
+// routes on the raw request URL while the redirect and header rules read the
+// resolved pathname, so `/v1/ui/./button` is a 405 and `/v1/ui/a\b` a
+// component 404, not a 200 and a route 404. `^` is percent-encoded in the
+// resolved pathname. `wrangler dev` resolves the path before the Worker sees
+// it, so these are compared only when neither target is local. A workers.dev
+// host also resolves LITERAL `.` and `..` segments before the Worker (the TS
+// Worker's own preview answers `/v1/ui/./button` with 200 where
+// api.mzizi.dev answers 405), so those compare only between custom domains.
+const RAW_PATHS = [
+  "/v1/ui/./button",
+  "/v1/ui/../ui/button",
+  "/v1/ui/%2e%2e/ui/button",
+  "/v1/ui/%2E/button",
+  "/./v1/ui",
+  "/api/../v1/ui/button",
+  "/v1/ui/x/%2e%2e/button/docs",
+  "/v1/ui/nyuchi-footer/../button",
+  "/v1\\ui\\button",
+  "/v1/ui/a\\b",
+  "/nope/x^",
+  "/v1/ui/x^/",
+  "/v1/ui/x^",
+  "/v1/ui/button/.",
+  "/v1/ui/..",
+  "/v1/./ui?x=1",
+  "/v1/ui/nyuchi-a11y/./docs",
+  "/api/v1/./health",
+];
+const isLocal = (base) =>
+  ["localhost", "127.0.0.1", "[::1]"].includes(new URL(base).hostname);
+const isWorkersDev = (base) => new URL(base).hostname.endsWith(".workers.dev");
+const RAW_COMPARABLE = !isLocal(LIVE) && !isLocal(LOCAL);
+const DOTS_COMPARABLE =
+  RAW_COMPARABLE && !isWorkersDev(LIVE) && !isWorkersDev(LOCAL);
+/** A literal `.` or `..` segment, which a workers.dev host resolves. */
+const hasDotSegment = (p) =>
+  p
+    .split("?")[0]
+    .split(/[/\\]/)
+    .some((s) => s === "." || s === "..");
+const rawPaths = RAW_PATHS.filter((p) => DOTS_COMPARABLE || !hasDotSegment(p));
+
 const requests = [
   ...paths.map((p) => ({ method: "GET", path: p })),
   ...[
@@ -300,13 +685,49 @@ const requests = [
     { method: "POST", path: p },
     { method: "HEAD", path: p },
   ]),
+  ...(RAW_COMPARABLE
+    ? rawPaths.flatMap((p) =>
+        ["GET", "HEAD", "OPTIONS"].map((method) => ({
+          method,
+          path: p,
+          raw: true,
+        })),
+      )
+    : []),
 ];
 
+/** One request with the path on the wire exactly as given. */
+function rawRequest(base, method, path) {
+  const url = new URL(base);
+  const client = url.protocol === "https:" ? https : http;
+  return new Promise((resolve, reject) => {
+    const req = client.request(
+      { host: url.hostname, port: url.port || undefined, method, path },
+      (res) => {
+        let text = "";
+        res.setEncoding("utf8");
+        res.on("data", (c) => (text += c));
+        res.on("end", () =>
+          resolve({
+            status: res.statusCode,
+            headers: { get: (h) => res.headers[h] ?? null },
+            text: async () => text,
+          }),
+        );
+      },
+    );
+    req.on("error", reject);
+    req.end();
+  });
+}
+
 // ── Run ─────────────────────────────────────────────────────────────────────
-async function hit(base, { method, path }) {
+async function hit(base, { method, path, raw }) {
   for (let attempt = 0; ; attempt++) {
     try {
-      const res = await fetch(base + path, { method, redirect: "manual" });
+      const res = raw
+        ? await rawRequest(base, method, path)
+        : await fetch(base + path, { method, redirect: "manual" });
       const text = await res.text();
       const headers = Object.fromEntries(
         HEADERS.map((h) => [h, res.headers.get(h)]),
@@ -462,6 +883,13 @@ const lines = [
   `| Names only the candidate lists, checked against the contract | ${newNames.length} |`,
   `| **Of those, failing the contract** | **${newFailures.length}** |`,
   ``,
+  RAW_COMPARABLE
+    ? `Includes ${rawPaths.length * 3} requests with the path sent as-is (dot segments, backslashes, \`^\`)` +
+      (DOTS_COMPARABLE
+        ? "."
+        : `; skipped ${(RAW_PATHS.length - rawPaths.length) * 3} with a literal \`.\` or \`..\` segment, which a workers.dev host resolves before the Worker.`)
+    : `Skipped ${RAW_PATHS.length * 3} requests with the path sent as-is: a local \`wrangler dev\` resolves the path before the Worker sees it, so they compare only between deployed Workers.`,
+  ``,
   `Identical by status: ${Object.entries(byStatus)
     .map(([s, n]) => `${s} × ${n}`)
     .join(", ")}. ` +
@@ -477,7 +905,7 @@ if (expected.length) {
   );
   for (const r of expected) {
     lines.push(
-      `| \`${key(r)}\` | ${r.liveStatus} → ${r.localStatus} | ${r.diffs.join("; ").replace(/\|/g, "\\|").slice(0, 200)} | ${expectation(r).why} |`,
+      `| \`${key(r)}\` | ${r.liveStatus} → ${r.localStatus} | ${r.diffs.join("; ").replace(/[\\|]/g, "\\$&").slice(0, 200)} | ${expectation(r).why} |`,
     );
   }
   lines.push("");
@@ -491,7 +919,7 @@ if (failed.length) {
   );
   for (const r of failed)
     lines.push(
-      `| \`${key(r)}\` | ${r.liveStatus} → ${r.localStatus} | ${r.diffs.join("; ").replace(/\|/g, "\\|").slice(0, 300)} |`,
+      `| \`${key(r)}\` | ${r.liveStatus} → ${r.localStatus} | ${r.diffs.join("; ").replace(/[\\|]/g, "\\$&").slice(0, 300)} |`,
     );
   lines.push("");
 }
