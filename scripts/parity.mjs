@@ -874,7 +874,7 @@ if (expected.length) {
   );
   for (const r of expected) {
     lines.push(
-      `| \`${key(r)}\` | ${r.liveStatus} → ${r.localStatus} | ${r.diffs.join("; ").replace(/\|/g, "\\|").slice(0, 200)} | ${expectation(r).why} |`,
+      `| \`${key(r)}\` | ${r.liveStatus} → ${r.localStatus} | ${r.diffs.join("; ").replace(/[\\|]/g, "\\$&").slice(0, 200)} | ${expectation(r).why} |`,
     );
   }
   lines.push("");
@@ -888,7 +888,7 @@ if (failed.length) {
   );
   for (const r of failed)
     lines.push(
-      `| \`${key(r)}\` | ${r.liveStatus} → ${r.localStatus} | ${r.diffs.join("; ").replace(/\|/g, "\\|").slice(0, 300)} |`,
+      `| \`${key(r)}\` | ${r.liveStatus} → ${r.localStatus} | ${r.diffs.join("; ").replace(/[\\|]/g, "\\$&").slice(0, 300)} |`,
     );
   lines.push("");
 }
