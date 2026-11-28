@@ -21,6 +21,10 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Changed — staging wording removed from comments (2026-11-28)
+
+Comments in the release and Dependabot workflows no longer describe a `staging` branch; the repo is trunk-based. No behaviour changes.
+
 ### Security — parity report escapes backslashes (2026-11-28, #180)
 
 `scripts/parity.mjs` escapes backslash before pipe when it writes Markdown table cells (CodeQL js/incomplete-sanitization). A development script only: no change to any API response.
