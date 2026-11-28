@@ -59,7 +59,7 @@ jobs:
 
       - name: Compute the next version
         id: v
-        uses: nyuchi/.github/.github/actions/next-version@0e026639ad69fef58704e114e1db4401a1c5f0ba  # main, 2026-10-19
+        uses: nyuchi/.github/.github/actions/next-version@ef07da8dfce087c16ea643607a49d8ecdbe1907e  # main, 2026-10-19
         with:
           channel: main
           bump: ${{ inputs.bump || '' }}
