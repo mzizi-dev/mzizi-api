@@ -21,6 +21,10 @@ To see which registry commit production is serving, read the
 
 ## [Unreleased]
 
+### Security — parity report escapes backslashes (2026-11-28, #180)
+
+`scripts/parity.mjs` escapes backslash before pipe when it writes Markdown table cells (CodeQL js/incomplete-sanitization). A development script only: no change to any API response.
+
 ### Changed — docs say `mz add`, not `mzizi add` (mzizi-api#174, 2026-11-24)
 
 The CLI is one binary, `mz`, built in mzizi-dev/mzizi-cli; `mzizi` is a deprecated alias. The README row for `GET /v1/astro/{name}` and a source comment now say `mz add --target astro`. No behaviour change. The `npx @nyuchi/mzizi-cli add` hint in responses still works and is unchanged.
