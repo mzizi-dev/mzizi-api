@@ -1,5 +1,5 @@
-# Dependabot version updates. Owner rule (2026-10-21): every Dependabot pull
-# request targets `staging`, never `main`; `staging` reaches `main` by a release.
+# Dependabot version updates. Every Dependabot pull request targets `main`
+# (the repo is trunk-based; there is no `staging` branch).
 version: 2
 updates:
   - package-ecosystem: github-actions
