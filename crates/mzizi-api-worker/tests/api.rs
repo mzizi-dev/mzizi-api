@@ -976,7 +976,7 @@ fn lists_the_pinned_skills_bundle() {
     assert_eq!(res.status, 200);
     let b = body(&res);
     assert_eq!(b["meta"]["count"], 12);
-    assert_eq!(b["meta"]["version"], "0.24.0");
+    assert_eq!(b["meta"]["version"], "0.25.0");
     let names: Vec<&str> = b["data"]
         .as_array()
         .unwrap()

@@ -437,8 +437,39 @@ const REG_93600F0_ENTRIES = {
     "/v1/ui?type=registry%3Aui",
   ]),
 };
+// Pin 5a9c960 (mzizi-registry#763): the skills come from @nyuchi/mzizi-skills 0.25.0, whose text
+// says `mz add` and `mz floor`, and the registry's 4.50.0 and 4.51.0 releases moved the changelog,
+// the MCP instructions and app-nav. Remove these entries once production serves the pin.
+const REG_5A9C960_ENTRIES = expectFor(
+  "mzizi-registry#763: skills regenerated from @nyuchi/mzizi-skills 0.25.0 (mz add, mz floor); registry 4.50.0 and 4.51.0 content. Production still serves the earlier pin.",
+  [
+    "/api/v1/changelog",
+    "/api/v1/skills",
+    "/v1/ai/instructions/mcp-server",
+    "/v1/ai/instructions/nyuchi-mcp-system-prompt",
+    "/v1/changelog",
+    "/v1/skills",
+    "/v1/ui/app-nav",
+    ...[
+      "digital-hygiene",
+      "discoverability",
+      "mukoko-design",
+      "mzizi-architecture",
+      "mzizi-backend",
+      "mzizi-design",
+      "mzizi-language",
+      "mzizi-roots",
+      "pr-gates",
+      "progress-report",
+      "registry-propagation",
+      "ship-release",
+      "summary",
+    ].map((n) => `/v1/skills/${n}`),
+  ],
+);
 const EXPECTED = {
   ...REG_93600F0_ENTRIES,
+  ...REG_5A9C960_ENTRIES,
   // A trailing `/*` matches every path under that prefix: one 200 per component
   // that has a Rust build.
   "GET /v1/rs/*": {
