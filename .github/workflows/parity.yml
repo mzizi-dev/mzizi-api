@@ -11,10 +11,6 @@ name: Parity
 #   doesn't touch scripts/parity.mjs, and the pull request targets main, the
 #   run is `--strict`: EXPECTED then holds only an earlier bump's reasons, which
 #   production already serves, so nothing in it may excuse a difference.
-#   Pull requests (and merge queues) into staging run WITHOUT --strict:
-#   staging is ahead of production until the next release, so EXPECTED
-#   legitimately excuses the differences a newer pin brings. Strictness is
-#   restored at the release into main.
 # - By hand (workflow_dispatch), against any two URLs. A blank candidate is this
 #   commit's Rust Worker under `wrangler dev`, as on a pull request. To compare the
 #   TypeScript Worker (wrangler.ts.jsonc) with production, run it by hand on its own
@@ -34,9 +30,7 @@ on:
   # Required checks must also report on a merge queue's gh-readonly-queue/**
   # ref, or a queued PR waits until the queue times it out. Harmless where no
   # queue is configured. merge_group takes no branches or paths filter, so the
-  # job skips itself on a queue for any branch but main or staging
-  # (pull_request runs only on PRs into those two). A pin move targets
-  # staging, so it must get parity there.
+  # job skips itself on a queue for any branch but main.
   merge_group:
   workflow_dispatch:
     inputs:
@@ -61,8 +55,7 @@ jobs:
     name: parity
     if: >-
       github.event_name != 'merge_group' ||
-      github.event.merge_group.base_ref == 'refs/heads/main' ||
-      github.event.merge_group.base_ref == 'refs/heads/staging'
+      github.event.merge_group.base_ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     # The first run on a runner builds the Rust Worker from scratch (worker-build,
     # wasm-bindgen), which takes several minutes.
@@ -108,8 +101,7 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
           BASE_REF: ${{ github.event.pull_request.base.ref || github.event.merge_group.base_ref }}
         run: |
-          # Only a change into main is held to --strict; staging is ahead of
-          # production, so EXPECTED is honoured there.
+          # Only a change into main is held to --strict.
           [ "${BASE_REF#refs/heads/}" = main ] || exit 0
           if git diff --quiet "$BASE_SHA...$HEAD_SHA" -- scripts/parity.mjs; then
             echo "flags=--strict" >> "$GITHUB_OUTPUT"
