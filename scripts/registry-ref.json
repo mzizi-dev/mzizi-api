@@ -1,6 +1,6 @@
 {
   "repository": "https://github.com/mzizi-dev/mzizi-registry",
-  "ref": "93600f03c48a44ff3a4b09f644293bc379f73eb2",
-  "pinned": "2026-11-23",
-  "note": "mzizi-registry main at the merge of #752 (wordmarks with an initial capital), on top of v4.49.0 (66aea7e); previous pin was v4.45.0 (4b488a2)."
+  "ref": "5a9c960f7e85b4a88938d071c9f2b8a915e8df18",
+  "pinned": "2026-11-28",
+  "note": "mzizi-registry main at the merge of #763 (agent skills regenerated from @nyuchi/mzizi-skills 0.25.0: mz add); previous pin was 93600f0 (#752)."
 }
