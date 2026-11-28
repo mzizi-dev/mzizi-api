@@ -12,6 +12,10 @@ Fixed or Security, and a breaking change is marked **Breaking**.
 **The rule (owner, 2026-09-30):** every pull request that changes behaviour, an
 API response, a dependency, a default, the registry pin or a documented fact
 adds an entry under `## [Unreleased]` in the same pull request. The
+
+### Changed — TypeScript moves to v6 and Dependabot ignores TypeScript 7 (2026-11-28, #178)
+
+The Worker's TypeScript is 6.0.3. Dependabot ignores TypeScript major version 7 until the org adopts it by hand. Build tooling only: no change to any response or behaviour.
 `changelog / entry required` check fails a pull request that doesn't. One
 exemption: pull requests labelled `no-changelog` (pure CI, lint or typo
 changes), besides those that touch only `.github/`, lockfiles or lint config. When a dated section is cut, the Unreleased entries move under it.
