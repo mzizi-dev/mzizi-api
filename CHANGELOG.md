@@ -25,6 +25,7 @@ To see which registry commit production is serving, read the
 ### Changed — TypeScript moves to v6 and Dependabot ignores TypeScript 7 (2026-11-28, #178)
 
 The Worker's TypeScript is 6.0.3. Dependabot ignores TypeScript major version 7 until the org adopts it by hand. Build tooling only: no change to any response or behaviour.
+
 ### Changed — the registry pin moves to the skills 0.25.0 regeneration (2026-11-28, #184)
 
 Closes #184. `scripts/registry-ref.json` moves from 93600f0 (#752) to 5a9c960, mzizi-registry main at the merge of #763. `/v1/skills` now serves `@nyuchi/mzizi-skills` 0.25.0, whose text says `mz add` and `mz floor` where it said `mzizi add` and `mzizi check`; its `meta.version` is 0.25.0. The test that names the skills version follows.
